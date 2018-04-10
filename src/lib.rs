@@ -1,4 +1,8 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::53cbd3c0-e164-4bad-b535-6fd6df916650][53cbd3c0-e164-4bad-b535-6fd6df916650]]
+#![feature(conservative_impl_trait)]
+#![allow(dead_code)]
+
+extern crate petgraph;
 extern crate cgmath;
 #[macro_use]
 extern crate timeit;
@@ -9,6 +13,15 @@ extern crate itertools;
 
 pub type Point3D = [f64; 3];
 pub type Points = Vec<Point3D>;
+
+pub mod element;
+pub use element::AtomKind;
+pub use element::AtomKind::{Element, Dummy};
+pub mod atom;
+pub use atom::Atom;
+pub mod molecule;
+pub mod io;
+pub use io::write_as_xyz;
 
 #[inline]
 pub fn euclidean_distance(p1: Point3D, p2: Point3D) -> f64 {
@@ -99,13 +112,18 @@ fn close_contact(points: &Points) -> bool {
 use cgmath::prelude::*;
 use cgmath::{Quaternion, Vector3};
 
-pub fn random_rotate(points: Vec<Point3D>) -> Points{
+/// generate a random quaternion for rotation
+fn rand_quaternion() -> Quaternion<f64> {
     let radius = 1.0;
     let p = rand_point_on_sphere(radius);
     let v = Vector3::from(p);
     let s = (v.magnitude2() + radius*radius).sqrt();
-    let rot = Quaternion::from_sv(radius/s, v/s);
 
+    Quaternion::from_sv(radius/s, v/s)
+}
+
+pub fn rand_rotate(points: Points) -> Points {
+    let rot = rand_quaternion();
     let mut rpoints = vec![];
     for &p in points.iter() {
         let v = Vector3::from(p);
@@ -117,7 +135,7 @@ pub fn random_rotate(points: Vec<Point3D>) -> Points{
 }
 
 #[test]
-fn test_random_rotate() {
+fn test_rand_rotate() {
     let points = [[-0.02264019, -0.01300713, -0.06295011],
                   [ 1.37326881, -0.01300713, -0.06295011],
                   [-0.44222819, -0.73391213,  0.82834789],
@@ -126,7 +144,7 @@ fn test_random_rotate() {
                   [-1.46366314,  1.28242565, -0.77914068],
                   [-1.20324889,  1.43034987,  0.82615384]];
 
-    let rpoints = random_rotate(points.to_vec());
+    let rpoints = rand_rotate(points.to_vec());
 
     let npoints = points.len();
     assert_eq!(npoints, rpoints.len());
