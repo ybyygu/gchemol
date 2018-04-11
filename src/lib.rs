@@ -2,6 +2,17 @@
 #![feature(conservative_impl_trait)]
 #![allow(dead_code)]
 
+#[macro_use]
+extern crate error_chain;
+
+// We'll put our errors in an `errors` module, and other modules in
+// this crate will `use errors::*;` to get access to everything
+// `error_chain!` creates.
+pub mod errors {
+    // Create the Error, ErrorKind, ResultExt, and Result types
+    error_chain! { }
+}
+
 extern crate petgraph;
 extern crate cgmath;
 #[macro_use]
@@ -19,7 +30,9 @@ pub use element::AtomKind;
 pub use element::AtomKind::{Element, Dummy};
 pub mod atom;
 pub use atom::Atom;
+pub mod graph;
 pub mod molecule;
+pub mod topology;
 pub mod io;
 pub use io::write_as_xyz;
 
@@ -85,26 +98,6 @@ pub fn rand_point_on_sphere(radius: f64) -> Point3D {
             return [x*s, y*s, z*s];
         }
     }
-}
-
-/// check if any pair of points come too close
-fn close_contact(points: &Points) -> bool {
-    let cutoff = 0.4;
-
-    for pair in points.iter().combinations(2) {
-        let p1 = pair[0];
-        let p2 = pair[1];
-        let dx = p2[0] - p1[0];
-        let dy = p2[1] - p1[1];
-        let dz = p2[2] - p1[2];
-        let d2 = dx*dx + dy*dy + dz*dz;
-        if d2 <= cutoff {
-            println!("{:?}", d2);
-            return true
-        }
-    }
-
-    false
 }
 // 0cd950e1-e3e1-44cf-96f8-8629f3bf3f95 ends here
 

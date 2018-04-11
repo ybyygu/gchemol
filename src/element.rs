@@ -1,15 +1,7 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::731651b9-ebba-4df3-86f7-083f837e4065][731651b9-ebba-4df3-86f7-083f837e4065]]
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::a806642c-37da-4ce1-aa7b-0fb8d00233e3][a806642c-37da-4ce1-aa7b-0fb8d00233e3]]
 use std::fmt::{self, Debug, Display};
 
-#[derive(Debug, Copy, Clone)]
-pub enum AtomKind<'a> {
-    /// physical elements
-    Element(usize),
-    /// a dummy-atom is not a real atom
-    Dummy(&'a str),
-}
-
-static ELEMENT_DATA: [(&'static str, &'static str); 118] = [
+const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
     ("H", "hydrogen"),
     ("He", "helium"),
     ("Li", "lithium"),
@@ -128,41 +120,67 @@ static ELEMENT_DATA: [(&'static str, &'static str); 118] = [
     ("Uuh", "ununhexium"),
     ("Uus", "ununseptium"),
     ("Uuo", "ununoctium")];
+// a806642c-37da-4ce1-aa7b-0fb8d00233e3 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::731651b9-ebba-4df3-86f7-083f837e4065][731651b9-ebba-4df3-86f7-083f837e4065]]
+#[derive(Debug, Clone)]
+pub enum AtomKind {
+    /// physical elements
+    Element(usize),
+    /// a dummy-atom is not a real atom
+    Dummy(String),
+}
 
-impl <'a>AtomKind<'a> {
-    pub fn symbol(&self) -> String {
+impl AtomKind {
+    pub fn symbol(&self) -> &str {
         match(self) {
-            &Element(num) => ELEMENT_DATA[num-1].0.to_string(),
-            &Dummy(sym) => sym.to_string()
+            &Element(num) => ELEMENT_DATA[num-1].0,
+            &Dummy(ref sym) => sym
         }
     }
 
     pub fn number(&self) -> usize {
         match(self) {
             &Element(num) => num,
-            &Dummy(sym) => 0,
+            &Dummy(ref sym) => 0,
         }
     }
 
     pub fn name(&self) -> String {
         match(self) {
             &Element(num) => ELEMENT_DATA[num-1].1.to_string(),
-            &Dummy(sym) => format!("dummy atom {}", sym),
+            &Dummy(ref sym) => format!("dummy atom {}", sym),
         }
     }
 }
 
-impl <'a>fmt::Display for AtomKind<'a> {
+impl fmt::Display for AtomKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match(self) {
             &Element(num) => write!(f, "Element {:}", self.symbol()),
-            &Dummy(sym) =>  write!(f, "Dummy atom {:}", self.symbol()),
+            &Dummy(ref sym) =>  write!(f, "Dummy atom {:}", self.symbol()),
         }
     }
 }
+// 731651b9-ebba-4df3-86f7-083f837e4065 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::b95edc21-e696-4625-ba99-94257394772d][b95edc21-e696-4625-ba99-94257394772d]]
+use std::str::FromStr;
+use errors::*;
 
 use self::AtomKind::{Element, Dummy};
+
+/// Return AtomKind using common sense
+pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
+    let sym = sym.into();
+    for (i, &(s, n) )in ELEMENT_DATA.iter().enumerate() {
+        if s == sym  || n == sym {
+            return Element(i+1);
+        }
+    }
+
+    Dummy(sym)
+}
 
 #[test]
 fn test_element() {
@@ -171,10 +189,10 @@ fn test_element() {
     println!("symbol = {:}", x.symbol());
     println!("number = {:}", x.number());
     println!("name = {:}", x.name());
-    let x = Dummy("X");
+    let x = Dummy("X".to_string());
     println!("{:}", x);
     println!("symbol = {:}", x.symbol());
     println!("number = {:}", x.number());
     println!("name = {:}", x.name());
 }
-// 731651b9-ebba-4df3-86f7-083f837e4065 ends here
+// b95edc21-e696-4625-ba99-94257394772d ends here
