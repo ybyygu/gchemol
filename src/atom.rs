@@ -10,10 +10,11 @@ use Element;
 #[derive (Debug, Clone)]
 /// simple atom data structure
 pub struct Atom {
-    /// Atom type, could be an element or a pseudo-atom
-    pub kind: AtomKind,
     /// Cartesian coordinates
     pub position: Point3D,
+    /// Atom type, could be an element or a pseudo-atom
+    pub kind: AtomKind,
+
     /// Atom nick name
     pub name: String,
 }
@@ -62,6 +63,5 @@ fn test_atom_init() {
     let atom = Atom::new("dummy", [9.3; 3]);
     assert_eq!("dummy", atom.symbol());
     assert_eq!(0, atom.number());
-    println!("{:?}", atom.name);
 }
 // 150189fd-57d9-4e19-a888-d64497f5ba7e ends here

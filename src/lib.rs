@@ -30,6 +30,8 @@ pub use element::AtomKind;
 pub use element::AtomKind::{Element, Dummy};
 pub mod atom;
 pub use atom::Atom;
+pub mod bond;
+pub use bond::Bond;
 pub mod graph;
 pub mod molecule;
 pub mod topology;

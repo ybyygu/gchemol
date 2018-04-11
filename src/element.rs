@@ -165,15 +165,12 @@ impl fmt::Display for AtomKind {
 // 731651b9-ebba-4df3-86f7-083f837e4065 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::b95edc21-e696-4625-ba99-94257394772d][b95edc21-e696-4625-ba99-94257394772d]]
-use std::str::FromStr;
-use errors::*;
-
 use self::AtomKind::{Element, Dummy};
 
 /// Return AtomKind using common sense
 pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
     let sym = sym.into();
-    for (i, &(s, n) )in ELEMENT_DATA.iter().enumerate() {
+    for (i, &(s, n) ) in ELEMENT_DATA.iter().enumerate() {
         if s == sym  || n == sym {
             return Element(i+1);
         }
@@ -186,13 +183,12 @@ pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
 fn test_element() {
     let x = Element(12);
     println!("{:}", x);
-    println!("symbol = {:}", x.symbol());
-    println!("number = {:}", x.number());
-    println!("name = {:}", x.name());
+    assert_eq!(12, x.number());
+    assert_eq!("Mg", x.symbol());
+    assert_eq!("magnesium", x.name());
+
     let x = Dummy("X".to_string());
-    println!("{:}", x);
-    println!("symbol = {:}", x.symbol());
-    println!("number = {:}", x.number());
-    println!("name = {:}", x.name());
+    assert_eq!("X", x.symbol());
+    assert_eq!(0, x.number());
 }
 // b95edc21-e696-4625-ba99-94257394772d ends here
