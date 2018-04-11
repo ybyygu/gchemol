@@ -133,21 +133,21 @@ pub enum AtomKind {
 
 impl AtomKind {
     pub fn symbol(&self) -> &str {
-        match(self) {
+        match self {
             &Element(num) => ELEMENT_DATA[num-1].0,
             &Dummy(ref sym) => sym
         }
     }
 
     pub fn number(&self) -> usize {
-        match(self) {
+        match self {
             &Element(num) => num,
             &Dummy(ref sym) => 0,
         }
     }
 
     pub fn name(&self) -> String {
-        match(self) {
+        match self {
             &Element(num) => ELEMENT_DATA[num-1].1.to_string(),
             &Dummy(ref sym) => format!("dummy atom {}", sym),
         }
@@ -156,7 +156,7 @@ impl AtomKind {
 
 impl fmt::Display for AtomKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match(self) {
+        match self {
             &Element(num) => write!(f, "Element {:}", self.symbol()),
             &Dummy(ref sym) =>  write!(f, "Dummy atom {:}", self.symbol()),
         }

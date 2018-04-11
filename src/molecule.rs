@@ -58,18 +58,89 @@ impl Molecule {
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::ddf54b1b-6bda-496a-8444-b9762645cc94][ddf54b1b-6bda-496a-8444-b9762645cc94]]
+use std::iter::IntoIterator;
+use std::fmt;
+
+pub fn get_reduced_formula<'a, I>(symbols: I) -> String
+where
+    I: IntoIterator,
+    I::Item: fmt::Display,
+{
+    let symbols: Vec<_> = symbols.into_iter()
+        .map(|item| format!("{:}", item))
+        .collect();
+
+    // 1. count symbols: CCCC ==> C 4
+        let mut counts = HashMap::new();
+    for x in &symbols {
+        let c = counts.entry(x).or_insert(0);
+        *c += 1;
+    }
+
+    let mut syms: Vec<String> = Vec::new();
+    let mut to_append = String::new();
+    // 2. format the formula
+    for (k, v) in counts {
+        // 2.1 omit number if the count is 1: C1H4 ==> CH4
+        let mut s = String::new();
+        if v > 1 {
+            s = v.to_string();
+        }
+        // 2.2 special treatments for C and H
+        let reduced = format!("{}{}", k, s);
+        if *k == "C" {
+            syms.insert(0, reduced);
+        } else if *k == "H" {
+            to_append = reduced;
+        } else {
+            syms.push(reduced);
+        }
+    }
+    // 3. final output
+    syms.push(to_append);
+    let formula = syms.join("");
+    formula
+}
+
+impl Molecule {
+    /// Return the formula representation in string
+    fn formula(&self) -> String
+    {
+        get_reduced_formula(self.symbols())
+    }
+}
+
+#[test]
+fn test_formula() {
+    let symbols   = vec!["C", "H", "C", "H", "H", "H"];
+    let formula = get_reduced_formula(&symbols);
+    assert_eq!("C2H4", formula);
+    let symbols   = vec!["C", "H", "C", "H", "H", "O", "H", "O"];
+    let formula = get_reduced_formula(&symbols);
+    assert_eq!("C2O2H4", formula);
+}
+// ddf54b1b-6bda-496a-8444-b9762645cc94 ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::5052eafc-f1ab-4612-90d7-0924c3bacb16][5052eafc-f1ab-4612-90d7-0924c3bacb16]]
 #[test]
 fn test_molecule() {
     let mut mol = Molecule::new();
-    mol.add_atom(Atom::default());
-    println!("{:?}", mol);
-    println!("{:?}", mol.graph);
+    println!("{:?}", mol.formula());
+    let a1 = mol.add_atom(Atom::default());
+    let a2 = mol.add_atom(Atom::default());
+
+    let b1 = mol.add_bond(a1, a2);
+    println!("{:?}", b1);
+
+    // loop over atoms
     for a in mol.atoms() {
         println!("{:?}", a);
     }
 
+    // pick a single atom
     let a = mol.atom(0).unwrap();
     println!("{:?}", a.symbol());
+    println!("{:?}", mol.formula());
 }
 // 5052eafc-f1ab-4612-90d7-0924c3bacb16 ends here
