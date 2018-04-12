@@ -67,6 +67,17 @@ impl Molecule {
         self.atoms().map(|ref a| &a.position)
     }
 
+    /// Set positions of atoms
+    fn set_positions(&mut self, positions: Points)
+    {
+        let indices: Vec<_> = self.graph.node_indices().collect();
+
+        for (&index, position) in indices.iter().zip(positions) {
+            let mut atom = &mut self.graph[index];
+            atom.position = position;
+        }
+    }
+
     /// Return an iterator over the symbols of all  atoms in the molecule.
     fn symbols(&self) -> impl Iterator<Item = &str> {
         self.atoms().map(|ref a| a.symbol())
@@ -84,10 +95,10 @@ impl Molecule {
         self.graph.add_node(atom)
     }
 
-    /// Add a single bond into molecule
-    pub fn add_bond(&mut self, atom1: AtomIndex, atom2: AtomIndex) -> BondIndex {
-        let bond = Bond::default();
-        self.graph.update_edge(atom1, atom2, bond)
+    /// Remove an atom from the molecule.
+    /// Return atom if it exists, or return None.
+    pub fn remove_atom(&mut self, a: AtomIndex) -> Option<Atom> {
+        self.graph.remove_node(a)
     }
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
@@ -111,6 +122,35 @@ impl IntoAtomIndex for AtomIndex {
     }
 }
 // be29e151-18c6-43cb-9586-aba0e708d38c ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::66630db1-08e3-479e-b59f-00c5c3b08164][66630db1-08e3-479e-b59f-00c5c3b08164]]
+impl Molecule {
+    /// Add a single bond into molecule
+    pub fn add_bond(&mut self, atom1: AtomIndex, atom2: AtomIndex) -> BondIndex {
+        let bond = Bond::default();
+        self.graph.update_edge(atom1, atom2, bond)
+    }
+
+    /// Remove a bond using atom indices
+    /// Return the bond if it exists, or return None
+    pub fn remove_bond_between<T: IntoAtomIndex>(&mut self, a: T, b: T) -> Option<Bond> {
+        let a = a.into_atom_index();
+        let b = b.into_atom_index();
+        if let Some(e) = self.graph.find_edge(a, b) {
+            self.remove_bond(e)
+        } else {
+            None
+        }
+    }
+
+    /// Remove a bond using bond index
+    /// Return the bond if it exists, or return None
+    pub fn remove_bond(&mut self, e: BondIndex) -> Option<Bond>{
+        self.graph.remove_edge(e)
+    }
+
+}
+// 66630db1-08e3-479e-b59f-00c5c3b08164 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f556412b-874d-4c2c-ba79-9fb3edbefae1][f556412b-874d-4c2c-ba79-9fb3edbefae1]]
 use bond::BondKind;
@@ -147,33 +187,14 @@ impl Molecule {
 }
 // f556412b-874d-4c2c-ba79-9fb3edbefae1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::66630db1-08e3-479e-b59f-00c5c3b08164][66630db1-08e3-479e-b59f-00c5c3b08164]]
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::ec7b11d2-6f13-49fd-b253-af4b213b49a3][ec7b11d2-6f13-49fd-b253-af4b213b49a3]]
 impl Molecule {
-    /// Remove a bond using atom indices
-    /// Return the bond if it exists, or return None
-    pub fn remove_bond_between<T: IntoAtomIndex>(&mut self, a: T, b: T) -> Option<Bond> {
-        let a = a.into_atom_index();
-        let b = b.into_atom_index();
-        if let Some(e) = self.graph.find_edge(a, b) {
-            self.remove_bond(e)
-        } else {
-            None
-        }
-    }
-
-    /// Remove a bond using bond index
-    /// Return the bond if it exists, or return None
-    pub fn remove_bond(&mut self, e: BondIndex) -> Option<Bond>{
-        self.graph.remove_edge(e)
-    }
-
-    /// Remove an atom from the molecule.
-    /// Return atom if it exists, or return None.
-    pub fn remove_atom(&mut self, a: AtomIndex) -> Option<Atom> {
-        self.graph.remove_node(a)
+    /// Return an iterator of all atoms connected to a.
+    fn connected() {
+        //
     }
 }
-// 66630db1-08e3-479e-b59f-00c5c3b08164 ends here
+// ec7b11d2-6f13-49fd-b253-af4b213b49a3 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
 impl Molecule {
@@ -313,6 +334,14 @@ fn test_molecule() {
     for a in mol.atoms() {
         println!("got {:?}", a);
     }
+
+    //set atom positions
+    let positions = [[-0.90203687,  0.62555259,  0.0081889 ],
+                     [-0.54538244, -0.38325741,  0.0081889 ],
+                     [-0.54536403,  1.12995078, -0.8654626 ],
+                     [-1.97203687,  0.62556577,  0.0081889 ]];
+    mol.set_positions(positions.to_vec());
+    assert_eq!(mol.atom(0).unwrap().position[0], -0.90203687);
 
     // pick a single atom
     let a = mol.atom(0).unwrap();
