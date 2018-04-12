@@ -70,6 +70,152 @@ impl Molecule {
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::66630db1-08e3-479e-b59f-00c5c3b08164][66630db1-08e3-479e-b59f-00c5c3b08164]]
+impl Molecule {
+    /// Remove a bond using atom indices
+    /// Return the bond if it exists, or return None
+    pub fn remove_bond_between<T: IntoAtomIndex>(&mut self, a: T, b: T) -> Option<Bond> {
+        let a = a.into_atom_index();
+        let b = b.into_atom_index();
+        if let Some(e) = self.graph.find_edge(a, b) {
+            self.remove_bond(e)
+        } else {
+            None
+        }
+    }
+
+    /// Remove a bond using bond index
+    /// Return the bond if it exists, or return None
+    pub fn remove_bond(&mut self, e: BondIndex) -> Option<Bond>{
+        self.graph.remove_edge(e)
+    }
+
+    /// Remove an atom from the molecule.
+    /// Return atom if it exists, or return None.
+    pub fn remove_atom(&mut self, a: AtomIndex) -> Option<Atom> {
+        self.graph.remove_node(a)
+    }
+}
+// 66630db1-08e3-479e-b59f-00c5c3b08164 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::be29e151-18c6-43cb-9586-aba0e708d38c][be29e151-18c6-43cb-9586-aba0e708d38c]]
+pub trait IntoAtomIndex {
+    fn into_atom_index(&self) -> AtomIndex;
+}
+
+impl IntoAtomIndex for usize {
+    fn into_atom_index(&self) -> AtomIndex {
+        // atom index counting from zero
+        debug_assert!(*self > 0);
+        AtomIndex::new(*self - 1)
+    }
+}
+
+impl IntoAtomIndex for AtomIndex {
+    fn into_atom_index(&self) -> AtomIndex {
+        *self
+    }
+}
+// be29e151-18c6-43cb-9586-aba0e708d38c ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::f556412b-874d-4c2c-ba79-9fb3edbefae1][f556412b-874d-4c2c-ba79-9fb3edbefae1]]
+use bond::BondKind;
+use data::guess_bond_kind;
+
+impl Molecule {
+    /// Removes all existing bonds between atoms
+    pub fn unbond(&mut self) {
+        self.graph.clear_edges();
+    }
+
+    /// Return the number of atoms in the molecule.
+    pub fn natoms(&self) -> usize {
+        self.graph.node_count()
+    }
+
+    /// Return the number of bonds in the molecule.
+    pub fn nbonds(&self) -> usize {
+        self.graph.edge_count()
+    }
+
+    /// Redefine bonds from distances based on predefined bonding lengths
+    pub fn rebond(&mut self) {
+        let indices: Vec<_> = self.graph.node_indices().collect();
+        let n = indices.len();
+        let mut pairs = vec![];
+        for i in 0..n {
+            for j in (i+1)..n {
+                let vi = indices[i];
+                let vj = indices[j];
+                let ai = &self.graph[vi];
+                let aj = &self.graph[vj];
+                let bk = guess_bond_kind(ai, aj);
+                if bk != BondKind::Dummy {
+                    pairs.push((vi, vj));
+                }
+            }
+        }
+
+        for (vi, vj) in pairs {
+            self.add_bond(vi, vj);
+        }
+    }
+}
+// f556412b-874d-4c2c-ba79-9fb3edbefae1 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
+impl Molecule {
+    /// fragment into a list of sub-molecules based on connectivity
+    fn fragment(&self) -> Vec<Molecule> {
+        let graph = &self.graph;
+
+        let mut mols = vec![];
+        let subgraphs = connected_component_subgraphs(graph);
+
+        for g in subgraphs {
+            mols.push(Molecule::from_graph(g));
+        }
+
+        mols
+    }
+}
+
+/// Generate connected components as subgraphs
+fn connected_component_subgraphs(graph: &MolGraph) -> Vec<MolGraph>{
+    // get fragments from connected components
+    let components = pg::algo::kosaraju_scc(graph);
+
+    let mut graphs = vec![];
+    for nodes in components {
+        let g: MolGraph = graph.filter_map
+            (
+                // node closure:
+                // keep atoms in the same component
+                |i, n| {
+                    if nodes.contains(&i) {
+                        Some(n.clone())
+                    } else {
+                        None
+                    }
+                },
+                // edge closure:
+                // keep the bond if bonded atoms are both in the same component
+                |i, e| {
+                    let (n1, n2) = graph.edge_endpoints(i).unwrap();
+                    if nodes.contains(&n1) && nodes.contains(&n2) {
+                        Some(e.clone())
+                    } else {
+                        None
+                    }
+                }
+            );
+        graphs.push(g);
+    }
+
+    graphs
+}
+// f0258648-03f4-41c9-949e-f3677c3b44bc ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ddf54b1b-6bda-496a-8444-b9762645cc94][ddf54b1b-6bda-496a-8444-b9762645cc94]]
 use std::iter::IntoIterator;
 use std::fmt;
@@ -135,59 +281,6 @@ fn test_formula() {
 }
 // ddf54b1b-6bda-496a-8444-b9762645cc94 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
-impl Molecule {
-    /// fragment into a list of sub-molecules based on connectivity
-    fn fragment(&self) -> Vec<Molecule> {
-        let graph = &self.graph;
-
-        let mut mols = vec![];
-        let subgraphs = connected_component_subgraphs(graph);
-
-        for g in subgraphs {
-            mols.push(Molecule::from_graph(g));
-        }
-
-        mols
-    }
-}
-
-/// Generate connected components as subgraphs
-fn connected_component_subgraphs(graph: &MolGraph) -> Vec<MolGraph>{
-    // get fragments from connected components
-    let components = pg::algo::kosaraju_scc(graph);
-
-    let mut graphs = vec![];
-    for nodes in components {
-        let g: MolGraph = graph.filter_map
-            (
-                // node closure:
-                // keep atoms in the same component
-                |i, n| {
-                    if nodes.contains(&i) {
-                        Some(n.clone())
-                    } else {
-                        None
-                    }
-                },
-                // edge closure:
-                // keep the bond if bonded atoms are both in the same component
-                |i, e| {
-                    let (n1, n2) = graph.edge_endpoints(i).unwrap();
-                    if nodes.contains(&n1) && nodes.contains(&n2) {
-                        Some(e.clone())
-                    } else {
-                        None
-                    }
-                }
-            );
-        graphs.push(g);
-    }
-
-    graphs
-}
-// f0258648-03f4-41c9-949e-f3677c3b44bc ends here
-
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::5052eafc-f1ab-4612-90d7-0924c3bacb16][5052eafc-f1ab-4612-90d7-0924c3bacb16]]
 #[test]
 fn test_molecule() {
@@ -219,5 +312,29 @@ fn test_molecule() {
     for m in frags {
         println!("{:?}", m.formula());
     }
+}
+
+#[test]
+fn test_molecule_rebond() {
+    let atom1 = Atom::new("C", [-0.90203687,  0.62555259,  0.0081889 ]);
+    let atom2 = Atom::new("H", [-0.54538244, -0.38325741,  0.0081889 ]);
+    let atom3 = Atom::new("H", [-0.54536403,  1.12995078,  0.88184041]);
+    let atom4 = Atom::new("H", [-0.54536403,  1.12995078, -0.8654626 ]);
+    let atom5 = Atom::new("H", [-1.97203687,  0.62556577,  0.0081889 ]);
+
+    let mut mol = Molecule::new();
+    mol.add_atom(atom1);
+    mol.add_atom(atom2);
+    mol.add_atom(atom3);
+    mol.add_atom(atom4);
+    mol.add_atom(atom5);
+
+    assert_eq!(5, mol.natoms());
+    assert_eq!(0, mol.nbonds());
+    mol.rebond();
+    assert_eq!(4, mol.nbonds());
+
+    let x = mol.remove_bond_between(1, 4);
+    assert_eq!(3, mol.nbonds());
 }
 // 5052eafc-f1ab-4612-90d7-0924c3bacb16 ends here

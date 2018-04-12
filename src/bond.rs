@@ -1,16 +1,28 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::75287fd8-649d-496d-8c50-40f9247a4c10][75287fd8-649d-496d-8c50-40f9247a4c10]]
 use Atom;
 
+/// https://en.wikipedia.org/wiki/Bond_order
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq)]
+pub enum BondKind {
+    Dummy,
+    Partial,
+    Single,
+    Aromatic,
+    Double,
+    Triple,
+    Quadruple,
+}
+
 #[derive(Debug, Clone)]
 pub struct Bond {
-    order: f64,
-    name: String,
+    pub kind: BondKind,
+    pub name: String,
 }
 
 impl Default for Bond {
     fn default() -> Self {
         Bond {
-            order: 1.0,
+            kind: BondKind::Dummy,
             name: String::default(),
         }
     }

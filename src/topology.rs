@@ -9,7 +9,7 @@ fn close_contact(points: &Points) -> bool {
 
     let npts = points.len();
     for i in 0..npts {
-        for j in i..npts {
+        for j in (i+1)..npts {
             let p1 = points[i];
             let p2 = points[j];
             let dx = p2[0] - p1[0];

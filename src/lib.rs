@@ -36,6 +36,7 @@ pub mod molecule;
 pub mod topology;
 pub mod io;
 pub use io::write_as_xyz;
+pub mod data;
 
 #[inline]
 pub fn euclidean_distance(p1: Point3D, p2: Point3D) -> f64 {
@@ -145,7 +146,7 @@ fn test_rand_rotate() {
     assert!(points[0][0] != rpoints[0][0]);
 
     for i in 0..npoints {
-        for j in i..npoints {
+        for j in (i+1)..npoints {
             let d1 = euclidean_distance(points[i], points[j]);
             let d2 = euclidean_distance(rpoints[i], rpoints[j]);
             assert_relative_eq!(d1, d2, epsilon=1e-4);
