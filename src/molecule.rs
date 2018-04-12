@@ -15,10 +15,22 @@ type MolGraph = StableUnGraph<Atom, Bond>;
 type AtomIndex = NodeIndex;
 type BondIndex = EdgeIndex;
 
+/// Repsents any singular entity, irrespective of its nature, in order
+/// to concisely express any type of chemical particle: atom,
+/// molecule, ion, ion pair, radical, radical ion, complex, conformer,
+/// etc.
+///
+/// Reference
+/// ---------
+/// 1. http://goldbook.iupac.org/M03986.html
+/// 2. https://en.wikipedia.org/wiki/Molecular_entity
+///
 #[derive(Debug, Clone)]
-pub struct Molecule {
+pub struct MolecularEntity {
     graph: MolGraph,
 }
+
+pub type Molecule = MolecularEntity;
 
 impl Molecule {
     /// Create a new empty molecule
@@ -26,6 +38,16 @@ impl Molecule {
         Molecule {
             graph: MolGraph::default(),
         }
+    }
+
+    /// Return the number of atoms in the molecule.
+    pub fn natoms(&self) -> usize {
+        self.graph.node_count()
+    }
+
+    /// Return the number of bonds in the molecule.
+    pub fn nbonds(&self) -> usize {
+        self.graph.edge_count()
     }
 
     /// Construct from an existing graph
@@ -70,34 +92,6 @@ impl Molecule {
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::66630db1-08e3-479e-b59f-00c5c3b08164][66630db1-08e3-479e-b59f-00c5c3b08164]]
-impl Molecule {
-    /// Remove a bond using atom indices
-    /// Return the bond if it exists, or return None
-    pub fn remove_bond_between<T: IntoAtomIndex>(&mut self, a: T, b: T) -> Option<Bond> {
-        let a = a.into_atom_index();
-        let b = b.into_atom_index();
-        if let Some(e) = self.graph.find_edge(a, b) {
-            self.remove_bond(e)
-        } else {
-            None
-        }
-    }
-
-    /// Remove a bond using bond index
-    /// Return the bond if it exists, or return None
-    pub fn remove_bond(&mut self, e: BondIndex) -> Option<Bond>{
-        self.graph.remove_edge(e)
-    }
-
-    /// Remove an atom from the molecule.
-    /// Return atom if it exists, or return None.
-    pub fn remove_atom(&mut self, a: AtomIndex) -> Option<Atom> {
-        self.graph.remove_node(a)
-    }
-}
-// 66630db1-08e3-479e-b59f-00c5c3b08164 ends here
-
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::be29e151-18c6-43cb-9586-aba0e708d38c][be29e151-18c6-43cb-9586-aba0e708d38c]]
 pub trait IntoAtomIndex {
     fn into_atom_index(&self) -> AtomIndex;
@@ -128,16 +122,6 @@ impl Molecule {
         self.graph.clear_edges();
     }
 
-    /// Return the number of atoms in the molecule.
-    pub fn natoms(&self) -> usize {
-        self.graph.node_count()
-    }
-
-    /// Return the number of bonds in the molecule.
-    pub fn nbonds(&self) -> usize {
-        self.graph.edge_count()
-    }
-
     /// Redefine bonds from distances based on predefined bonding lengths
     pub fn rebond(&mut self) {
         let indices: Vec<_> = self.graph.node_indices().collect();
@@ -162,6 +146,34 @@ impl Molecule {
     }
 }
 // f556412b-874d-4c2c-ba79-9fb3edbefae1 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::66630db1-08e3-479e-b59f-00c5c3b08164][66630db1-08e3-479e-b59f-00c5c3b08164]]
+impl Molecule {
+    /// Remove a bond using atom indices
+    /// Return the bond if it exists, or return None
+    pub fn remove_bond_between<T: IntoAtomIndex>(&mut self, a: T, b: T) -> Option<Bond> {
+        let a = a.into_atom_index();
+        let b = b.into_atom_index();
+        if let Some(e) = self.graph.find_edge(a, b) {
+            self.remove_bond(e)
+        } else {
+            None
+        }
+    }
+
+    /// Remove a bond using bond index
+    /// Return the bond if it exists, or return None
+    pub fn remove_bond(&mut self, e: BondIndex) -> Option<Bond>{
+        self.graph.remove_edge(e)
+    }
+
+    /// Remove an atom from the molecule.
+    /// Return atom if it exists, or return None.
+    pub fn remove_atom(&mut self, a: AtomIndex) -> Option<Atom> {
+        self.graph.remove_node(a)
+    }
+}
+// 66630db1-08e3-479e-b59f-00c5c3b08164 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
 impl Molecule {
