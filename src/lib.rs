@@ -27,15 +27,16 @@ pub type Points = Vec<Point3D>;
 
 pub mod geometry;
 pub mod element;
-pub use element::AtomKind;
+pub use element::{AtomKind};
 pub use element::AtomKind::{Element, Dummy};
 pub mod atom;
-pub use atom::Atom;
+pub use atom::{Atom};
 pub mod bond;
-pub use bond::Bond;
+pub use bond::{Bond};
 pub mod molecule;
+pub use molecule::{Molecule};
 pub mod topology;
 pub mod io;
-pub use io::write_as_xyz;
+pub use io::{write_as_xyz};
 pub mod data;
 // 53cbd3c0-e164-4bad-b535-6fd6df916650 ends here

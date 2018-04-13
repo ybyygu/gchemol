@@ -63,12 +63,12 @@ impl Molecule {
     }
 
     /// Return an iterator over positions of all atoms in the molecule.
-    fn positions(&self) -> impl Iterator<Item = &Point3D> {
+    pub fn positions(&self) -> impl Iterator<Item = &Point3D> {
         self.atoms().map(|ref a| &a.position)
     }
 
     /// Set positions of atoms
-    fn set_positions(&mut self, positions: Points)
+    pub fn set_positions(&mut self, positions: Points)
     {
         let indices: Vec<_> = self.graph.node_indices().collect();
 
@@ -79,7 +79,7 @@ impl Molecule {
     }
 
     /// Return an iterator over the symbols of all  atoms in the molecule.
-    fn symbols(&self) -> impl Iterator<Item = &str> {
+    pub fn symbols(&self) -> impl Iterator<Item = &str> {
         self.atoms().map(|ref a| a.symbol())
     }
 

@@ -43,17 +43,19 @@ pub fn write_lines(lines: Vec<String>, filename: &str) -> Result<()> {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::618eea82-a702-4d2f-a873-3807ead50d4b][618eea82-a702-4d2f-a873-3807ead50d4b]]
 /// write coordinates in xyz format
-pub fn write_as_xyz(points: &Points, filename: &str) -> Result<()>
+pub fn write_as_xyz(symbols: &[&str], positions: &Points, filename: &str) -> Result<()>
 {
     let mut lines = String::new();
 
     // meta information
-    lines.push_str(format!("{}\n", points.len()).as_str());
+    lines.push_str(format!("{}\n", positions.len()).as_str());
     lines.push_str("default title\n");
 
     // coordinates
-    for &p in points.iter() {
-        let s = format!("C {:-18.6}{:-18.6}{:-18.6}\n", p[0], p[1], p[2]);
+    for i in 0..symbols.len() {
+        let p = positions[i];
+        let sym = symbols[i];
+        let s = format!("{:6} {:-18.6}{:-18.6}{:-18.6}\n", sym, p[0], p[1], p[2]);
         lines.push_str(s.as_str());
     }
 
@@ -67,7 +69,8 @@ pub fn write_as_xyz(points: &Points, filename: &str) -> Result<()>
 // 618eea82-a702-4d2f-a873-3807ead50d4b ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a1e0083b-88b2-46d1-ae09-3ad7165fdb9e][a1e0083b-88b2-46d1-ae09-3ad7165fdb9e]]
-pub fn read_xyzfile(filename: &str) -> Result<(Vec<String>, Points)> {
+/// read essential molecular data from a xyz file
+fn read_xyzfile(filename: &str) -> Result<(Vec<String>, Points)> {
     let text = read_file(filename)?;
     let mut lines: Vec<_> = text.lines().collect();
 
@@ -105,3 +108,44 @@ fn test_read_xyzfile() {
     println!("{:?}", symbols);
 }
 // a1e0083b-88b2-46d1-ae09-3ad7165fdb9e ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::448a8479-f0e8-412a-9e8d-83865581eb43][448a8479-f0e8-412a-9e8d-83865581eb43]]
+use {
+    Atom,
+    Molecule,
+};
+
+impl Molecule {
+    /// Construct molecule from external text file
+    pub fn from_file<T: Into<String>>(filename: T) -> Self {
+        let filename = filename.into();
+        let (symbols, positions) = read_xyzfile(&filename).unwrap();
+        let mut mol = Molecule::new();
+        for i in 0..symbols.len() {
+            let sym = &symbols[i];
+            let pos = &positions[i];
+            let atom = Atom::new(sym.clone(), pos.clone());
+            mol.add_atom(atom);
+        }
+
+        mol
+    }
+
+    /// Save molecule to an external file
+    pub fn to_file<T: Into<String>>(&self, filename: T) -> Result<()> {
+        let filename = filename.into();
+
+        let symbols: Vec<_> = self.symbols().collect();
+        let positions: Vec<_> = self.positions().map(|v| *v).collect();
+
+        write_as_xyz(&symbols, &positions, &filename);
+        Ok(())
+    }
+}
+
+#[test]
+fn test_molecule_from_file() {
+    let mol = Molecule::from_file("tests/data/c2h4.xyz");
+    assert_eq!(6, mol.natoms());
+}
+// 448a8479-f0e8-412a-9e8d-83865581eb43 ends here
