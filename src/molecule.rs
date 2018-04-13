@@ -1,3 +1,17 @@
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::7e391e0e-a3e8-4c22-b881-e0425d0926bc][7e391e0e-a3e8-4c22-b881-e0425d0926bc]]
+//===============================================================================#
+//   DESCRIPTION:  molecular entity repsented in graph data structure
+//
+//       OPTIONS:  ---
+//  REQUIREMENTS:  ---
+//         NOTES:  ---
+//        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
+//       LICENCE:  GPL version 3
+//       CREATED:  <2018-04-12 Thu 15:48>
+//       UPDATED:  <2018-04-13 Fri 15:49>
+//===============================================================================#
+// 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::942dedaa-9351-426e-9be9-cdb640ec2b75][942dedaa-9351-426e-9be9-cdb640ec2b75]]
 use std::collections::HashMap;
 use petgraph::prelude::*;

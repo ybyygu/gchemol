@@ -1,3 +1,17 @@
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::891f59cf-3963-4dbe-a7d2-48279723b72e][891f59cf-3963-4dbe-a7d2-48279723b72e]]
+//===============================================================================#
+//   DESCRIPTION:  basic read & write support for molecular file
+//
+//       OPTIONS:  ---
+//  REQUIREMENTS:  ---
+//         NOTES:  ---
+//        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
+//       LICENCE:  GPL version 3
+//       CREATED:  <2018-04-11 Wed 15:42>
+//       UPDATED:  <2018-04-13 Fri 15:43>
+//===============================================================================#
+// 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::0f52a1ef-c664-45a9-ab96-6d31741ae8c0][0f52a1ef-c664-45a9-ab96-6d31741ae8c0]]
 use std::io::prelude::*;
 use std::io::{BufWriter, BufReader};
