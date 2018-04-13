@@ -123,7 +123,7 @@ const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
 // a806642c-37da-4ce1-aa7b-0fb8d00233e3 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::731651b9-ebba-4df3-86f7-083f837e4065][731651b9-ebba-4df3-86f7-083f837e4065]]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum AtomKind {
     /// physical elements
     Element(usize),
@@ -157,8 +157,8 @@ impl AtomKind {
 impl fmt::Display for AtomKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &Element(num) => write!(f, "Element {:}", self.symbol()),
-            &Dummy(ref sym) =>  write!(f, "Dummy atom {:}", self.symbol()),
+            &Element(num) => write!(f, "{:}", self.symbol()),
+            &Dummy(ref sym) =>  write!(f, "{:}", self.symbol()),
         }
     }
 }
@@ -170,12 +170,20 @@ use self::AtomKind::{Element, Dummy};
 /// Return AtomKind using common sense
 pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
     let sym = sym.into();
+
+    // element specified in number
+    if let Ok(x) = sym.parse::<usize>() {
+        return Element(x);
+    }
+
+    // element specified in symbol or long name
     for (i, &(s, n) ) in ELEMENT_DATA.iter().enumerate() {
         if s == sym  || n == sym {
             return Element(i+1);
         }
     }
 
+    // treat as dummy atom for the last resort
     Dummy(sym)
 }
 
@@ -190,5 +198,9 @@ fn test_element() {
     let x = Dummy("X".to_string());
     assert_eq!("X", x.symbol());
     assert_eq!(0, x.number());
+
+    let k = atom_kind_from_string("11");
+    assert_eq!(k.number(), 11);
+    assert_eq!(k.symbol(), "Na");
 }
 // b95edc21-e696-4625-ba99-94257394772d ends here
