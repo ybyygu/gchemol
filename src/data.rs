@@ -3,7 +3,7 @@ use {
     Atom,
     Bond,
     bond::BondKind,
-    euclidean_distance,
+    geometry::euclidean_distance,
 };
 
 const COVALENT_RADII: [f64; 96] = [

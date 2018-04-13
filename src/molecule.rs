@@ -123,6 +123,17 @@ impl IntoAtomIndex for AtomIndex {
 }
 // be29e151-18c6-43cb-9586-aba0e708d38c ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3][a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3]]
+use geometry::get_distance_matrix;
+
+impl Molecule {
+    fn distance_matrix(&self) -> Vec<Vec<f64>>{
+        let positions: Vec<_> = self.positions().map(|a| *a ).collect();
+        get_distance_matrix(positions)
+    }
+}
+// a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3 ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::66630db1-08e3-479e-b59f-00c5c3b08164][66630db1-08e3-479e-b59f-00c5c3b08164]]
 impl Molecule {
     /// Add a single bond into molecule
