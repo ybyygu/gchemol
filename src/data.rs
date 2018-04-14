@@ -122,6 +122,10 @@ pub fn guess_bond_kind(atom1: &Atom, atom2: &Atom) -> BondKind {
 }
 // fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::40a03fbc-5f09-4432-a569-f2216d508de4][40a03fbc-5f09-4432-a569-f2216d508de4]]
+include!("data/vdw.txt");
+// 40a03fbc-5f09-4432-a569-f2216d508de4 ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::0c32acf0-9391-40d5-9c80-3b4bc74f2020][0c32acf0-9391-40d5-9c80-3b4bc74f2020]]
 impl Atom {
     /// Access covalent atomic radii
@@ -130,6 +134,16 @@ impl Atom {
         let i = self.number() - 1;
         if i >= 0 && i< COVALENT_RADII.len() {
             let r = COVALENT_RADII[i];
+            Some(r)
+        } else {
+            None
+        }
+    }
+
+    pub fn vdw_radius(&self) -> Option<f64> {
+        let i = self.number() - 1;
+        if i >= 0 && i< VDW_RADII.len() {
+            let r = VDW_RADII[i];
             Some(r)
         } else {
             None
