@@ -120,7 +120,25 @@ pub fn guess_bond_kind(atom1: &Atom, atom2: &Atom) -> BondKind {
         return BondKind::Single;
     }
 }
+// fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::0c32acf0-9391-40d5-9c80-3b4bc74f2020][0c32acf0-9391-40d5-9c80-3b4bc74f2020]]
+impl Atom {
+    /// Access covalent atomic radii
+    /// Return None if no data available
+    pub fn covalent_radius(&self) -> Option<f64> {
+        let i = self.number() - 1;
+        if i >= 0 && i< COVALENT_RADII.len() {
+            let r = COVALENT_RADII[i];
+            Some(r)
+        } else {
+            None
+        }
+    }
+}
+// 0c32acf0-9391-40d5-9c80-3b4bc74f2020 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::2d6a4ce4-f616-4bea-a5fd-65ed9117e613][2d6a4ce4-f616-4bea-a5fd-65ed9117e613]]
 #[test]
 fn test_guess_bond_kind() {
     // CH4 molecule
@@ -129,9 +147,13 @@ fn test_guess_bond_kind() {
     let atom3 = Atom::new("H", [-0.54536403,  1.12995078,  0.88184041]);
     let atom4 = Atom::new("H", [-0.54536403,  1.12995078, -0.8654626 ]);
     let atom5 = Atom::new("H", [-1.97203687,  0.62556577,  0.0081889 ]);
+
     let x = guess_bond_kind(&atom1, &atom2);
     assert!(x != BondKind::Dummy);
     let x = guess_bond_kind(&atom2, &atom3);
     assert!(x == BondKind::Dummy);
+
+    //covalent radii
+    assert!(atom1.covalent_radius().is_some());
 }
-// fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01 ends here
+// 2d6a4ce4-f616-4bea-a5fd-65ed9117e613 ends here
