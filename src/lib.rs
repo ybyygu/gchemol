@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-04-13 Fri 15:48>
+//       UPDATED:  <2018-04-14 Sat 17:19>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -18,6 +18,8 @@
 
 #[macro_use]
 extern crate error_chain;
+#[macro_use]
+extern crate nom;
 
 // We'll put our errors in an `errors` module, and other modules in
 // this crate will `use errors::*;` to get access to everything
@@ -53,4 +55,5 @@ pub mod topology;
 pub mod io;
 pub use io::{write_as_xyz};
 pub mod data;
+pub mod parser;
 // 53cbd3c0-e164-4bad-b535-6fd6df916650 ends here
