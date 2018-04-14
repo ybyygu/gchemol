@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-14 Sat 18:45>
+//       UPDATED:  <2018-04-14 Sat 19:00>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -135,7 +135,7 @@ use std::collections::HashMap;
 /// Return
 /// ------
 /// A list of molecules
-fn from_mol2file(filename: &str) -> Result<Molecule> {
+pub fn from_mol2file(filename: &str) -> Result<Molecule> {
     let txt = read_file(filename)?;
 
     let mut lines = txt.lines();

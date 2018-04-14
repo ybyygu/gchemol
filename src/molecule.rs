@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-14 Sat 16:07>
+//       UPDATED:  <2018-04-14 Sat 19:25>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -41,7 +41,7 @@ type BondIndex = EdgeIndex;
 ///
 #[derive(Debug, Clone)]
 pub struct MolecularEntity {
-    graph: MolGraph,
+    pub graph: MolGraph,
 }
 
 pub type Molecule = MolecularEntity;
@@ -147,7 +147,7 @@ impl IntoAtomIndex for AtomIndex {
 use geometry::get_distance_matrix;
 
 impl Molecule {
-    fn distance_matrix(&self) -> Vec<Vec<f64>>{
+    pub fn distance_matrix(&self) -> Vec<Vec<f64>>{
         let positions: Vec<_> = self.positions().map(|a| *a ).collect();
         get_distance_matrix(positions)
     }
@@ -230,7 +230,7 @@ impl Molecule {
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
 impl Molecule {
     /// fragment into a list of sub-molecules based on connectivity
-    fn fragment(&self) -> Vec<Molecule> {
+    pub fn fragment(&self) -> Vec<Molecule> {
         let graph = &self.graph;
 
         let mut mols = vec![];

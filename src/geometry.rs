@@ -43,15 +43,13 @@ pub fn get_distance_matrix(points: Points) -> Vec<Vec<f64>>{
     let mut distmat = vec![];
     for i in 0..npts {
         let mut dijs = vec![];
-        for j in i..npts {
+        for j in 0..npts {
             let dij = euclidean_distance(points[i], points[j]);
             dijs.push(dij);
         }
         distmat.push(dijs);
     }
 
-    debug_assert!(distmat.len() == npts, "distance matrix shape is incorrect!");
-    debug_assert!(distmat[0].len() == npts, "distance matrix shape is incorrect!");
     distmat
 }
 // f2ed012d-0e00-4288-b59e-0cb61f7921c2 ends here
