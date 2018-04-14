@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-13 Fri 15:49>
+//       UPDATED:  <2018-04-14 Sat 16:07>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -76,6 +76,11 @@ impl Molecule {
         self.graph.node_indices().map(move |n| &self.graph[n])
     }
 
+    /// Return an iterator over the bonds in the molecule.
+    pub fn bonds(&self) -> impl Iterator<Item = &Bond> {
+        self.graph.edge_indices().map(move |e| &self.graph[e])
+    }
+
     /// Return an iterator over positions of all atoms in the molecule.
     pub fn positions(&self) -> impl Iterator<Item = &Point3D> {
         self.atoms().map(|ref a| &a.position)
@@ -114,6 +119,7 @@ impl Molecule {
     pub fn remove_atom(&mut self, a: AtomIndex) -> Option<Atom> {
         self.graph.remove_node(a)
     }
+
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
 

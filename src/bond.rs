@@ -22,7 +22,7 @@ pub struct Bond {
 impl Default for Bond {
     fn default() -> Self {
         Bond {
-            kind: BondKind::Dummy,
+            kind: BondKind::Single,
             name: String::default(),
         }
     }
