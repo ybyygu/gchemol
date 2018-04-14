@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-13 Fri 16:15>
+//       UPDATED:  <2018-04-14 Sat 18:45>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -122,6 +122,137 @@ fn test_read_xyzfile() {
     println!("{:?}", symbols);
 }
 // a1e0083b-88b2-46d1-ae09-3ad7165fdb9e ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::01bb2894-4548-42f3-9977-84164657219c][01bb2894-4548-42f3-9977-84164657219c]]
+use std::collections::HashMap;
+
+/// A quick and dirty way to get molecules from .mol2 file
+///
+/// Parameters
+/// ---------
+/// filename: the path to a tripos mol2 file
+///
+/// Return
+/// ------
+/// A list of molecules
+fn from_mol2file(filename: &str) -> Result<Molecule> {
+    let txt = read_file(filename)?;
+
+    let mut lines = txt.lines();
+
+    let mut jumping_to = |tag: &str| {
+    };
+
+    //
+    // 1. get natoms and nbonds
+    // -----------------------------------------------------------------------------
+    // jumping
+    let tag = "@<TRIPOS>MOLECULE";
+    loop {
+        if let Some(line) = lines.next() {
+            if line.trim_left().contains(tag) {
+                break;
+            }
+        } else {
+            bail!("expected tag {} not found", tag);
+        }
+    }
+
+    // skip one line and get the next line
+    let mut natoms = 0;
+    let mut nbonds = 0;
+    if let (_, Some(line)) = (lines.next(), lines.next()) {
+        let parts: Vec<_> = line.split_whitespace().collect();
+        if parts.len() == 2 {
+            natoms = parts[0].parse().chain_err(|| "cannot get natoms")?;
+            nbonds = parts[1].parse().chain_err(|| "cannot get nbonds")?;
+        } else {
+            bail!("wrong line: {}", line);
+        }
+    } else {
+        bail!("cannot read number of atoms and bonds in: {}", filename);
+    }
+
+    // 2. read in atoms
+    let tag = "@<TRIPOS>ATOM";
+    loop {
+        if let Some(line) = lines.next() {
+            if line.trim_left().contains(tag) {
+                break;
+            }
+        } else {
+            bail!("expected tag {} not found", tag);
+        }
+    }
+
+    // 2. read in atoms
+    let mut atoms = HashMap::new();
+    let mut molecule = Molecule::new();
+    // atom_id element_symbol, x, y, z
+    for _ in 0..natoms {
+        if let Some(line) = lines.next() {
+            let parts: Vec<_> = line.split_whitespace().take(5).collect();
+            let index = parts[0];
+            let label = parts[1];
+            // remove any numbers after element symbol: e.g. N39
+            let symbol = label.trim_right_matches(char::is_numeric);
+            let x: f64 = parts[2].parse().unwrap();
+            let y: f64 = parts[3].parse().unwrap();
+            let z: f64 = parts[4].parse().unwrap();
+            let mut atom = Atom::new(symbol, [x, y, z]);
+            atom.name = label.to_string();
+            let a = molecule.add_atom(atom);
+            atoms.insert(index, a);
+        } else {
+            bail!("incomplete atom records");
+        }
+    }
+
+    // 3. read in bonds
+    let tag = "@<TRIPOS>BOND";
+    loop {
+        if let Some(line) = lines.next() {
+            if line.trim_left().contains(tag) {
+                break;
+            }
+        } else {
+            bail!("expected tag {} not found", tag);
+        }
+    }
+    for _ in 0..nbonds {
+        if let Some(line) = lines.next() {
+            // ignore bond order attribute
+            let parts: Vec<_> = line.split_whitespace()
+                .skip(1)
+                .take(2)
+                .collect();
+            let i = parts[0];
+            let j = parts[1];
+            let ai = atoms[i];
+            let aj = atoms[j];
+            molecule.add_bond(ai, aj);
+        } else {
+            bail!("incomplete bond records");
+        }
+    }
+
+    Ok(molecule)
+}
+
+#[test]
+fn test_from_mol2file() {
+    // FIXME: the path
+    let mol = from_mol2file("tests/files/alanine-gv.mol2").unwrap();
+    assert_eq!(12, mol.natoms());
+    assert_eq!(11, mol.nbonds());
+}
+// 01bb2894-4548-42f3-9977-84164657219c ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::bd8ea4f1-b38f-4c81-a722-96cf78fb53a6][bd8ea4f1-b38f-4c81-a722-96cf78fb53a6]]
+fn to_mol2file() {
+    //
+}
+// bd8ea4f1-b38f-4c81-a722-96cf78fb53a6 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::448a8479-f0e8-412a-9e8d-83865581eb43][448a8479-f0e8-412a-9e8d-83865581eb43]]
 use {
