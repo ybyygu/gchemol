@@ -1,5 +1,6 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::75287fd8-649d-496d-8c50-40f9247a4c10][75287fd8-649d-496d-8c50-40f9247a4c10]]
 use Atom;
+use Molecule;
 
 /// https://en.wikipedia.org/wiki/Bond_order
 #[derive(Debug, Clone, Copy, PartialOrd, PartialEq)]
@@ -17,6 +18,8 @@ pub enum BondKind {
 pub struct Bond {
     pub kind : BondKind,
     pub name : String,
+    pub neighbors: [usize; 2],
+
     /// set this attribute for arbitrary bond order
     order    : Option<f64>,
 }
@@ -24,16 +27,17 @@ pub struct Bond {
 impl Default for Bond {
     fn default() -> Self {
         Bond {
-            order : None,
-            kind  : BondKind::Single,
-            name  : String::default(),
+            order     : None,
+            kind      : BondKind::Single,
+            name      : String::default(),
+            neighbors : [0; 2],
         }
     }
 }
 
 impl Bond {
     pub fn new(order: f64) -> Self {
-        debug_assert!(order > 0.0);
+        debug_assert!(order >= 0.0);
 
         Bond {
             order: Some(order),

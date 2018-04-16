@@ -14,10 +14,10 @@ pub struct Atom {
     pub position: Point3D,
     /// Atom type, could be an element or a pseudo-atom
     pub kind: AtomKind,
-
     /// Atom nick name
     pub name: String,
-    index: usize,
+    /// Would be managed by its parent molecule
+    pub index: usize,
 }
 
 impl Default for Atom {
@@ -51,10 +51,6 @@ impl Atom {
     /// shortcut for accessing atom number
     pub fn number(&self) -> usize {
         self.kind.number()
-    }
-
-    pub fn index(&self) -> usize {
-        self.index
     }
 }
 // 150189fd-57d9-4e19-a888-d64497f5ba7e ends here

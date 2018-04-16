@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-16 Mon 14:04>
+//       UPDATED:  <2018-04-16 Mon 20:17>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -27,8 +27,8 @@ use {
 };
 
 type MolGraph = StableUnGraph<Atom, Bond>;
-type AtomIndex = NodeIndex;
-type BondIndex = EdgeIndex;
+type AtomIndex = usize;
+type BondIndex = [usize; 2];
 
 /// Repsents any singular entity, irrespective of its nature, in order
 /// to concisely express any type of chemical particle: atom,
@@ -50,7 +50,7 @@ pub struct MolecularEntity {
     /// mapping atom index to NodeIndex
     atom_indices: HashMap<usize, NodeIndex>,
     /// mapping bond tuple to EdgeIndex
-    bond_indices: HashMap<(usize, usize), EdgeIndex>,
+    bond_indices: HashMap<[usize; 2], EdgeIndex>,
 }
 
 pub type Molecule = MolecularEntity;
@@ -129,12 +129,6 @@ impl Molecule {
         }
     }
 
-    /// Add a single atom into molecule
-    pub fn add_atom(&mut self, atom: Atom) -> AtomIndex {
-        let i = self.graph.add_node(atom);
-        i
-    }
-
     /// TODO
     pub fn set_symbols(&mut self, symbols: Vec<String>) {
         //
@@ -144,69 +138,160 @@ impl Molecule {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::9924e323-dd02-49d0-ab07-41208114546f][9924e323-dd02-49d0-ab07-41208114546f]]
 impl Molecule {
-    /// access atom by atom index
-    pub fn get_atom<T: IntoAtomIndex>(&self, index: T) -> Option<&Atom> {
-        let i = index.into_atom_index();
-
-        self.graph.node_weight(i)
+    /// a bunch of private methods for easy of maintaining
+    /// convert atom index to graph node index
+    fn get_node_index(&self, index: AtomIndex) -> Option<&NodeIndex> {
+        self.atom_indices.get(&index)
     }
 
-    /// mutable access to atom by atom index
-    pub fn get_atom_mut<T: IntoAtomIndex>(&mut self, index: T) -> Option<&mut Atom> {
-        let index = index.into_atom_index();
-        self.graph.node_weight_mut(index)
+    /// store node index and return the associated atom index
+    fn new_atom_index(&mut self, node: NodeIndex) -> AtomIndex {
+        let index = self.natoms();
+        // cache atom index in molecule
+        self.atom_indices.insert(index, node);
+        // cache atom index in atom
+        let mut atom = self.get_atom_mut(index).unwrap();
+        atom.index = index;
+
+        index
+    }
+
+    /// convert a pair of atom index to graph edge index
+    fn get_edge_index(&self, index1: AtomIndex, index2: AtomIndex) -> Option<&EdgeIndex> {
+        self.bond_indices.get(&[index1, index2])
+    }
+
+    /// store edge index and return the assocated pair of atom indices
+    fn new_bond_index(&mut self, index1: AtomIndex, index2: AtomIndex, edge: EdgeIndex) -> BondIndex {
+        let mut pair = [index1, index2];
+        if index1 > index2 {
+            pair.swap(0, 1);
+        }
+
+        self.bond_indices.insert(pair, edge);
+
+        pair
+    }
+
+    /// Add a single atom into molecule
+    /// Return an index to atom counting from 1
+    pub fn add_atom(&mut self, atom: Atom) -> AtomIndex {
+        let i = self.graph.add_node(atom);
+        self.new_atom_index(i)
     }
 
     /// Remove an atom from the molecule.
-    /// Return atom if it exists, or return None.
-    pub fn remove_atom(&mut self, a: AtomIndex) -> Option<Atom> {
-        self.graph.remove_node(a)
-    }
-
-    /// access bond by bond index
-    pub fn get_bond(&self, index: BondIndex) -> Option<&Bond> {
-        self.graph.edge_weight(index)
-    }
-
-    /// mutable access to bond by bond index
-    pub fn get_bond_mut(&mut self, index: BondIndex) -> Option<&mut Bond> {
-        self.graph.edge_weight_mut(index)
-    }
-
-    /// Add a single bond into molecule
-    pub fn add_bond(&mut self, atom1: AtomIndex, atom2: AtomIndex) -> BondIndex {
-        let bond = Bond::default();
-        self.graph.update_edge(atom1, atom2, bond)
+    /// Return the removed atom if it exists, or return None.
+    pub fn remove_atom(&mut self, index: AtomIndex) -> Option<Atom> {
+        if let Some(&n) = self.get_node_index(index) {
+            self.graph.remove_node(n)
+        } else {
+            None
+        }
     }
 
     /// TODO
+    pub fn add_atoms_from(&mut self) {
+        //
+    }
+
+    /// access atom by atom index
+    pub fn get_atom(&self, index: AtomIndex) -> Option<&Atom> {
+        if let Some(&n) = self.get_node_index(index) {
+            self.graph.node_weight(n)
+        } else {
+            None
+        }
+    }
+
+    /// mutable access to atom by atom index
+    pub fn get_atom_mut(&mut self, index: AtomIndex) -> Option<&mut Atom> {
+        if let Some(&n) = self.get_node_index(index) {
+            self.graph.node_weight_mut(n)
+        } else {
+            None
+        }
+    }
+
+    /// Add a single bond into molecule
+    pub fn add_bond(&mut self, index1: AtomIndex, index2: AtomIndex, bond: Bond) -> Option<BondIndex> {
+        if let Some(&node1) = self.get_node_index(index1) {
+            if let Some(&node2) = self.get_node_index(index2) {
+                // cache atom indices of the bonded pair
+                let mut bond = bond;
+                bond.neighbors[0] = index1;
+                bond.neighbors[1] = index2;
+                let e = self.graph.update_edge(node1, node2, bond);
+                let b = self.new_bond_index(index1, index2, e);
+                return Some(b);
+            }
+        };
+
+        None
+    }
+
+    /// access bond by atom indices
+    pub fn get_bond(&self, index1: AtomIndex, index2: AtomIndex) -> Option<&Bond> {
+        if let Some(&e) = self.get_edge_index(index1, index2) {
+            self.graph.edge_weight(e)
+        } else {
+            None
+        }
+    }
+
+    /// Remove a bond using a pair of atom indices
+    /// Return the bond if it exists, or return None
+    pub fn remove_bond(&mut self, index1: AtomIndex, index2: AtomIndex) -> Option<Bond>{
+        if let Some(&e) = self.get_edge_index(index1, index2) {
+            self.graph.remove_edge(e)
+        } else {
+            None
+        }
+    }
+
+    /// mutable access to bond by bond index
+    pub fn get_bond_mut(&mut self, index1: AtomIndex, index2: AtomIndex) -> Option<&mut Bond> {
+        if let Some(&e) = self.get_edge_index(index1, index2) {
+            self.graph.edge_weight_mut(e)
+        } else {
+            None
+        }
+    }
+
+    /// Recalculate atom indices (counting from 1)
     pub fn reorder(&mut self) {
-        self.graph.retain_nodes(|g, i| {
-            true
-        });
+        // reorder atom indices
+        self.atom_indices.clear();
+        let nodes: Vec<_> = self.graph.node_indices().collect();
+        for (i, &node) in nodes.iter().enumerate() {
+            let index = i + 1;
+            self.atom_indices.insert(index, node);
+        }
+
+        for (i, &node) in nodes.iter().enumerate() {
+            let index = i + 1;
+            let atom = &mut self.graph[node];
+            atom.index = index;
+        }
+
+        // reorder bond indices
+        self.bond_indices.clear();
+        let mut pairs = vec![];
+        for e in self.graph.edge_indices() {
+            let bond = &self.graph[e];
+            let i = bond.neighbors[0];
+            let j = bond.neighbors[1];
+            if i < j {
+                pairs.push((i, j, e));
+            }
+        }
+
+        for (i, j, e) in pairs {
+            self.new_bond_index(i, j, e);
+        }
     }
 }
 // 9924e323-dd02-49d0-ab07-41208114546f ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::be29e151-18c6-43cb-9586-aba0e708d38c][be29e151-18c6-43cb-9586-aba0e708d38c]]
-pub trait IntoAtomIndex {
-    fn into_atom_index(&self) -> AtomIndex;
-}
-
-impl IntoAtomIndex for usize {
-    fn into_atom_index(&self) -> AtomIndex {
-        // atom index counting from zero
-        debug_assert!(*self > 0);
-        AtomIndex::new(*self - 1)
-    }
-}
-
-impl IntoAtomIndex for AtomIndex {
-    fn into_atom_index(&self) -> AtomIndex {
-        *self
-    }
-}
-// be29e151-18c6-43cb-9586-aba0e708d38c ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::c936ccf3-7276-48b9-9cc7-d83b7cc257f7][c936ccf3-7276-48b9-9cc7-d83b7cc257f7]]
 #[test]
@@ -222,52 +307,38 @@ fn test_molecule_remove_atom() {
     mol.get_atom_mut(a3).unwrap().position[0] = 2.0;
     mol.get_atom_mut(a4).unwrap().position[0] = 4.0;
     mol.get_atom_mut(a5).unwrap().position[0] = 5.0;
-    mol.remove_atom(a3);
-    mol.reorder();
-    for a in mol.graph.node_indices() {
-        println!("{:?}", a);
+    // test removing atom
+    {
+        mol.remove_atom(a3);
+        mol.add_bond(a1, a4, Bond::default());
+        let a = mol.get_atom(5).unwrap();
+        assert_eq!(5, a.index);
+        assert_eq!(5.0, a.position[0]);
+    }
+    // test reorder
+    {
+        mol.reorder();
+        let a = mol.get_atom(4).unwrap();
+        assert_eq!(4, a.index);
+        assert_eq!(5.0, a.position[0]);
+        for b in mol.bonds() {
+            println!("{:?}", b);
+        }
     }
 }
 // c936ccf3-7276-48b9-9cc7-d83b7cc257f7 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3][a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3]]
 use geometry::get_distance_matrix;
+use bond::BondKind;
+use data::guess_bond_kind;
 
 impl Molecule {
     pub fn distance_matrix(&self) -> Vec<Vec<f64>>{
         let positions: Vec<_> = self.positions().map(|a| *a ).collect();
         get_distance_matrix(positions)
     }
-}
-// a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::66630db1-08e3-479e-b59f-00c5c3b08164][66630db1-08e3-479e-b59f-00c5c3b08164]]
-impl Molecule {
-    /// Remove a bond using atom indices
-    /// Return the bond if it exists, or return None
-    pub fn remove_bond_between<T: IntoAtomIndex>(&mut self, a: T, b: T) -> Option<Bond> {
-        let a = a.into_atom_index();
-        let b = b.into_atom_index();
-        if let Some(e) = self.graph.find_edge(a, b) {
-            self.remove_bond(e)
-        } else {
-            None
-        }
-    }
-
-    /// Remove a bond using bond index
-    /// Return the bond if it exists, or return None
-    pub fn remove_bond(&mut self, e: BondIndex) -> Option<Bond>{
-        self.graph.remove_edge(e)
-    }
-}
-// 66630db1-08e3-479e-b59f-00c5c3b08164 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::f556412b-874d-4c2c-ba79-9fb3edbefae1][f556412b-874d-4c2c-ba79-9fb3edbefae1]]
-use bond::BondKind;
-use data::guess_bond_kind;
-
-impl Molecule {
     /// Removes all existing bonds between atoms
     pub fn unbond(&mut self) {
         self.graph.clear_edges();
@@ -275,28 +346,27 @@ impl Molecule {
 
     /// Redefine bonds from distances based on predefined bonding lengths
     pub fn rebond(&mut self) {
-        let indices: Vec<_> = self.graph.node_indices().collect();
-        let n = indices.len();
+        let n = self.natoms();
         let mut pairs = vec![];
-        for i in 0..n {
-            for j in (i+1)..n {
-                let vi = indices[i];
-                let vj = indices[j];
-                let ai = &self.graph[vi];
-                let aj = &self.graph[vj];
+        for i in 1..(n+1) {
+            for j in (i+1)..(n+1) {
+                let ai = self.get_atom(i).unwrap();
+                let aj = self.get_atom(j).unwrap();
                 let bk = guess_bond_kind(ai, aj);
                 if bk != BondKind::Dummy {
-                    pairs.push((vi, vj));
+                    let mut bond = Bond::default();
+                    bond.kind = bk;
+                    pairs.push((i, j, bond));
                 }
             }
         }
 
-        for (vi, vj) in pairs {
-            self.add_bond(vi, vj);
+        for (i, j, b) in pairs {
+            self.add_bond(i, j, b);
         }
     }
 }
-// f556412b-874d-4c2c-ba79-9fb3edbefae1 ends here
+// a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ec7b11d2-6f13-49fd-b253-af4b213b49a3][ec7b11d2-6f13-49fd-b253-af4b213b49a3]]
 impl Molecule {
@@ -441,9 +511,15 @@ fn test_molecule_basic() {
     let a2 = mol.add_atom(atom2);
     let a3 = mol.add_atom(atom3);
     let a4 = mol.add_atom(atom4);
+    assert_eq!(4, mol.natoms());
 
-    let b1 = mol.add_bond(a1, a2);
-    let b2 = mol.add_bond(a3, a4);
+    let b1 = mol.add_bond(a1, a2, Bond::default());
+    let b2 = mol.add_bond(a3, a4, Bond::default());
+    assert_eq!(2, mol.nbonds());
+    mol.remove_bond(1, 2).unwrap();
+    assert_eq!(1, mol.nbonds());
+    mol.add_bond(1, 4, Bond::default());
+    assert_eq!(2, mol.nbonds());
 
     // loop over atoms
     for a in mol.atoms() {
@@ -462,7 +538,6 @@ fn test_molecule_basic() {
     let a = mol.get_atom(a1).unwrap();
     assert_eq!("Fe", a.symbol());
     assert_eq!(1.2, a.position[0]);
-
 }
 
 #[test]
@@ -507,7 +582,7 @@ fn test_molecule_rebond() {
     mol.rebond();
     assert_eq!(4, mol.nbonds());
 
-    let x = mol.remove_bond_between(1, 4);
-    assert_eq!(3, mol.nbonds());
+    use io;
+    io::to_mol2file(&mol, "/tmp/test.mol2");
 }
 // 5052eafc-f1ab-4612-90d7-0924c3bacb16 ends here
