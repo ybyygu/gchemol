@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-16 Mon 21:57>
+//       UPDATED:  <2018-04-16 Mon 22:01>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -310,39 +310,6 @@ impl Molecule {
             self.graph.edge_weight_mut(e)
         } else {
             None
-        }
-    }
-
-    /// Recalculate atom indices (counting from 1)
-    pub fn reorder(&mut self) {
-        // reorder atom indices
-        self.atom_indices.clear();
-        let nodes: Vec<_> = self.graph.node_indices().collect();
-        for (i, &node) in nodes.iter().enumerate() {
-            let index = i + 1;
-            self.atom_indices.insert(index, node);
-        }
-
-        for (i, &node) in nodes.iter().enumerate() {
-            let index = i + 1;
-            let atom = &mut self.graph[node];
-            atom.index = index;
-        }
-
-        // reorder bond indices
-        self.bond_indices.clear();
-        let mut pairs = vec![];
-        for e in self.graph.edge_indices() {
-            let bond = &self.graph[e];
-            let i = bond.neighbors[0];
-            let j = bond.neighbors[1];
-            if i < j {
-                pairs.push((i, j, e));
-            }
-        }
-
-        for (i, j, e) in pairs {
-            self.new_bond_index(i, j, e);
         }
     }
 }
