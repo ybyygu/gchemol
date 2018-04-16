@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-16 Mon 20:17>
+//       UPDATED:  <2018-04-16 Mon 21:57>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -57,9 +57,10 @@ pub type Molecule = MolecularEntity;
 
 impl Default for Molecule {
     fn default() -> Self {
+        let graph = MolGraph::default();
         Molecule {
             name: "default".to_string(),
-            graph: MolGraph::default(),
+            graph: graph,
             atom_indices: HashMap::new(),
             bond_indices: HashMap::new(),
         }
@@ -135,6 +136,60 @@ impl Molecule {
     }
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::e1d0c51a-0dd7-4977-ae54-7928ee46d373][e1d0c51a-0dd7-4977-ae54-7928ee46d373]]
+use std::ops::Index;
+
+#[derive(Debug, Clone)]
+pub struct AtomsView<'a>(&'a MolGraph);
+
+impl<'a> Index<usize> for AtomsView<'a>
+{
+    type Output = Atom;
+
+    fn index(&self, index: usize) -> &Atom {
+        let index = NodeIndex::new(index);
+        &self.0[index]
+    }
+}
+
+#[test]
+fn test_atoms_view() {
+    let mut mol = Molecule::default();
+    mol.add_atom(Atom::new("Fe", [0.0; 3]));
+
+    let av = AtomsView(&mol.graph);
+    assert_eq!("Fe", av[0].symbol())
+}
+// e1d0c51a-0dd7-4977-ae54-7928ee46d373 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::5916eec2-ec7e-4525-bc6c-fade1d250a16][5916eec2-ec7e-4525-bc6c-fade1d250a16]]
+#[derive(Debug, Clone)]
+pub struct BondsView<'a>(&'a MolGraph);
+
+impl<'a> Index<(usize, usize)> for BondsView<'a>
+{
+    type Output = Bond;
+
+    fn index(&self, bond_index: (usize, usize)) -> &Bond {
+        let i = NodeIndex::new(bond_index.0);
+        let j = NodeIndex::new(bond_index.1);
+        let e = self.0.find_edge(i, j).unwrap();
+        &self.0[e]
+    }
+}
+
+#[test]
+fn test_bonds_view() {
+    let mut mol = Molecule::default();
+    let a1 = mol.add_atom(Atom::new("C", [0.0; 3]));
+    let a2 = mol.add_atom(Atom::new("H", [1.0; 3]));
+    let a3 = mol.add_atom(Atom::new("H", [2.0; 3]));
+    mol.add_bond(a1, a2, Bond::default());
+    let bv = BondsView(&mol.graph);
+    let b = &bv[(0, 1)];
+}
+// 5916eec2-ec7e-4525-bc6c-fade1d250a16 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::9924e323-dd02-49d0-ab07-41208114546f][9924e323-dd02-49d0-ab07-41208114546f]]
 impl Molecule {
@@ -292,41 +347,6 @@ impl Molecule {
     }
 }
 // 9924e323-dd02-49d0-ab07-41208114546f ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::c936ccf3-7276-48b9-9cc7-d83b7cc257f7][c936ccf3-7276-48b9-9cc7-d83b7cc257f7]]
-#[test]
-fn test_molecule_remove_atom() {
-    let mut mol = Molecule::default();
-    let a1 = mol.add_atom(Atom::default());
-    let a2 = mol.add_atom(Atom::default());
-    let a3 = mol.add_atom(Atom::default());
-    let a4 = mol.add_atom(Atom::default());
-    let a5 = mol.add_atom(Atom::default());
-    mol.get_atom_mut(a1).unwrap().position[0] = 1.0;
-    mol.get_atom_mut(a2).unwrap().position[0] = 2.0;
-    mol.get_atom_mut(a3).unwrap().position[0] = 2.0;
-    mol.get_atom_mut(a4).unwrap().position[0] = 4.0;
-    mol.get_atom_mut(a5).unwrap().position[0] = 5.0;
-    // test removing atom
-    {
-        mol.remove_atom(a3);
-        mol.add_bond(a1, a4, Bond::default());
-        let a = mol.get_atom(5).unwrap();
-        assert_eq!(5, a.index);
-        assert_eq!(5.0, a.position[0]);
-    }
-    // test reorder
-    {
-        mol.reorder();
-        let a = mol.get_atom(4).unwrap();
-        assert_eq!(4, a.index);
-        assert_eq!(5.0, a.position[0]);
-        for b in mol.bonds() {
-            println!("{:?}", b);
-        }
-    }
-}
-// c936ccf3-7276-48b9-9cc7-d83b7cc257f7 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3][a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3]]
 use geometry::get_distance_matrix;
