@@ -32,6 +32,15 @@ impl Default for Bond {
 }
 
 impl Bond {
+    pub fn new(order: f64) -> Self {
+        debug_assert!(order > 0.0);
+
+        Bond {
+            order: Some(order),
+            ..Default::default()
+        }
+    }
+
     /// Return bond order
     pub fn order(&self) -> f64 {
         if let Some(order) = self.order {
@@ -50,3 +59,12 @@ impl Bond {
     }
 }
 // 75287fd8-649d-496d-8c50-40f9247a4c10 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::486bd5a4-e762-46bf-a237-e692393a795d][486bd5a4-e762-46bf-a237-e692393a795d]]
+#[test]
+fn test_bond() {
+    let b = Bond::default();
+    let b = Bond::new(1.5);
+    assert_eq!(1.5, b.order());
+}
+// 486bd5a4-e762-46bf-a237-e692393a795d ends here

@@ -17,6 +17,7 @@ pub struct Atom {
 
     /// Atom nick name
     pub name: String,
+    index: usize,
 }
 
 impl Default for Atom {
@@ -25,6 +26,7 @@ impl Default for Atom {
             kind: Element(6),   // carbon atom
             position: [0.0; 3],
             name: "carbon".to_string(),
+            index: 0,
         }
     }
 }
@@ -49,6 +51,10 @@ impl Atom {
     /// shortcut for accessing atom number
     pub fn number(&self) -> usize {
         self.kind.number()
+    }
+
+    pub fn index(&self) -> usize {
+        self.index
     }
 }
 // 150189fd-57d9-4e19-a888-d64497f5ba7e ends here
