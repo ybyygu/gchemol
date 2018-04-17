@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-17 Tue 15:37>
+//       UPDATED:  <2018-04-17 Tue 16:07>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -366,13 +366,12 @@ impl Molecule {
                 let atom = Atom::new(sym.clone(), pos.clone());
                 mol.add_atom(atom);
             }
-
             return Ok(mol);
         } else if ext == "mol2" {
-            from_mol2file(&filename)?;
+            return from_mol2file(&filename);
+        } else {
+            bail!("File format is not supported yet.");
         }
-
-        bail!("File format is not supported yet.");
     }
 
     /// Save molecule to an external file
@@ -385,12 +384,12 @@ impl Molecule {
             let symbols: Vec<_> = self.symbols().collect();
             let positions: Vec<_> = self.positions().map(|v| *v).collect();
 
-            write_as_xyz(&symbols, &positions, &filename)?;
+            return write_as_xyz(&symbols, &positions, &filename);
         } else if ext == "mol2" {
-            to_mol2file(&self, &filename)?;
+            return to_mol2file(&self, &filename);
+        } else {
+            bail!("Not supported file format for writing");
         }
-
-        bail!("Not supported file format for writing");
     }
 }
 
