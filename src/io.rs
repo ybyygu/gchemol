@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-17 Tue 14:19>
+//       UPDATED:  <2018-04-17 Tue 15:37>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -16,6 +16,7 @@
 use std::io::prelude::*;
 use std::io::{BufWriter, BufReader};
 use std::fs::File;
+use std::path::Path;
 
 use errors::*;
 use Point3D;
@@ -342,37 +343,60 @@ use {
     Molecule,
 };
 
+fn file_extension_lower(path: &Path) -> Result<String> {
+    let ext = path.extension().ok_or("cannot find file extension")?;
+    let ext = ext.to_str().ok_or("cannot handle wield file extention")?;
+    let ext = ext.to_lowercase();
+
+    Ok(ext.to_string())
+}
+
 impl Molecule {
     /// Construct molecule from external text file
-    pub fn from_file<T: Into<String>>(filename: T) -> Self {
+    pub fn from_file<T: Into<String>>(filename: T) -> Result<Self> {
         let filename = filename.into();
-        let (symbols, positions) = read_xyzfile(&filename).unwrap();
-        let mut mol = Molecule::default();
-        for i in 0..symbols.len() {
-            let sym = &symbols[i];
-            let pos = &positions[i];
-            let atom = Atom::new(sym.clone(), pos.clone());
-            mol.add_atom(atom);
+        let path = Path::new(&filename);
+        let ext = file_extension_lower(&path)?;
+        if ext == "xyz" {
+            let (symbols, positions) = read_xyzfile(&filename)?;
+            let mut mol = Molecule::default();
+            for i in 0..symbols.len() {
+                let sym = &symbols[i];
+                let pos = &positions[i];
+                let atom = Atom::new(sym.clone(), pos.clone());
+                mol.add_atom(atom);
+            }
+
+            return Ok(mol);
+        } else if ext == "mol2" {
+            from_mol2file(&filename)?;
         }
 
-        mol
+        bail!("File format is not supported yet.");
     }
 
     /// Save molecule to an external file
     pub fn to_file<T: Into<String>>(&self, filename: T) -> Result<()> {
         let filename = filename.into();
 
-        let symbols: Vec<_> = self.symbols().collect();
-        let positions: Vec<_> = self.positions().map(|v| *v).collect();
+        let path = Path::new(&filename);
+        let ext = file_extension_lower(&path)?;
+        if ext == "xyz" {
+            let symbols: Vec<_> = self.symbols().collect();
+            let positions: Vec<_> = self.positions().map(|v| *v).collect();
 
-        write_as_xyz(&symbols, &positions, &filename);
-        Ok(())
+            write_as_xyz(&symbols, &positions, &filename)?;
+        } else if ext == "mol2" {
+            to_mol2file(&self, &filename)?;
+        }
+
+        bail!("Not supported file format for writing");
     }
 }
 
 #[test]
 fn test_molecule_from_file() {
-    let mol = Molecule::from_file("tests/data/c2h4.xyz");
+    let mol = Molecule::from_file("tests/data/c2h4.xyz").unwrap();
     assert_eq!(6, mol.natoms());
 }
 // 448a8479-f0e8-412a-9e8d-83865581eb43 ends here
