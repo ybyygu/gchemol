@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-17 Tue 11:46>
+//       UPDATED:  <2018-04-17 Tue 14:16>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -196,7 +196,11 @@ impl Molecule {
     /// Add a single atom into molecule
     /// Return an index to atom counting from 1
     pub fn add_atom(&mut self, atom: Atom) -> AtomIndex {
-        self.graph.add_node(atom)
+        let n = self.graph.add_node(atom);
+        let atom = self.get_atom_mut(n).unwrap();
+        atom.index = n;
+
+        n
     }
 
     /// Remove an atom from the molecule.
@@ -227,7 +231,7 @@ impl Molecule {
 
         // cache atom indices of the bonded pair
         let mut bond = &mut self.graph[e];
-        bond.index = e.index();
+        bond.index = e;
 
         e
     }
@@ -286,9 +290,9 @@ impl Molecule {
     /// Update atom indices
     pub fn reorder(&mut self) {
         let ns: Vec<_> = self.graph.node_indices().collect();
-        for n in ns {
+        for (i, &n) in ns.iter().enumerate() {
             let atom = &mut self.graph[n];
-            atom.index = n.index();
+            atom.index = n;
         }
     }
 }
@@ -331,7 +335,7 @@ impl IntoBondIndex for BondIndex {
 
 impl IntoBondIndex for Bond {
     fn into_bond_index(&self) -> BondIndex {
-        BondIndex::new(self.index)
+        self.index
     }
 }
 // be29e151-18c6-43cb-9586-aba0e708d38c ends here
@@ -565,7 +569,7 @@ fn test_molecule_basic() {
 
     // bonded partners
     let real_b14 = mol.get_bond(b14).expect("failed to get bond b14");
-    assert_eq!(real_b14.index, b14.index());
+    assert_eq!(real_b14.index, b14);
     let (n1, n4) = mol.partners(&b14).expect("failed to get bond partners using bond index");
     assert_eq!(n1.index(), a1.index());
     assert_eq!(n4.index(), a4.index());

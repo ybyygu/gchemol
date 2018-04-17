@@ -6,6 +6,9 @@ use element::atom_kind_from_string;
 use Point3D;
 use AtomKind;
 use Element;
+use petgraph;
+
+type AtomIndex = petgraph::prelude::NodeIndex;
 
 #[derive (Debug, Clone)]
 /// simple atom data structure
@@ -17,7 +20,7 @@ pub struct Atom {
     /// Atom nick name
     pub name: String,
     /// Would be managed by its parent molecule
-    pub index: usize,
+    pub index: AtomIndex,
 }
 
 impl Default for Atom {
@@ -26,7 +29,7 @@ impl Default for Atom {
             kind: Element(6),   // carbon atom
             position: [0.0; 3],
             name: "carbon".to_string(),
-            index: 0,
+            index: AtomIndex::new(0),
         }
     }
 }
