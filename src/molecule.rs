@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-17 Tue 10:26>
+//       UPDATED:  <2018-04-17 Tue 11:46>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -206,11 +206,6 @@ impl Molecule {
         self.graph.remove_node(n)
     }
 
-    /// TODO
-    pub fn add_atoms_from(&mut self) {
-        //
-    }
-
     /// access atom by atom index
     pub fn get_atom<T: IntoAtomIndex>(&self, index: T) -> Option<&Atom> {
         let n = index.into_atom_index();
@@ -228,19 +223,20 @@ impl Molecule {
     pub fn add_bond<T: IntoAtomIndex>(&mut self, index1: T, index2: T, bond: Bond) -> BondIndex {
         let n1 = index1.into_atom_index();
         let n2 = index2.into_atom_index();
-        // cache atom indices of the bonded pair
-        let mut bond = bond;
-        bond.neighbors[0] = n1.index();
-        bond.neighbors[1] = n2.index();
+        let e = self.graph.update_edge(n1, n2, bond);
 
-        self.graph.update_edge(n1, n2, bond)
+        // cache atom indices of the bonded pair
+        let mut bond = &mut self.graph[e];
+        bond.index = e.index();
+
+        e
     }
 
     /// access bond by bond index
-    pub fn get_bond(&self, e: BondIndex) -> Option<&Bond> {
+    pub fn get_bond<T: IntoBondIndex>(&self, e: T) -> Option<&Bond> {
+        let e = e.into_bond_index();
         self.graph.edge_weight(e)
     }
-
 
     /// Get the bond index between two atoms
     /// Return None if not found
@@ -248,6 +244,8 @@ impl Molecule {
         self.graph.find_edge(n1, n2)
     }
 
+    /// Return any bond bween two atoms
+    /// Return None if it does not exist
     pub fn get_bond_between<T: IntoAtomIndex>(&mut self, index1: T, index2: T) -> Option<&Bond> {
         let n1 = index1.into_atom_index();
         let n2 = index2.into_atom_index();
@@ -261,7 +259,8 @@ impl Molecule {
 
     /// Remove a bond specified by bond index
     /// Return the removed bond if it exists, or return None
-    pub fn remove_bond(&mut self, b: BondIndex) -> Option<Bond>{
+    pub fn remove_bond<T: IntoBondIndex>(&mut self, b: T) -> Option<Bond>{
+        let b = b.into_bond_index();
         self.graph.remove_edge(b)
     }
 
@@ -279,8 +278,18 @@ impl Molecule {
     }
 
     /// mutable access to bond by bond index
-    pub fn get_bond_mut(&mut self, b: BondIndex) -> Option<&mut Bond> {
+    pub fn get_bond_mut<T: IntoBondIndex>(&mut self, b: T) -> Option<&mut Bond> {
+        let b = b.into_bond_index();
         self.graph.edge_weight_mut(b)
+    }
+
+    /// Update atom indices
+    pub fn reorder(&mut self) {
+        let ns: Vec<_> = self.graph.node_indices().collect();
+        for n in ns {
+            let atom = &mut self.graph[n];
+            atom.index = n.index();
+        }
     }
 }
 // 9924e323-dd02-49d0-ab07-41208114546f ends here
@@ -302,7 +311,50 @@ impl IntoAtomIndex for AtomIndex {
         *self
     }
 }
+
+pub trait IntoBondIndex {
+    fn into_bond_index(&self) -> BondIndex;
+}
+
+impl IntoBondIndex for usize {
+    fn into_bond_index(&self) -> BondIndex {
+        // atom index counting from zero
+        BondIndex::new(*self)
+    }
+}
+
+impl IntoBondIndex for BondIndex {
+    fn into_bond_index(&self) -> BondIndex {
+        *self
+    }
+}
+
+impl IntoBondIndex for Bond {
+    fn into_bond_index(&self) -> BondIndex {
+        BondIndex::new(self.index)
+    }
+}
 // be29e151-18c6-43cb-9586-aba0e708d38c ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::72dd0c31-26e5-430b-9f67-1c5bd5220a84][72dd0c31-26e5-430b-9f67-1c5bd5220a84]]
+impl Molecule {
+    pub fn add_atoms_from(&mut self) {
+        //
+    }
+
+    pub fn add_bonds_from(&mut self) {
+        //
+    }
+
+    pub fn remove_atoms_from(&mut self) {
+        //
+    }
+
+    pub fn remove_bonds_from(&mut self) {
+        //
+    }
+}
+// 72dd0c31-26e5-430b-9f67-1c5bd5220a84 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3][a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3]]
 use geometry::get_distance_matrix;
@@ -313,6 +365,17 @@ impl Molecule {
     pub fn distance_matrix(&self) -> Vec<Vec<f64>>{
         let positions: Vec<_> = self.positions().map(|a| *a ).collect();
         get_distance_matrix(positions)
+    }
+
+    /// Access the bonded atom indices for bond `b`
+    pub fn partners<T: IntoBondIndex>(&self, b: &T) -> Option<(AtomIndex, AtomIndex)>{
+        let b = b.into_bond_index();
+        self.graph.edge_endpoints(b)
+    }
+
+    /// Return all connected atoms with `a`
+    pub fn neighbors(&self, a: AtomIndex) -> Vec<AtomIndex> {
+        self.graph.neighbors(a).collect()
     }
 
     /// Removes all existing bonds between atoms
@@ -497,8 +560,24 @@ fn test_molecule_basic() {
     mol.remove_bond_between(a1, a2).expect("failed to remove bond between a1 and a2");
     mol.remove_bond(b2).expect("failed to remove bond b2");
     assert_eq!(0, mol.nbonds());
-    mol.add_bond(a1, a4, Bond::default());
+    let b14 = mol.add_bond(a1, a4, Bond::default());
     assert_eq!(1, mol.nbonds());
+
+    // bonded partners
+    let real_b14 = mol.get_bond(b14).expect("failed to get bond b14");
+    assert_eq!(real_b14.index, b14.index());
+    let (n1, n4) = mol.partners(&b14).expect("failed to get bond partners using bond index");
+    assert_eq!(n1.index(), a1.index());
+    assert_eq!(n4.index(), a4.index());
+    // get partners using bond
+    let (n1, n4) = mol.partners(real_b14).expect("failed to get bond partners using bond struct");
+    assert_eq!(n1.index(), a1.index());
+    assert_eq!(n4.index(), a4.index());
+
+    // get atom neighbors
+    let indices = mol.neighbors(a1);
+    assert_eq!(1, indices.len());
+    assert!(indices.contains(&a4));
 
     // loop over atoms
     for a in mol.atoms() {
@@ -517,6 +596,7 @@ fn test_molecule_basic() {
     let a = mol.get_atom(a1).expect("failed to get atom a1");
     assert_eq!("Fe", a.symbol());
     assert_eq!(1.2, a.position[0]);
+
 }
 
 #[test]

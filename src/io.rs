@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-16 Mon 21:55>
+//       UPDATED:  <2018-04-17 Tue 11:45>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -312,8 +312,10 @@ pub fn to_mol2file(molecule: &Molecule, filename: &str) -> Result<()>{
         lines.push_str("@<TRIPOS>BOND\n");
         for (i, &ref b) in molecule.bonds().enumerate() {
             let bond_index = i + 1;
-            let atom1_index = b.neighbors[0];
-            let atom2_index = b.neighbors[1];
+            let (n1, n2) = molecule.partners(b).ok_or("cannot find bond partner atoms")?;
+            /// FIXME: if atoms were removed and added...
+            let atom1_index = n1.index() + 1;
+            let atom2_index = n2.index() + 1;
             let bond_order = format_bond_order(&b);
             let line = format!(
                 "{} {} {} {}\n",

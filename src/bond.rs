@@ -18,7 +18,8 @@ pub enum BondKind {
 pub struct Bond {
     pub kind : BondKind,
     pub name : String,
-    pub neighbors: [usize; 2],
+    /// will be managed by molecule
+    pub index: usize,
 
     /// set this attribute for arbitrary bond order
     order    : Option<f64>,
@@ -27,10 +28,10 @@ pub struct Bond {
 impl Default for Bond {
     fn default() -> Self {
         Bond {
-            order     : None,
-            kind      : BondKind::Single,
-            name      : String::default(),
-            neighbors : [0; 2],
+            order : None,
+            kind  : BondKind::Single,
+            name  : String::default(),
+            index : 0,
         }
     }
 }
