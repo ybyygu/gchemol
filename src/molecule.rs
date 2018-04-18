@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-17 Tue 14:16>
+//       UPDATED:  <2018-04-18 Wed 13:50>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -421,6 +421,21 @@ impl Molecule {
     }
 }
 // ec7b11d2-6f13-49fd-b253-af4b213b49a3 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::2a27ca30-0a99-4d5d-b544-5f5900304bbb][2a27ca30-0a99-4d5d-b544-5f5900304bbb]]
+impl Molecule {
+    /// Translate molecule to a new location
+    pub fn translate(&mut self, loc: Point3D) {
+        let nodes: Vec<_> = self.graph.node_indices().collect();
+        for n in nodes {
+            let mut atom = &mut self.graph[n];
+            for v in 0..3 {
+                atom.position[v] += loc[v];
+            }
+        }
+    }
+}
+// 2a27ca30-0a99-4d5d-b544-5f5900304bbb ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
 impl Molecule {

@@ -54,6 +54,17 @@ pub fn get_distance_matrix(points: Points) -> Vec<Vec<f64>>{
 }
 // f2ed012d-0e00-4288-b59e-0cb61f7921c2 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::26f9be7f-1dbd-4ac0-9cdf-4759ede5d338][26f9be7f-1dbd-4ac0-9cdf-4759ede5d338]]
+/// Translate all points to a new location
+pub fn translate(points: &mut Points, loc: Point3D) {
+    for i in 0..points.len() {
+        for v in 0..3 {
+            points[i][v] += loc[v];
+        }
+    }
+}
+// 26f9be7f-1dbd-4ac0-9cdf-4759ede5d338 ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::9413e1bc-8f8f-4b07-b305-9d2911afabc6][9413e1bc-8f8f-4b07-b305-9d2911afabc6]]
 use rand::{self, Rng};
 use rand::distributions::{Distribution, Range, Normal};
