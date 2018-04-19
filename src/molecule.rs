@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-18 Wed 21:56>
+//       UPDATED:  <2018-04-19 Thu 14:15>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -430,6 +430,7 @@ use rand::{thread_rng, Rng};
 const EPSILON: f64 = 1.0E-6;
 
 impl Molecule {
+    /// Set atom position
     pub fn set_position(&mut self, index: AtomIndex, position: Point3D) {
         let atom = &mut self.graph[index];
         atom.position = position;
@@ -460,21 +461,124 @@ impl Molecule {
             }
         }
     }
+}
+// 2a27ca30-0a99-4d5d-b544-5f5900304bbb ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::2351f71f-246f-4193-85c9-7bbe4a9d7587][2351f71f-246f-4193-85c9-7bbe4a9d7587]]
+type Bounds = HashMap<(AtomIndex, AtomIndex), f64>;
+
+impl Molecule {
+    /// Clean up molecule geometry
+    pub fn clean(&mut self) {
+        let mut rng = thread_rng();
+        // parameters for SPE
+        let maxlam = 1.0;
+        let minlam = 0.001;
+        let maxcycle = 500;
+        let maxstep = 100;
+        let dlam = (maxlam - minlam)/(maxcycle as f64);
+        let mut lam = maxlam;
+
+        let indices: Vec<_> = self.graph.node_indices().collect();
+        let bounds = self.get_distance_bounds();
+        // enter spe loop
+        for icycle in 0..maxcycle {
+            lam -= dlam;
+            let mut total_force = 0.0;
+            // choose the first random atom
+            let &node_i = rng.choose(&indices).expect("node_i");
+            for istep in 0..maxstep {
+                let &node_j = rng.choose(&indices).expect("node_j");
+                // calculate current distance between node_i and node_j
+                let mut pi = self.get_atom(node_i).expect("atom i from node_i").position;
+                let mut pj = self.get_atom(node_j).expect("atom j from node_j").position;
+                let disparity = self.force_bonded_between(node_i, node_j, &bounds);
+                for v in 0..3 {
+                    pi[v] += 0.5 * lam * disparity * (pi[v] - pj[v]);
+                    pj[v] += 0.5 * lam * disparity * (pj[v] - pi[v]);
+                }
+
+                self.set_position(node_i, pi);
+                self.set_position(node_j, pj);
+                total_force += disparity;
+            }
+            println!("total force: {:?}", total_force);
+        }
+    }
+
+    // attractive force between two atoms
+    fn force_bonded_between(&self, index1: AtomIndex, index2: AtomIndex, bounds: &Bounds) -> f64 {
+        let ai = self.get_atom(index1).unwrap();
+        let aj = self.get_atom(index2).unwrap();
+
+        let dij = euclidean_distance(ai.position, aj.position);
+        let bound = self.distance_bound_between(index1, index2);
+        let lij = bound[0];
+        let uij = bound[1];
+
+        if dij > lij && dij < uij {
+            0.0
+        } else {
+            (lij - dij)/(dij + EPSILON)
+        }
+    }
+
+    // deduce ideal distance between two atoms
+    fn distance_bound_between(&self, index1: AtomIndex, index2: AtomIndex) -> [f64; 2] {
+        let ai = self.get_atom(index1).unwrap();
+        let aj = self.get_atom(index2).unwrap();
+
+        let rvi = ai.vdw_radius().unwrap();
+        let rvj = aj.vdw_radius().unwrap();
+        let rci = ai.covalent_radius().unwrap();
+        let rcj = aj.covalent_radius().unwrap();
+        let rvij = rvi + rvj;
+        let rcij = rci + rcj;
+
+        let max_rij = 20.0;
+        let mut bound = [rcij, rvij];
+        if let Some(nb) = self.nbonds_between(index1, index2) {
+            if nb == 1 {
+                bound[0] = rcij;
+                bound[1] = rcij;
+            } else {
+                bound[0] = rvij;
+                bound[1] = max_rij;
+            }
+        } else {
+            bound[0]= rvij;
+            bound[1] = max_rij;
+        }
+
+        if bound[0] > bound[1] {
+            bound.swap(0, 1);
+        }
+
+        bound
+    }
+
+    // repulsive force between two atoms
+    fn force_nonbonded_between(&self, index1: AtomIndex, index2: AtomIndex) -> f64 {
+        0.0
+    }
 
     // return distance bounds between atoms
     // upper-tri for upper bounds
     // lower-tri for lower bounds
-    fn get_distance_bounds(&self) -> Vec<Vec<f64>>{
+    fn get_distance_bounds(&self) -> Bounds {
         let mut dm = self.distance_matrix();
         // max distance between two atoms
         let max_rij = 90.0;
 
+        let mut bounds = HashMap::new();
         let node_indices: Vec<_> = self.graph.node_indices().collect();
         let nnodes = node_indices.len();
-        for i in 0..nnodes {
-            for j in (i+1)..nnodes {
-                let node_i = node_indices[i];
-                let node_j = node_indices[j];
+        for node_i in self.graph.node_indices() {
+            for node_j in self.graph.node_indices() {
+                if node_i >= node_j {
+                    continue;
+                }
+
                 let atom_i = &self.graph[node_i];
                 let atom_j = &self.graph[node_j];
 
@@ -494,124 +598,56 @@ impl Molecule {
                     bound.swap(0, 1);
                 }
 
-                let dij = dm[i][j];
+                let dij = euclidean_distance(atom_i.position, atom_j.position);
                 // if i and j is directly bonded
                 // set covalent radius as the lower bound
                 // or set vdw radius as the lower bound if not bonded
                 if let Some(nb) = self.nbonds_between(node_i, node_j) {
                     if nb == 1 {
-                        dm[i][j] = bound[0];
-                        dm[j][i] = bound[0];
+                        if dij > bound[1] && dij < max_rij {
+                            bounds.insert((node_i, node_j), dij);
+                            bounds.insert((node_j, node_i), dij);
+                        } else {
+                            bounds.insert((node_i, node_j), bound[0]);
+                            bounds.insert((node_j, node_i), bound[0]);
+                        }
                     } else if nb == 2 {
                         if dij > bound[1] && dij < max_rij {
-                            dm[i][j] = bound[1];
-                            dm[j][i] = max_rij;
+                            bounds.insert((node_i, node_j), dij);
+                            bounds.insert((node_j, node_i), dij);
                         } else {
-                            dm[i][j] = bound[1];
-                            dm[j][i] = max_rij;
+                            bounds.insert((node_i, node_j), bound[1]);
+                            bounds.insert((node_j, node_i), bound[1] + dij);
                         }
                     } else {
                         if dij > bound[1] && dij < max_rij {
-                            dm[i][j] = bound[1];
-                            dm[j][i] = max_rij;
+                            bounds.insert((node_i, node_j), bound[1]);
+                            bounds.insert((node_j, node_i), max_rij);
                         } else {
-                            dm[i][j] = bound[1];
-                            dm[j][i] = max_rij;
+                            bounds.insert((node_i, node_j), bound[1]);
+                            bounds.insert((node_j, node_i), max_rij);
                         }
                     }
-                    println!("{:?}", ((node_i.index(), node_j.index()), bound, dij, nb, dm[i][j], dm[j][i]));
                 } else {
-                    dm[i][j] = bound[1];
-                    dm[j][i] = max_rij;
+                    bounds.insert((node_i, node_j), bound[1]);
+                    bounds.insert((node_j, node_i), max_rij);
                 }
             }
         }
 
-        dm
-    }
-
-    /// Clean up molecule geometry
-    pub fn clean(&mut self) {
-        let mut rng = thread_rng();
-
-        // parameters for SPE
-        let maxlam = 1.0;
-        let minlam = 0.001;
-        let maxcycle = 500;
-        let maxstep = 100;
-        let dlam = (maxlam - minlam)/(maxcycle as f64);
-        let mut lam = maxlam;
-
-        let indices: Vec<_> = self.graph.node_indices().collect();
-        let orign_distances = self.distance_matrix();
-        let bounds = self.get_distance_bounds();
-
-        // enter spe loop
-        for icycle in 0..maxcycle {
-            lam -= dlam;
-            // choose the first random atom
-            let &node_i = rng.choose(&indices).expect("node_i");
-            for istep in 0..maxstep {
-                println!("cycle {:}, step {:}", icycle, istep);
-                // choose the second random atom
-                let &node_j = rng.choose(&indices).expect("node_j");
-                let lij = bounds[node_i.index()][node_j.index()];
-                let uij = bounds[node_j.index()][node_i.index()];
-                let mut bound = [lij, uij];
-                if lij > uij {
-                    bound.swap(0, 1);
-                }
-                let lij = bound[0];
-                let uij = bound[1];
-
-                // calculate current distance between node_i and node_j
-                let pi = self.get_atom(node_i).expect("atom i from node_i").position;
-                let pj = self.get_atom(node_j).expect("atom j from node_j").position;
-                let dij = euclidean_distance(pi, pj);
-
-                // update coordinates or not
-                if dij >= lij && dij <= uij {
-                    continue;
-                }
-
-                let oij = orign_distances[node_i.index()][node_j.index()];
-                let mut rij = lij;
-                if oij >= lij && oij <= uij {
-                    rij = oij;
-                }
-
-                {
-                    let mut bb = [node_i.index(), node_j.index()];
-                    if bb[0] > bb[1] {
-                        bb.swap(0, 1);
-                    }
-                    println!("{:?}", (bb, dij, rij, bound));
-                }
-
-                // calculate position shift
-                let mut pi = pi;
-                let mut pj = pj;
-                let disparity = lam*(rij - dij) / (dij + EPSILON);
-                for v in 0..3 {
-                    pi[v] += 0.5 * disparity * (pi[v] - pj[v]);
-                    pj[v] += 0.5 * disparity * (pj[v] - pi[v]);
-                }
-
-                self.set_position(node_i, pi);
-                self.set_position(node_j, pj);
-            }
-        }
-        println!("{:?}", bounds);
+        bounds
     }
 }
+// 2351f71f-246f-4193-85c9-7bbe4a9d7587 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::62b43ead-8805-4a73-998c-a1a15f5891ed][62b43ead-8805-4a73-998c-a1a15f5891ed]]
 #[test]
 fn test_molecule_clean() {
     let mut mol = Molecule::from_file("/tmp/test.mol2").unwrap();
     mol.clean();
     mol.to_file("/tmp/test2.mol2");
 }
-// 2a27ca30-0a99-4d5d-b544-5f5900304bbb ends here
+// 62b43ead-8805-4a73-998c-a1a15f5891ed ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
 impl Molecule {
