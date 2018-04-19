@@ -19,6 +19,8 @@ pub struct Atom {
     pub kind: AtomKind,
     /// Atom nick name
     pub name: String,
+    /// Atomic momentum vector
+    pub momentum: Point3D,
     /// Would be managed by its parent molecule
     pub index: AtomIndex,
 }
@@ -28,6 +30,7 @@ impl Default for Atom {
         Atom {
             kind: Element(6),   // carbon atom
             position: [0.0; 3],
+            momentum: [0.0; 3],
             name: "carbon".to_string(),
             index: AtomIndex::new(0),
         }
