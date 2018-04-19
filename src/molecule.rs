@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-19 Thu 14:39>
+//       UPDATED:  <2018-04-19 Thu 18:48>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -468,41 +468,47 @@ impl Molecule {
 type Bounds = HashMap<(AtomIndex, AtomIndex), f64>;
 
 impl Molecule {
+    pub fn set_momentum(&mut self, index: AtomIndex, m: Point3D) {
+        let mut atom = &mut self.graph[index];
+        atom.momentum = m;
+    }
+
     /// Clean up molecule geometry
     pub fn clean(&mut self) {
         let mut rng = thread_rng();
         // parameters for SPE
         let maxlam = 1.0;
         let minlam = 0.001;
-        let maxcycle = 500;
-        let maxstep = 100;
+        let maxcycle = 1000;
         let dlam = (maxlam - minlam)/(maxcycle as f64);
         let mut lam = maxlam;
 
         let indices: Vec<_> = self.graph.node_indices().collect();
         let bounds = self.get_distance_bounds();
-        // enter spe loop
         for icycle in 0..maxcycle {
             lam -= dlam;
-            let mut total_force = 0.0;
             // choose the first random atom
             let &node_i = rng.choose(&indices).expect("node_i");
-            for istep in 0..maxstep {
-                let &node_j = rng.choose(&indices).expect("node_j");
-                // calculate current distance between node_i and node_j
-                let mut pi = self.get_atom(node_i).expect("atom i from node_i").position;
-                let mut pj = self.get_atom(node_j).expect("atom j from node_j").position;
-                let disparity = self.force_bonded_between(node_i, node_j, &bounds);
-                for v in 0..3 {
-                    pi[v] += 0.5 * lam * disparity * (pi[v] - pj[v]);
-                    pj[v] += 0.5 * lam * disparity * (pj[v] - pi[v]);
-                }
 
-                self.set_position(node_i, pi);
-                self.set_position(node_j, pj);
-                total_force += disparity;
+            let mut pi = self.get_atom_mut(node_i).expect("atom i").position;
+            // calculate force acting on node_i
+            let mut force_i = [0.0; 3];
+            for &node_j in indices.iter() {
+                if node_i == node_j {continue}
+
+                // calculate current distance between node_i and node_j
+                let pj = self.get_atom(node_j).expect("atom j from node_j").position;
+                let f = self.force_bonded_between(node_i, node_j, &bounds);
+                for v in 0..3 {
+                    force_i[v] += 0.5*f*(pi[v] - pj[v]);
+                }
             }
-            println!("total force: {:?}", total_force);
+            // update atom position
+            for v in 0.. 3{
+                pi[v] += lam*force_i[v];
+            }
+            self.set_position(node_i, pi);
+            // println!("{:?}", (icycle, node_i, force_i, pi));
         }
     }
 
@@ -512,7 +518,12 @@ impl Molecule {
         let aj = self.get_atom(index2).unwrap();
 
         let dij = euclidean_distance(ai.position, aj.position);
-        let bound = self.distance_bound_between(index1, index2);
+        let mut bound = [0.0; 2];
+        bound[0] = bounds[&(index1, index2)];
+        bound[1] = bounds[&(index2, index1)];
+        if bound[0] > bound[1] {
+            bound.swap(0, 1);
+        }
         let lij = bound[0];
         let uij = bound[1];
 
@@ -521,45 +532,6 @@ impl Molecule {
         } else {
             (lij - dij)/(dij + EPSILON)
         }
-    }
-
-    // deduce ideal distance between two atoms
-    fn distance_bound_between(&self, index1: AtomIndex, index2: AtomIndex) -> [f64; 2] {
-        let ai = self.get_atom(index1).unwrap();
-        let aj = self.get_atom(index2).unwrap();
-
-        let rvi = ai.vdw_radius().unwrap();
-        let rvj = aj.vdw_radius().unwrap();
-        let rci = ai.covalent_radius().unwrap();
-        let rcj = aj.covalent_radius().unwrap();
-        let rvij = rvi + rvj;
-        let rcij = rci + rcj;
-
-        let max_rij = 20.0;
-        let mut bound = [rcij, rvij];
-        if let Some(nb) = self.nbonds_between(index1, index2) {
-            if nb == 1 {
-                bound[0] = rcij;
-                bound[1] = rcij;
-            } else {
-                bound[0] = rvij;
-                bound[1] = max_rij;
-            }
-        } else {
-            bound[0]= rvij;
-            bound[1] = max_rij;
-        }
-
-        if bound[0] > bound[1] {
-            bound.swap(0, 1);
-        }
-
-        bound
-    }
-
-    // repulsive force between two atoms
-    fn force_nonbonded_between(&self, index1: AtomIndex, index2: AtomIndex) -> f64 {
-        0.0
     }
 
     // return distance bounds between atoms
@@ -640,14 +612,60 @@ impl Molecule {
 }
 // 2351f71f-246f-4193-85c9-7bbe4a9d7587 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::62b43ead-8805-4a73-998c-a1a15f5891ed][62b43ead-8805-4a73-998c-a1a15f5891ed]]
-#[test]
-fn test_molecule_clean() {
-    let mut mol = Molecule::from_file("/tmp/test.mol2").unwrap();
-    mol.clean();
-    mol.to_file("/tmp/test2.mol2");
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::14d03d99-7a18-4c63-b15e-cbe036168f84][14d03d99-7a18-4c63-b15e-cbe036168f84]]
+// pairwise interactions with all other atoms
+fn calc_forces_nonbonded(positions: &Points, distances: &Vec<Vec<f64>>) -> Points {
+    let k = 1.0;
+
+    let npts = positions.len();
+    let mut vectors = vec![];
+    for i in 0..npts {
+        let mut vi = [0.0; 3];
+        for j in 0..npts {
+            if i != j {
+                let dij = distances[i][j];
+                let mut delta = [0.0; 3];
+                for x in 0..3 {
+                    delta[x] = positions[j][x] - positions[i][x];
+                    vi[x] += (delta[x]/dij)*(k*k/dij);
+                }
+            }
+        }
+        vectors.push(vi);
+    }
+
+    vectors
 }
-// 62b43ead-8805-4a73-998c-a1a15f5891ed ends here
+
+#[test]
+fn test_force_nonbonded() {
+    let positions = [[-0.13194354, -0.28294154,  0.31595688],
+                     [ 0.4012202 , -1.21064646,  0.31595688],
+                     [-1.20194354, -0.28294154,  0.31595688],
+                     [ 0.54333077,  0.89203576,  0.31595688],
+                     [ 0.01016702,  1.81974068,  0.31595688],
+                     [ 1.61333077,  0.89203576,  0.31595688]];
+    let positions = positions.to_vec();
+
+    let distances = [[ 0.        ,  1.07      ,  1.07      ,  1.3552    ,  2.10747905, 2.10393775],
+                     [ 1.07      ,  0.        ,  1.85223389,  2.10747905,  3.05551449, 2.42703205],
+                     [ 1.07      ,  1.85223389,  0.        ,  2.10393775,  2.42703204, 3.05062962],
+                     [ 1.3552    ,  2.10747905,  2.10393775,  0.        ,  1.07      , 1.07      ],
+                     [ 2.10747905,  3.05551449,  2.42703204,  1.07      ,  0.        , 1.8522339 ],
+                     [ 2.10393775,  2.42703205,  3.05062962,  1.07      ,  1.8522339 , 0.        ]];
+    let distances: Vec<_> = distances.iter().map(|v| v.to_vec()).collect();
+
+    let x = calc_forces_nonbonded(&positions, &distances);
+    assert_eq!(6, x.len());
+    assert_relative_eq!(0.32505944, x[0][0], epsilon=1e-4);
+    assert_relative_eq!(2.23566938, x[1][1], epsilon=1e-4);
+    assert_relative_eq!(0.73709077, x[4][0], epsilon=1e-4);
+}
+// 14d03d99-7a18-4c63-b15e-cbe036168f84 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::8f520216-eb94-4062-97ad-63a832e9bef7][8f520216-eb94-4062-97ad-63a832e9bef7]]
+
+// 8f520216-eb94-4062-97ad-63a832e9bef7 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
 impl Molecule {
