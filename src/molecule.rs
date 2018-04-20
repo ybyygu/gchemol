@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-19 Thu 18:48>
+//       UPDATED:  <2018-04-20 Fri 15:57>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -498,13 +498,13 @@ impl Molecule {
 
                 // calculate current distance between node_i and node_j
                 let pj = self.get_atom(node_j).expect("atom j from node_j").position;
-                let f = self.force_bonded_between(node_i, node_j, &bounds);
+                let f = self.get_force_between(node_i, node_j, &bounds);
                 for v in 0..3 {
                     force_i[v] += 0.5*f*(pi[v] - pj[v]);
                 }
             }
             // update atom position
-            for v in 0.. 3{
+            for v in 0..3 {
                 pi[v] += lam*force_i[v];
             }
             self.set_position(node_i, pi);
@@ -512,8 +512,8 @@ impl Molecule {
         }
     }
 
-    // attractive force between two atoms
-    fn force_bonded_between(&self, index1: AtomIndex, index2: AtomIndex, bounds: &Bounds) -> f64 {
+    // force component between two atoms
+    fn get_force_between(&self, index1: AtomIndex, index2: AtomIndex, bounds: &Bounds) -> f64 {
         let ai = self.get_atom(index1).unwrap();
         let aj = self.get_atom(index2).unwrap();
 
@@ -593,7 +593,7 @@ impl Molecule {
                         }
                     } else {
                         if dij > bound[1] && dij < max_rij {
-                            bounds.insert((node_i, node_j), bound[1]);
+                            bounds.insert((node_i, node_j), dij);
                             bounds.insert((node_j, node_i), max_rij);
                         } else {
                             bounds.insert((node_i, node_j), bound[1]);
@@ -662,10 +662,6 @@ fn test_force_nonbonded() {
     assert_relative_eq!(0.73709077, x[4][0], epsilon=1e-4);
 }
 // 14d03d99-7a18-4c63-b15e-cbe036168f84 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::8f520216-eb94-4062-97ad-63a832e9bef7][8f520216-eb94-4062-97ad-63a832e9bef7]]
-
-// 8f520216-eb94-4062-97ad-63a832e9bef7 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
 impl Molecule {
