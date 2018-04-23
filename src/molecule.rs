@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-22 Sun 17:38>
+//       UPDATED:  <2018-04-23 Mon 11:32>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -637,7 +637,7 @@ impl Molecule {
                 let crij = cri + crj;
 
                 // make sure vdw radius larger than covalent radius (usually it is)
-                let mut bound = [crij, vrij];
+                let mut bound = [crij*0.8, vrij];
                 if crij > vrij {
                     bound.swap(0, 1);
                 }
@@ -734,15 +734,6 @@ fn test_force_nonbonded() {
     assert_relative_eq!(0.73709077, x[4][0], epsilon=1e-4);
 }
 // 14d03d99-7a18-4c63-b15e-cbe036168f84 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::62b43ead-8805-4a73-998c-a1a15f5891ed][62b43ead-8805-4a73-998c-a1a15f5891ed]]
-#[test]
-fn test_molecule_clean() {
-    let mut mol = Molecule::from_file("/tmp/test.mol2").unwrap();
-    mol.clean();
-    mol.to_file("/tmp/test2.mol2");
-}
-// 62b43ead-8805-4a73-998c-a1a15f5891ed ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
 impl Molecule {
