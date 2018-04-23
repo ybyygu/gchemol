@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-17 Tue 16:07>
+//       UPDATED:  <2018-04-23 Mon 12:46>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -127,6 +127,19 @@ fn test_read_xyzfile() {
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::01bb2894-4548-42f3-9977-84164657219c][01bb2894-4548-42f3-9977-84164657219c]]
 use std::collections::HashMap;
 
+fn guess_mol2_bondkind(label: &str) -> BondKind {
+    match label {
+        "1"  => BondKind::Single,
+        "2"  => BondKind::Double,
+        "3"  => BondKind::Triple,
+        "4"  => BondKind::Quadruple,
+        "ar" => BondKind::Aromatic,
+        "wk" => BondKind::Partial, // gaussian view use this
+        "nc" => BondKind::Dummy,
+        _    => BondKind::Single
+    }
+}
+
 /// A quick and dirty way to get molecules from .mol2 file
 ///
 /// Parameters
@@ -225,13 +238,16 @@ pub fn from_mol2file(filename: &str) -> Result<Molecule> {
             // ignore bond order attribute
             let parts: Vec<_> = line.split_whitespace()
                 .skip(1)
-                .take(2)
+                .take(3)
                 .collect();
             let i = parts[0];
             let j = parts[1];
+            let bo = parts[2];
             let ai = atoms[i];
             let aj = atoms[j];
-            molecule.add_bond(ai, aj, Bond::default());
+            let mut bond = Bond::default();
+            bond.kind = guess_mol2_bondkind(bo);
+            molecule.add_bond(ai, aj, bond);
         } else {
             bail!("incomplete bond records");
         }
