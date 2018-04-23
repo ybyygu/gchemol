@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-23 Mon 12:46>
+//       UPDATED:  <2018-04-23 Mon 13:28>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -134,6 +134,7 @@ fn guess_mol2_bondkind(label: &str) -> BondKind {
         "3"  => BondKind::Triple,
         "4"  => BondKind::Quadruple,
         "ar" => BondKind::Aromatic,
+        "am" => BondKind::Aromatic,
         "wk" => BondKind::Partial, // gaussian view use this
         "nc" => BondKind::Dummy,
         _    => BondKind::Single
@@ -280,6 +281,24 @@ fn format_bond_order(bond: &Bond) -> &str {
     }
 }
 
+/// simple translation without considering the bonding pattern
+/// http://www.sdsc.edu/CCMS/Packages/cambridge/pluto/atom_types.html
+/// I just want material studio happy to accept my .mol2 file
+fn format_mol2_atom_type(atom: &Atom) -> &str {
+    match atom.symbol() {
+        "C" => "C.3",
+        "P" => "P.3",
+        "Co" => "Co.oh",
+        "Ru" => "Ru.oh",
+        "O" => "O.2",
+        "N" => "N.3",
+        "S" => "S.2",
+        "Ti" => "Ti.oh",
+        "Cr" => "Cr.oh",
+        _ => atom.symbol(),
+    }
+}
+
 /// Write molecule in .mol2 file format
 ///
 /// Parameters
@@ -308,7 +327,7 @@ pub fn to_mol2file(molecule: &Molecule, filename: &str) -> Result<()>{
     let mut user_indices = HashMap::new();
     lines.push_str("@<TRIPOS>ATOM\n");
     for (i, &ref atom) in molecule.atoms().enumerate() {
-        let symbol = atom.symbol();
+        let symbol = format_mol2_atom_type(atom);
         let name = &atom.name;
         let xyz = format!("{:-12.6} {:-12.6} {:-12.6}",
                           atom.position[0],
