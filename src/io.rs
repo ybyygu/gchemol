@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-23 Mon 13:28>
+//       UPDATED:  <2018-04-24 Tue 13:25>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -247,7 +247,7 @@ pub fn from_mol2file(filename: &str) -> Result<Molecule> {
             let ai = atoms[i];
             let aj = atoms[j];
             let mut bond = Bond::default();
-            bond.kind = guess_mol2_bondkind(bo);
+            bond.kind = guess_mol2_bondkind(&bo.to_lowercase());
             molecule.add_bond(ai, aj, bond);
         } else {
             bail!("incomplete bond records");
