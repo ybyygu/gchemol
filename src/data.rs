@@ -1,11 +1,28 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01][fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01]]
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::891f59cf-3963-4dbe-a7d2-48279723b72e][891f59cf-3963-4dbe-a7d2-48279723b72e]]
+//===============================================================================#
+//   DESCRIPTION:  data access API for atoms and molecules
+//
+//       OPTIONS:  ---
+//  REQUIREMENTS:  ---
+//         NOTES:  ---
+//        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
+//       LICENCE:  GPL version 3
+//       CREATED:  <2018-04-12 Thu 14:40>
+//       UPDATED:  <2018-04-24 Tue 16:41>
+//===============================================================================#
+
 use {
     Atom,
     Bond,
+    Molecule,
+    molecule::AtomIndex,
     bond::BondKind,
     geometry::euclidean_distance,
 };
+use errors::*;
+// 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01][fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01]]
 // Element radii data taking from: https://mendeleev.readthedocs.io/en/stable/data.html
 // Data in columns:
 // covalent_radii_single covalent_radii_double, covalent_radii_triple, vdw_radii
@@ -189,6 +206,15 @@ impl Atom {
     }
 }
 // 0c32acf0-9391-40d5-9c80-3b4bc74f2020 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::0cbcebc4-9ccc-457a-a816-8a503d095e60][0cbcebc4-9ccc-457a-a816-8a503d095e60]]
+impl Molecule {
+    /// Deduce the ideal distance for given pair of atoms i and j
+    pub fn ideal_distance(&self, i: AtomIndex, j: AtomIndex) -> Result<f64> {
+        Ok(0.0)
+    }
+}
+// 0cbcebc4-9ccc-457a-a816-8a503d095e60 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::2d6a4ce4-f616-4bea-a5fd-65ed9117e613][2d6a4ce4-f616-4bea-a5fd-65ed9117e613]]
 #[test]

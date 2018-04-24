@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-23 Mon 16:28>
+//       UPDATED:  <2018-04-24 Tue 16:39>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -26,9 +26,9 @@ use {
     Bond,
 };
 
-type MolGraph = StableUnGraph<Atom, Bond>;
-type AtomIndex = NodeIndex;
-type BondIndex = EdgeIndex;
+pub type MolGraph = StableUnGraph<Atom, Bond>;
+pub type AtomIndex = NodeIndex;
+pub type BondIndex = EdgeIndex;
 
 /// Repsents any singular entity, irrespective of its nature, in order
 /// to concisely express any type of chemical particle: atom,
@@ -465,9 +465,105 @@ impl Molecule {
 }
 // 2a27ca30-0a99-4d5d-b544-5f5900304bbb ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::2351f71f-246f-4193-85c9-7bbe4a9d7587][2351f71f-246f-4193-85c9-7bbe4a9d7587]]
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::82294367-1b69-4638-a70b-fd8daf02ff3e][82294367-1b69-4638-a70b-fd8daf02ff3e]]
 type Bounds = HashMap<(AtomIndex, AtomIndex), f64>;
 
+impl Molecule {
+    // return distance bounds between atoms
+    // upper-tri for upper bounds
+    // lower-tri for lower bounds
+    fn get_distance_bounds(&self) -> Bounds {
+        let mut dm = self.distance_matrix();
+        // max distance between two atoms
+        let max_rij = 90.0;
+
+        let mut bounds = HashMap::new();
+        let node_indices: Vec<_> = self.graph.node_indices().collect();
+        let nnodes = node_indices.len();
+        for node_i in self.graph.node_indices() {
+            for node_j in self.graph.node_indices() {
+                if node_i >= node_j {
+                    continue;
+                }
+
+                let atom_i = &self.graph[node_i];
+                let atom_j = &self.graph[node_j];
+
+                // use vdw radii as the lower bound for non-bonded pair
+                let vri = atom_i.vdw_radius().unwrap();
+                let vrj = atom_j.vdw_radius().unwrap();
+                let vrij = vri + vrj;
+
+                // use covalent radii as the lower bound for bonded pair
+                let cri = atom_i.covalent_radius().unwrap();
+                let crj = atom_j.covalent_radius().unwrap();
+                let crij = cri + crj;
+
+                let lij = crij * 0.8;
+                let uij = vrij * 0.8;
+                let uij = if uij > crij*1.2 {uij} else {crij*1.2};
+
+                // make sure vdw radius larger than covalent radius (usually it is)
+                let mut bound = [lij, uij];
+                if crij > vrij {
+                    bound.swap(0, 1);
+                }
+
+                let dij = euclidean_distance(atom_i.position, atom_j.position);
+                // if i and j is directly bonded
+                // set covalent radius as the lower bound
+                // or set vdw radius as the lower bound if not bonded
+                if let Some(nb) = self.nbonds_between(node_i, node_j) {
+                    if nb == 1 {
+                        if dij > bound[0]*1.2 { // too distant
+                            bounds.insert((node_i, node_j), bound[0]);
+                            bounds.insert((node_j, node_i), bound[0]);
+                        } else if dij < bound[0] { // too close
+                            bounds.insert((node_i, node_j), bound[0]);
+                            bounds.insert((node_j, node_i), bound[0]);
+                        } else { // resonable
+                            bounds.insert((node_i, node_j), dij);
+                            bounds.insert((node_j, node_i), dij);
+                        }
+                    } else if nb == 2 {
+                        if dij < bound[0] { // too close
+                            bounds.insert((node_i, node_j), bound[1]);
+                            bounds.insert((node_j, node_i), 2.0* bound[0]);
+                        } else if dij > bound[0] && dij < bound[1]*1.2 { // resonable
+                            bounds.insert((node_i, node_j), dij);
+                            bounds.insert((node_j, node_i), dij);
+                        } else { //
+                            bounds.insert((node_i, node_j), bound[1]);
+                            bounds.insert((node_j, node_i), 2.0*bound[0]);
+                        }
+                    } else if nb == 3 {
+                        if dij < bound[0] { // too close
+                            bounds.insert((node_i, node_j), bound[1]);
+                            bounds.insert((node_j, node_i), 3.0*bound[1]);
+                        } else if dij > bound[0] && dij < bound[1]*1.2 {
+                            bounds.insert((node_i, node_j), bound[1]);
+                            bounds.insert((node_j, node_i), bound[1]*1.2);
+                        } else {
+                            bounds.insert((node_i, node_j), bound[1]);
+                            bounds.insert((node_j, node_i), max_rij);
+                        }
+                    } else {
+                        bounds.insert((node_i, node_j), bound[1]);
+                        bounds.insert((node_j, node_i), max_rij);
+                    }
+                } else {
+                    bounds.insert((node_i, node_j), bound[1]);
+                    bounds.insert((node_j, node_i), max_rij);
+                }
+            }
+        }
+
+        bounds
+    }
+}
+// 82294367-1b69-4638-a70b-fd8daf02ff3e ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::2351f71f-246f-4193-85c9-7bbe4a9d7587][2351f71f-246f-4193-85c9-7bbe4a9d7587]]
 // force component between two atoms
 fn get_force_between(lij: f64, uij: f64, dij: f64) -> (f64, f64) {
     let mut force = (lij - dij)/(dij + EPSILON);
@@ -475,7 +571,7 @@ fn get_force_between(lij: f64, uij: f64, dij: f64) -> (f64, f64) {
     if dij >= lij && dij < uij {
         weight = 0.0;
     } else if dij < lij {
-        weight = 1.5;
+        weight = 1.2;
     } else {
         weight = 1.0;
     }
@@ -560,138 +656,8 @@ impl Molecule {
         }
     }
 
-    // return distance bounds between atoms
-    // upper-tri for upper bounds
-    // lower-tri for lower bounds
-    fn get_distance_bounds(&self) -> Bounds {
-        let mut dm = self.distance_matrix();
-        // max distance between two atoms
-        let max_rij = 90.0;
-
-        let mut bounds = HashMap::new();
-        let node_indices: Vec<_> = self.graph.node_indices().collect();
-        let nnodes = node_indices.len();
-        for node_i in self.graph.node_indices() {
-            for node_j in self.graph.node_indices() {
-                if node_i >= node_j {
-                    continue;
-                }
-
-                let atom_i = &self.graph[node_i];
-                let atom_j = &self.graph[node_j];
-
-                // use vdw radii as the lower bound for non-bonded pair
-                let vri = atom_i.vdw_radius().unwrap();
-                let vrj = atom_j.vdw_radius().unwrap();
-                let vrij = vri + vrj;
-
-                // use covalent radii as the lower bound for bonded pair
-                let cri = atom_i.covalent_radius().unwrap();
-                let crj = atom_j.covalent_radius().unwrap();
-                let crij = cri + crj;
-
-                let lij = crij * 0.8;
-                let uij = vrij * 0.8;
-                let uij = if uij > crij*1.2 {uij} else {crij*1.2};
-
-                // make sure vdw radius larger than covalent radius (usually it is)
-                let mut bound = [lij, uij];
-                if crij > vrij {
-                    bound.swap(0, 1);
-                }
-
-                let dij = euclidean_distance(atom_i.position, atom_j.position);
-                // if i and j is directly bonded
-                // set covalent radius as the lower bound
-                // or set vdw radius as the lower bound if not bonded
-                if let Some(nb) = self.nbonds_between(node_i, node_j) {
-                    if nb == 1 {
-                        if dij > bound[1] && dij < max_rij {
-                            bounds.insert((node_i, node_j), dij);
-                            bounds.insert((node_j, node_i), dij);
-                        } else {
-                            bounds.insert((node_i, node_j), bound[0]);
-                            bounds.insert((node_j, node_i), bound[0]);
-                        }
-                    } else if nb == 2 {
-                        if dij > bound[1] && dij < max_rij {
-                            bounds.insert((node_i, node_j), dij);
-                            bounds.insert((node_j, node_i), dij);
-                        } else {
-                            bounds.insert((node_i, node_j), bound[1]);
-                            bounds.insert((node_j, node_i), bound[1] + dij);
-                        }
-                    } else {
-                        if dij > bound[1] && dij < max_rij {
-                            bounds.insert((node_i, node_j), dij);
-                            bounds.insert((node_j, node_i), max_rij);
-                        } else {
-                            bounds.insert((node_i, node_j), bound[1]);
-                            bounds.insert((node_j, node_i), max_rij);
-                        }
-                    }
-                } else {
-                    bounds.insert((node_i, node_j), bound[1]);
-                    bounds.insert((node_j, node_i), max_rij);
-                }
-            }
-        }
-
-        bounds
-    }
 }
 // 2351f71f-246f-4193-85c9-7bbe4a9d7587 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::14d03d99-7a18-4c63-b15e-cbe036168f84][14d03d99-7a18-4c63-b15e-cbe036168f84]]
-// pairwise interactions with all other atoms
-fn calc_forces_nonbonded(positions: &Points, distances: &Vec<Vec<f64>>) -> Points {
-    let k = 1.0;
-
-    let npts = positions.len();
-    let mut vectors = vec![];
-    for i in 0..npts {
-        let mut vi = [0.0; 3];
-        for j in 0..npts {
-            if i != j {
-                let dij = distances[i][j];
-                let mut delta = [0.0; 3];
-                for x in 0..3 {
-                    delta[x] = positions[j][x] - positions[i][x];
-                    vi[x] += (delta[x]/dij)*(k*k/dij);
-                }
-            }
-        }
-        vectors.push(vi);
-    }
-
-    vectors
-}
-
-#[test]
-fn test_force_nonbonded() {
-    let positions = [[-0.13194354, -0.28294154,  0.31595688],
-                     [ 0.4012202 , -1.21064646,  0.31595688],
-                     [-1.20194354, -0.28294154,  0.31595688],
-                     [ 0.54333077,  0.89203576,  0.31595688],
-                     [ 0.01016702,  1.81974068,  0.31595688],
-                     [ 1.61333077,  0.89203576,  0.31595688]];
-    let positions = positions.to_vec();
-
-    let distances = [[ 0.        ,  1.07      ,  1.07      ,  1.3552    ,  2.10747905, 2.10393775],
-                     [ 1.07      ,  0.        ,  1.85223389,  2.10747905,  3.05551449, 2.42703205],
-                     [ 1.07      ,  1.85223389,  0.        ,  2.10393775,  2.42703204, 3.05062962],
-                     [ 1.3552    ,  2.10747905,  2.10393775,  0.        ,  1.07      , 1.07      ],
-                     [ 2.10747905,  3.05551449,  2.42703204,  1.07      ,  0.        , 1.8522339 ],
-                     [ 2.10393775,  2.42703205,  3.05062962,  1.07      ,  1.8522339 , 0.        ]];
-    let distances: Vec<_> = distances.iter().map(|v| v.to_vec()).collect();
-
-    let x = calc_forces_nonbonded(&positions, &distances);
-    assert_eq!(6, x.len());
-    assert_relative_eq!(0.32505944, x[0][0], epsilon=1e-4);
-    assert_relative_eq!(2.23566938, x[1][1], epsilon=1e-4);
-    assert_relative_eq!(0.73709077, x[4][0], epsilon=1e-4);
-}
-// 14d03d99-7a18-4c63-b15e-cbe036168f84 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::62b43ead-8805-4a73-998c-a1a15f5891ed][62b43ead-8805-4a73-998c-a1a15f5891ed]]
 #[test]
