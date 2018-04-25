@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-04-24 Tue 16:41>
+//       UPDATED:  <2018-04-24 Tue 21:26>
 //===============================================================================#
 
 use {
@@ -209,9 +209,98 @@ impl Atom {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::0cbcebc4-9ccc-457a-a816-8a503d095e60][0cbcebc4-9ccc-457a-a816-8a503d095e60]]
 impl Molecule {
-    /// Deduce the ideal distance for given pair of atoms i and j
-    pub fn ideal_distance(&self, i: AtomIndex, j: AtomIndex) -> Result<f64> {
-        Ok(0.0)
+    /// Deduce the distance bound for given pair of atoms i and j according
+    /// their bonding pattern
+    pub fn distance_bound(&self, i: AtomIndex, j: AtomIndex) -> Result<[f64; 2]> {
+        let min_rij = 0.5;
+        let max_rij = 40.0;
+
+        let atom_i = self.get_atom(i).ok_or(format!("no atom {:?} in molecule", i))?;
+        let atom_j = self.get_atom(j).ok_or(format!("no atom {:?} in molecule", j))?;
+
+        // 1. get data
+        let msg = "no radius data";
+        // vdw radii as cutoff for non-bonding interaction
+        let rwi = atom_i.vdw_radius().ok_or(msg)?;
+        let rwj = atom_j.vdw_radius().ok_or(msg)?;
+        let srwij = rwi + rwj;
+
+        // covalent radii as cutoff for bonding interaction
+        let rci1 = atom_i.covalent_radius().ok_or(msg)?;
+        let rcj1 = atom_j.covalent_radius().ok_or(msg)?;
+        // radii for double bond
+        let rci2 = get_cov_radius(atom_i.number(), 2).ok_or(msg)?;
+        let rcj2 = get_cov_radius(atom_j.number(), 2).ok_or(msg)?;
+        // radii for triple bond
+        let rci3 = get_cov_radius(atom_i.number(), 3).ok_or(msg)?;
+        let rcj3 = get_cov_radius(atom_j.number(), 3).ok_or(msg)?;
+
+        let srcij1 = rci1 + rcj1;
+        let srcij2 = rci2 + rcj2;
+        let srcij3 = rci3 + rcj3;
+
+        let mut bound = [min_rij, max_rij];
+        // 2. check bonding
+        if let Some(bond) = self.get_bond_between(i, j) {
+            match bond.kind {
+                // treat dummy bond as non-bonding
+                BondKind::Dummy => {
+                    bound = [srwij, max_rij];
+                },
+                BondKind::Partial => {
+                    bound = [srcij1 * 1.2, srwij];
+                },
+                BondKind::Single => {
+                    let lij = srcij1 * 0.8;
+                    let uij = srcij1 * 1.2;
+                    bound = [lij, uij];
+                },
+                BondKind::Aromatic => {
+                    bound = [srcij2, srcij1];
+                },
+                BondKind::Double => {
+                    bound = [srcij2 * 0.8, srcij1];
+                },
+                BondKind::Triple => {
+                    bound = [srcij3 * 0.8, srcij2];
+                },
+                BondKind::Quadruple => {
+                    bound = [srcij3*0.6, srcij3];
+                },
+            }
+        } else {
+            // non-bonding
+            // treat as weak bonding if atom pair are already close to each other
+            let dij = euclidean_distance(atom_i.position, atom_j.position);
+            if dij > srcij1*1.2 && dij < srwij {
+                bound = [srcij1*1.2, srwij];
+            } else {
+                bound = [srwij, max_rij];
+            }
+        }
+
+        // 3. final check
+        if bound[0] > bound[1] {
+            bound.swap(0, 1);
+        }
+
+        Ok(bound)
+    }
+}
+
+#[test]
+#[ignore]
+fn test_molecule_distance_bound() {
+    let mol = Molecule::from_file("/tmp/test.mol2").unwrap();
+    for a in mol.atoms() {
+        for b in mol.atoms() {
+            let ai = a.index;
+            let bi = b.index;
+            if ai < bi {
+                let bound = mol.distance_bound(ai, bi);
+                println!("{:?}", (ai, bi, bound));
+            }
+        }
     }
 }
 // 0cbcebc4-9ccc-457a-a816-8a503d095e60 ends here
