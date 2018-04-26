@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-25 Wed 13:48>
+//       UPDATED:  <2018-04-26 Thu 13:34>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -706,15 +706,6 @@ impl Molecule {
 
 }
 // 2351f71f-246f-4193-85c9-7bbe4a9d7587 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::62b43ead-8805-4a73-998c-a1a15f5891ed][62b43ead-8805-4a73-998c-a1a15f5891ed]]
-#[test]
-fn test_molecule_clean() {
-    let mut mol = Molecule::from_file("/tmp/test.mol2").unwrap();
-    mol.clean().unwrap();
-    mol.to_file("/tmp/test2.mol2");
-}
-// 62b43ead-8805-4a73-998c-a1a15f5891ed ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
 impl Molecule {
