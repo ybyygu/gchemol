@@ -18,7 +18,7 @@ pub trait ChemFileLike {
         let path = format!("{}", path.as_ref().display());
         let path = path.to_lowercase();
         for s in self.extensions() {
-            if path.ends_with(&s.to_lowercase()) {
+        if path.ends_with(&s.to_lowercase()) {
                 return true;
             }
         }
@@ -95,6 +95,5 @@ fn test_formats_plainxyz() {
     let mols = file.parse(filename).unwrap();
     assert_eq!(1, mols.len());
     assert_eq!(12, mols[0].natoms());
-    println!("{:?}", mols[0]);
 }
 // 7faf1529-aae1-4bc5-be68-02d8ccdb9267 ends here

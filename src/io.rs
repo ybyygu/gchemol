@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-27 Fri 15:06>
+//       UPDATED:  <2018-04-27 Fri 15:44>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -261,8 +261,7 @@ pub fn from_mol2file(filename: &str) -> Result<Molecule> {
 
 #[test]
 fn test_from_mol2file() {
-    // FIXME: the path
-    let mol = from_mol2file("tests/files/alanine-gv.mol2").unwrap();
+    let mol = from_mol2file("tests/files/mol2/alanine-gv.mol2").unwrap();
     assert_eq!(12, mol.natoms());
     assert_eq!(11, mol.nbonds());
 }
@@ -432,7 +431,7 @@ impl Molecule {
 
 #[test]
 fn test_molecule_from_file() {
-    let mol = Molecule::from_file("tests/data/c2h4.xyz").unwrap();
+    let mol = Molecule::from_file("tests/files/xyz/c2h4.xyz").unwrap();
     assert_eq!(6, mol.natoms());
 }
 // 448a8479-f0e8-412a-9e8d-83865581eb43 ends here
