@@ -29,12 +29,14 @@ pub trait ChemFileLike {
     /// parse molecules from file `filename`
     fn parse<P: AsRef<Path>>(&self, filename: P) -> Result<Vec<Molecule>>;
 
-    /// represent molecules in certain format
-    fn represent(&self, mols: &Vec<Molecule>) -> String;
+    /// format molecules in certain format
+    fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
+        bail!("No implemented yet.");
+    }
 
     /// Save multiple molecules in a file
     fn save(&self, mols: &Vec<Molecule>, filename: &str) -> Result<()> {
-        let lines = self.represent(mols);
+        let lines = self.format(mols)?;
         io::write_file(lines, filename)?;
         Ok(())
     }
@@ -72,7 +74,7 @@ impl ChemFileLike for PlainXYZFile {
 
     /// Return a string representation of the last molecule in the list
     /// Return empty string if no molecule found
-    fn represent(&self, mols: &Vec<Molecule>) -> String {
+    fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
         let mut lines = String::new();
 
         if let Some(mol) = mols.last() {
@@ -81,7 +83,7 @@ impl ChemFileLike for PlainXYZFile {
             }
         }
 
-        lines
+        Ok(lines)
     }
 }
 
@@ -93,5 +95,6 @@ fn test_formats_plainxyz() {
     let mols = file.parse(filename).unwrap();
     assert_eq!(1, mols.len());
     assert_eq!(12, mols[0].natoms());
+    println!("{:?}", mols[0]);
 }
 // 7faf1529-aae1-4bc5-be68-02d8ccdb9267 ends here
