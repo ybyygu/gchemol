@@ -1,11 +1,29 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::7faf1529-aae1-4bc5-be68-02d8ccdb9267][7faf1529-aae1-4bc5-be68-02d8ccdb9267]]
 use errors::*;
 use io;
+use std::path::{Path, PathBuf};
 use Molecule;
 
 pub trait ChemFileLike {
+    /// file type string
+    fn ftype(&self) -> &str;
+
+    /// Supported file types in file extension, for example:
+    /// [".xyz", ".mol2"]
+    fn extensions(&self) -> Vec<&str>;
+
     /// test if file `filename` is parable
-    fn parsable(&self, filename: &str) -> bool;
+    fn parsable<P: AsRef<Path>>(&self, path: P) -> bool {
+        let path = format!("{}", path.as_ref().display());
+        let path = path.to_lowercase();
+        for s in self.extensions() {
+            if path.ends_with(&s.to_lowercase()) {
+                return true;
+            }
+        }
+
+        false
+    }
 
     /// parse molecules from file `filename`
     fn parse(&self, filename: &str) -> Result<Vec<Molecule>>;
@@ -13,6 +31,7 @@ pub trait ChemFileLike {
     /// represent molecules in certain format
     fn represent(&self, mols: &Vec<Molecule>) -> String;
 
+    /// Save multiple molecules in a file
     fn save(&self, mols: &Vec<Molecule>, filename: &str) -> Result<()> {
         let lines = self.represent(mols);
         io::write_file(lines, filename)?;
@@ -24,8 +43,13 @@ pub trait ChemFileLike {
 pub struct PlainXYZFile();
 
 impl ChemFileLike for PlainXYZFile {
-    fn parsable(&self, filename: &str) -> bool {
-        false
+    /// possible file extensions
+    fn extensions(&self) -> Vec<&str> {
+        [".coord"].to_vec()
+    }
+
+    fn ftype(&self) -> &str {
+        "text/coord"
     }
 
     /// parse molecules from file `filename`
@@ -52,9 +76,7 @@ impl ChemFileLike for PlainXYZFile {
 
 #[test]
 fn test_formats_plainxyz() {
-    let mol = Molecule::from_file("tests/data/c2h4.xyz").unwrap();
-
     let file = PlainXYZFile();
-    println!("{}", file.represent(&vec![mol]));
+    assert!(file.parsable("test.coord"));
 }
 // 7faf1529-aae1-4bc5-be68-02d8ccdb9267 ends here
