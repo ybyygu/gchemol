@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-24 Tue 13:25>
+//       UPDATED:  <2018-04-27 Fri 15:06>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -23,24 +23,26 @@ use Point3D;
 use Points;
 
 /// Return content of text file in string
-/// don't use if file is large
-pub fn read_file(filename: &str) -> Result<String> {
+/// don't use this if file is very large
+pub fn read_file<P: AsRef<Path>>(filename: P) -> Result<String> {
+    let filename = filename.as_ref();
     let mut buffer = String::new();
 
-    let mut fp = File::open(filename).chain_err(|| format!("unable to open {} for reading", filename))?;
-    fp.read_to_string(&mut buffer).chain_err(||format!("failed to read content: {}", filename))?;
+    let mut fp = File::open(filename).chain_err(|| format!("unable to open {} for reading", filename.display()))?;
+    fp.read_to_string(&mut buffer).chain_err(||format!("failed to read content: {}", filename.display()))?;
 
     Ok(buffer)
 }
 
 /// write string content to an external file
-pub fn write_file(content: String, filename: &str) -> Result<()> {
-    let msg = format!("failed to create output file: {}", filename);
-    let f = File::create(filename)
+pub fn write_file<P: AsRef<Path>>(content: String, filename: P) -> Result<()> {
+    let path = filename.as_ref();
+    let msg = format!("failed to create output file: {}", path.display());
+    let f = File::create(path)
         .chain_err(|| msg)?;
     let mut writer = BufWriter::new(&f);
 
-    let msg = format!("failed to write output file: {}", filename);
+    let msg = format!("failed to write output file: {}", path.display());
     writer.write_all(&content.as_bytes())
         .chain_err(|| msg)?;
 

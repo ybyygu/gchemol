@@ -2,6 +2,7 @@
 use errors::*;
 use io;
 use std::path::{Path, PathBuf};
+use Atom;
 use Molecule;
 
 pub trait ChemFileLike {
@@ -26,7 +27,7 @@ pub trait ChemFileLike {
     }
 
     /// parse molecules from file `filename`
-    fn parse(&self, filename: &str) -> Result<Vec<Molecule>>;
+    fn parse<P: AsRef<Path>>(&self, filename: P) -> Result<Vec<Molecule>>;
 
     /// represent molecules in certain format
     fn represent(&self, mols: &Vec<Molecule>) -> String;
@@ -53,10 +54,20 @@ impl ChemFileLike for PlainXYZFile {
     }
 
     /// parse molecules from file `filename`
-    fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
-        let mut mols = vec![];
+    fn parse<P: AsRef<Path>>(&self, filename: P) -> Result<Vec<Molecule>> {
+        let path = filename.as_ref();
+        let txt = io::read_file(path)?;
+        let mut mol = Molecule::new("from plain coordinates");
+        for line in txt.lines() {
+            let line = line.trim();
+            if line.is_empty() {
+                break;
+            }
+            let a: Atom = line.parse()?;
+            mol.add_atom(a);
+        }
 
-        Ok(mols)
+        Ok([mol].to_vec())
     }
 
     /// Return a string representation of the last molecule in the list
@@ -76,7 +87,11 @@ impl ChemFileLike for PlainXYZFile {
 
 #[test]
 fn test_formats_plainxyz() {
+    let filename = "tests/files/plain-coords/test.coord";
     let file = PlainXYZFile();
-    assert!(file.parsable("test.coord"));
+    assert!(file.parsable(filename));
+    let mols = file.parse(filename).unwrap();
+    assert_eq!(1, mols.len());
+    assert_eq!(12, mols[0].natoms());
 }
 // 7faf1529-aae1-4bc5-be68-02d8ccdb9267 ends here
