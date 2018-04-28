@@ -1,89 +1,190 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::85054519-f2d5-4c63-994a-78bbe4f9a30f][85054519-f2d5-4c63-994a-78bbe4f9a30f]]
 use std::fmt::Debug;
 use nom::IResult;
-use nom::{alphanumeric, multispace, float_s, double_s, is_digit, digit, crlf, line_ending};
+use nom::{alphanumeric,
+          eol,
+          double_s,
+          is_digit,
+          digit,
+          line_ending,
+          space,
+          not_line_ending,
+          alpha,
+};
 
-named!(maybe_f64_s<&str, f64>,
-       map_res!(is_not_s!(" \t"), str::parse)
-);
+fn dump<T: Debug>(res: IResult<&str,T>) {
+    match res {
+        IResult::Done(rest, value) => {println!("Done {:?} {:?}",rest,value)},
+        IResult::Error(err) => {println!("Err {:?}",err)},
+        IResult::Incomplete(needed) => {println!("Needed {:?}",needed)}
+    }
+}
 
-named!(pub xyz_array<&str, [f64; 3]>,
-       do_parse!(
-           x: ws!(maybe_f64_s) >>
-           y: ws!(maybe_f64_s) >>
-           z: ws!(maybe_f64_s) >>
-           ([x, y, z])
+pub fn end_of_line(input: &str) -> IResult<&str, &str> {
+    alt!(input, eof!() | line_ending)
+}
+// 85054519-f2d5-4c63-994a-78bbe4f9a30f ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::c755a2a3-458f-42b1-aeb4-7c89071491ef][c755a2a3-458f-42b1-aeb4-7c89071491ef]]
+named!(one_line<&str, &str>,
+       terminated!(
+           not_line_ending,
+           end_of_line
        )
 );
 
-named!(usize_timestep_s<&str, usize>,
-       ws!(preceded!(
-           tag!("# Timestep"),
-           map_res!(digit, str::parse)
-       ))
-);
+#[test]
+fn test_nom_one_line() {
+    let x = one_line("this is the end\nok\n").unwrap();
+}
 
-named!(usize_nparticles_s<&str, usize>,
-       ws!(preceded!(
-           tag!("# Number of particles"),
-           map_res!(digit, str::parse)
-       ))
-);
-
-named!(usize_neighbors_s<&str, Vec<usize>>,
-       length_count!(
-           usize_timestep_s,
-           map_res!(ws!(digit), str::parse)
-       )
-);
-
-/// return last usize digit in a line
-/// 200\n => 200_usize
-named!(usize_last_digit<&str, usize>,
+named!(digit_one_line<&str, usize>,
        map_res!(
-           terminated!(
-               digit,
-               alt!(eof!() | line_ending)
-           ),
+           ws!(digit),
            str::parse
        )
 );
 
-named!(last_item<&str, &str>,
-       terminated!(
-           is_not_s!(" \t\n\r"),
-           alt!(line_ending | eof!())
-       )
-);
-
-// # Timestep 3 => 3
-named!(pub take_last_digit<&str, usize>,
-       do_parse!(
-           r: many_till!(take!(1), ws!(usize_last_digit)) >>
-           (r.1)
-       )
-);
-
-// # Timestep 3 => 3
-named!(pub take_last_item<&str, &str>,
-       do_parse!(
-           r: many_till!(take!(1), ws!(last_item)) >>
-           (r.1)
-       )
-);
-// 85054519-f2d5-4c63-994a-78bbe4f9a30f ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::673f851b-fd18-4dc1-9598-80e6dc83cf14][673f851b-fd18-4dc1-9598-80e6dc83cf14]]
 #[test]
-fn test_nom() {
-    let x = usize_timestep_s("# Timestep 50");
-    println!("{:?}", x);
-    let x = usize_neighbors_s(" 408 1 8 416 272 280 288 400 407 392 536 0 0.803 0.059");
-    let x = take_last_digit("# Number of particles 50");
-    let x = take_last_item("# Number of particles 50.2
-  ");
-
-    let (_, x) = xyz_array(" 1. 1. 2").unwrap();
-    assert_eq!([1.0, 1.0, 2.0], x);
+fn test_nom_digit_one_line() {
+    let (_, n) = digit_one_line("123\n").unwrap();
+    assert_eq!(123, n);
+    let (_, n) = digit_one_line(" 123\n").unwrap();
+    assert_eq!(123, n);
+    let (_, n) = digit_one_line(" 123 \n").unwrap();
+    assert_eq!(123, n);
+    let (_, n) = digit_one_line("123").unwrap();
+    assert_eq!(123, n);
+    let (_, n) = digit_one_line("	123\nnext line").unwrap();
+    assert_eq!(123, n);
 }
-// 673f851b-fd18-4dc1-9598-80e6dc83cf14 ends here
+// c755a2a3-458f-42b1-aeb4-7c89071491ef ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::f1450c5e-a4b0-4dff-a548-af7fe8e52660][f1450c5e-a4b0-4dff-a548-af7fe8e52660]]
+use Atom;
+use Molecule;
+
+named!(maybe_f64_s<&str, f64>,
+       map_res!(is_not_s!(" \t\n"), str::parse)
+);
+
+named!(pub xyz_array<&str, [f64; 3]>,
+       do_parse!(
+             opt!(space) >>
+           x: double_s >>
+             space >>
+           y: double_s >>
+             space >>
+           z: ws!(double_s) >>
+           ([x, y, z])
+       )
+);
+
+#[test]
+fn test_nom_xyz_array() {
+    let (_, x) = xyz_array("-11.4286  1.7645  0.0000").unwrap();
+    assert_eq!(x[2], 0.0);
+
+    let (_, x) = xyz_array("-11.4286  1.7645  0.0000\n").unwrap();
+    assert_eq!(x[2], 0.0);
+
+    let (_, x) = xyz_array(" -11.4286\t1.7E-5  0.0000").unwrap();
+    assert_eq!(x[2], 0.0);
+}
+
+named!(symbol_and_position<&str, (&str, [f64; 3])>,
+       do_parse!(
+           opt!(space)              >>
+           symbol: alphanumeric     >>
+           position: ws!(xyz_array) >>
+           (symbol, position)
+       )
+);
+
+#[test]
+fn test_nom_symbol_and_position() {
+    let (_, (sym, position)) = symbol_and_position("C1 -11.4286 1.7645  0.0000\n").unwrap();
+    assert_eq!(sym, "C1");
+
+    let (_, (sym, position)) = symbol_and_position(" C1 -11.4286 1.7645  0.0000 other...").unwrap();
+    assert_eq!(sym, "C1");
+
+    let (_, (sym, position)) = symbol_and_position("1 -11.4286 1.7645  0.0000\n").unwrap();
+    assert_eq!(sym, "1");
+}
+
+named!(atom_from_xyz_line<&str, Atom>,
+       do_parse!(
+                   opt!(space)      >>
+           symbol: alphanumeric     >>
+           position: ws!(xyz_array) >>
+           (
+               Atom::new(symbol, position)
+           )
+       )
+);
+
+fn new_molecule(title: &str, atoms: Vec<Atom>) -> Molecule {
+    let mut mol = Molecule::new(title);
+    for a in atoms {
+        mol.add_atom(a);
+    }
+
+    mol
+}
+
+named!(xyz_molecule<&str, Molecule>,
+       do_parse!(
+           n     : digit_one_line             >>
+           title : one_line                   >>
+           atoms : many0!(atom_from_xyz_line) >>
+           (
+               new_molecule(title, atoms)
+           )
+       )
+);
+
+named!(xyz_molecule_many<&str, Vec<Molecule>>,
+       do_parse!(
+           mols : many0!(xyz_molecule) >>
+           (mols)
+       )
+);
+
+#[test]
+fn test_nom_xyz_molecule() {
+    let txt = "12
+C -11.4286  1.7645  0.0000
+C -10.0949  0.9945  0.0000
+C -10.0949 -0.5455  0.0000
+C -11.4286 -1.3155  0.0000
+C -12.7623 -0.5455  0.0000
+C -12.7623  0.9945  0.0000
+H -11.4286  2.8545  0.0000
+H -9.1509  1.5395  0.0000
+H -9.1509 -1.0905  0.0000
+H -11.4286 -2.4055  0.0000
+H -13.7062 -1.0905  0.0000
+H -13.7062  1.5395  0.0000
+12
+Molecule 2  0.000000
+C -4.9186  2.2028  0.0000
+C -3.5849  1.4328  0.0000
+C -3.5849 -0.1072  0.0000
+C -4.9186 -0.8772  0.0000
+C -6.2523 -0.1072  0.0000
+C -6.2523  1.4328  0.0000
+H -4.9186  3.2928  0.0000
+H -2.6410  1.9778  0.0000
+H -2.6410 -0.6522  0.0000
+H -4.9186 -1.9672  0.0000
+H -7.1963 -0.6522  0.0000
+H -7.1963  1.9778  0.00003
+C -11.4286  1.7645  0.0000
+C -10.0949  0.9945  0.0000
+C -10.0949 -0.5455  0.0000
+";
+    let (_, mols) = xyz_molecule_many(txt).unwrap();
+    assert_eq!(2, mols.len());
+}
+// f1450c5e-a4b0-4dff-a548-af7fe8e52660 ends here
