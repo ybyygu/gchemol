@@ -273,18 +273,6 @@ fn test_nom_gjf_route_section() {
 named!(gjf_title_section<&str, &str>,
    ws!(take_until!("\n\n"))
 );
-
-
-named!(gjf_molecule<&str, &str>,
-   do_parse!
-       (
-           gjf_link0_section >>
-           gjf_route_section >>
-           title: gjf_title_section >>
-           one_line >>
-           ("a")
-       )
-);
 // c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::dac5abf9-43a6-40a7-bf33-8338e106f738][dac5abf9-43a6-40a7-bf33-8338e106f738]]
@@ -458,6 +446,65 @@ fn test_gjf_atom_line() {
     assert_eq!(ga.position[0], 0.0);
 }
 // dac5abf9-43a6-40a7-bf33-8338e106f738 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2][d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2]]
+// Connectivity lines like this:
+// 1 2 1.0 3 1.0 4 1.0 5 1.0
+//     2
+//     3
+
+named!(gjf_bond_pair<&str, (&str, f64)>,
+    do_parse!(
+            space    >>
+        n:  digit    >>
+            space    >>
+        o:  double_s >>
+        (n, o)
+    )
+);
+
+fn build_bonds<'a>(index1: &'a str, others: Vec<(&'a str, f64)>) -> Vec<(&'a str, &'a str, f64)> {
+    let mut bonds = vec![];
+    for (index2, order) in others {
+        bonds.push((index1, index2, order));
+    }
+
+    bonds
+}
+
+named!(gjf_connect_line<&str, Vec<(&str, &str, f64)>>,
+    do_parse!
+    (
+                 opt!(space)           >>
+        n:       digit                 >>
+        others:  many0!(gjf_bond_pair) >>
+                 opt!(space)           >>
+                 end_of_line           >>
+        (
+            build_bonds(n, others)
+        )
+    )
+);
+
+#[test]
+fn test_nom_gjf_connectivity() {
+    let (_, x) = gjf_connect_line(" 1 2 1.0 3 1.0 4 1.0 5 1.0\n").unwrap();
+    assert_eq!(4, x.len());
+}
+// d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::2357368c-ab7e-4eb3-96a8-a8e4aba19bac][2357368c-ab7e-4eb3-96a8-a8e4aba19bac]]
+named!(gjf_molecule<&str, &str>,
+    do_parse!
+    (
+        gjf_link0_section >>
+        gjf_route_section >>
+        title: gjf_title_section >>
+        one_line >>
+        ("a")
+    )
+);
+// 2357368c-ab7e-4eb3-96a8-a8e4aba19bac ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ac94be65-37d4-4ea4-b839-e1875c9d45e1][ac94be65-37d4-4ea4-b839-e1875c9d45e1]]
 #[test]
