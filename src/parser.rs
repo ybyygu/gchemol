@@ -23,14 +23,31 @@ fn dump<T: Debug>(res: IResult<&str,T>) {
 pub fn end_of_line(input: &str) -> IResult<&str, &str> {
     alt!(input, eof!() | line_ending)
 }
+
+// -1, 0, 1, 2, ...
+named!(signed_digit<&str, isize>,
+       map_res!(
+           recognize!
+               (
+                   pair!(opt!(alt!(char!('+') | char!('-'))), digit)
+               ),
+           str::parse
+       )
+);
+
+#[test]
+fn test_nom_signed_digit() {
+    let x = signed_digit("-1");
+    let x = signed_digit("1");
+}
 // 85054519-f2d5-4c63-994a-78bbe4f9a30f ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::c755a2a3-458f-42b1-aeb4-7c89071491ef][c755a2a3-458f-42b1-aeb4-7c89071491ef]]
 named!(one_line<&str, &str>,
-       terminated!(
-           not_line_ending,
-           end_of_line
-       )
+    terminated!(
+        not_line_ending,
+        end_of_line
+    )
 );
 
 #[test]
@@ -39,23 +56,19 @@ fn test_nom_one_line() {
 }
 
 named!(digit_one_line<&str, usize>,
-       map_res!(
-           ws!(digit),
-           str::parse
-       )
+    map_res!(
+        terminated!(digit, end_of_line),
+        str::parse
+    )
 );
 
 #[test]
 fn test_nom_digit_one_line() {
     let (_, n) = digit_one_line("123\n").unwrap();
     assert_eq!(123, n);
-    let (_, n) = digit_one_line(" 123\n").unwrap();
-    assert_eq!(123, n);
-    let (_, n) = digit_one_line(" 123 \n").unwrap();
-    assert_eq!(123, n);
     let (_, n) = digit_one_line("123").unwrap();
     assert_eq!(123, n);
-    let (_, n) = digit_one_line("	123\nnext line").unwrap();
+    let (_, n) = digit_one_line("123\nnext line").unwrap();
     assert_eq!(123, n);
 }
 // c755a2a3-458f-42b1-aeb4-7c89071491ef ends here
@@ -65,19 +78,33 @@ use Atom;
 use Molecule;
 
 named!(maybe_f64_s<&str, f64>,
-       map_res!(is_not_s!(" \t\n"), str::parse)
+    map_res!(is_not_s!(" \t\n"), str::parse)
 );
 
+/// Consume three float numbers separated by one or more spaces
+/// Return position array
 named!(pub xyz_array<&str, [f64; 3]>,
-       do_parse!(
-             opt!(space) >>
-           x: double_s >>
-             space >>
-           y: double_s >>
-             space >>
-           z: ws!(double_s) >>
-           ([x, y, z])
+       do_parse!
+       (
+        x: double_s >>
+        space       >>
+        y: double_s >>
+        space       >>
+        z: double_s >>
+        ([x, y, z])
        )
+);
+
+named!(pub xyz_array3<&str, [f64; 3]>,
+    do_parse!(
+          opt!(space)    >>
+        x: double_s      >>
+          space          >>
+        y: double_s      >>
+          space          >>
+        z: ws!(double_s) >>
+        ([x, y, z])
+    )
 );
 
 #[test]
@@ -88,17 +115,17 @@ fn test_nom_xyz_array() {
     let (_, x) = xyz_array("-11.4286  1.7645  0.0000\n").unwrap();
     assert_eq!(x[2], 0.0);
 
-    let (_, x) = xyz_array(" -11.4286\t1.7E-5  0.0000").unwrap();
+    let (_, x) = xyz_array("-11.4286\t1.7E-5  0.0000").unwrap();
     assert_eq!(x[2], 0.0);
 }
 
 named!(symbol_and_position<&str, (&str, [f64; 3])>,
-       do_parse!(
-           opt!(space)              >>
-           symbol: alphanumeric     >>
-           position: ws!(xyz_array) >>
-           (symbol, position)
-       )
+    do_parse!(
+        symbol   : alphanumeric    >>
+                   space           >>
+        position : xyz_array       >>
+        (symbol, position)
+    )
 );
 
 #[test]
@@ -106,23 +133,27 @@ fn test_nom_symbol_and_position() {
     let (_, (sym, position)) = symbol_and_position("C1 -11.4286 1.7645  0.0000\n").unwrap();
     assert_eq!(sym, "C1");
 
-    let (_, (sym, position)) = symbol_and_position(" C1 -11.4286 1.7645  0.0000 other...").unwrap();
-    assert_eq!(sym, "C1");
-
-    let (_, (sym, position)) = symbol_and_position("1 -11.4286 1.7645  0.0000\n").unwrap();
+    let (_, (sym, position)) = symbol_and_position("1\t -11.4286 1.7645  0.0000\n").unwrap();
     assert_eq!(sym, "1");
 }
 
-named!(atom_from_xyz_line<&str, Atom>,
-       do_parse!(
-                   opt!(space)      >>
-           symbol: alphanumeric     >>
-           position: ws!(xyz_array) >>
-           (
-               Atom::new(symbol, position)
-           )
-       )
+named!(xyz_atom<&str, Atom>,
+    do_parse!(
+               opt!(space)         >>
+        parts: symbol_and_position >>
+               opt!(space)         >>
+               end_of_line         >>
+        (
+            Atom::new(parts.0, parts.1)
+        )
+    )
 );
+
+#[test]
+fn test_nom_xyz_atom() {
+    let (_, x) = xyz_atom("C -11.4286 -1.3155  0.0000 ").unwrap();
+    assert_eq!("C", x.symbol());
+}
 
 fn new_molecule(title: &str, atoms: Vec<Atom>) -> Molecule {
     let mut mol = Molecule::new(title);
@@ -134,14 +165,16 @@ fn new_molecule(title: &str, atoms: Vec<Atom>) -> Molecule {
 }
 
 named!(xyz_molecule<&str, Molecule>,
-       do_parse!(
-           n     : digit_one_line             >>
-           title : one_line                   >>
-           atoms : many0!(atom_from_xyz_line) >>
-           (
-               new_molecule(title, atoms)
-           )
-       )
+    do_parse!(
+                opt!(space)                >>
+        n     : digit_one_line             >>
+                opt!(space)                >>
+        title : one_line                   >>
+        atoms : many0!(xyz_atom) >>
+        (
+            new_molecule(title, atoms)
+        )
+    )
 );
 
 named!(xyz_molecule_many<&str, Vec<Molecule>>,
@@ -258,10 +291,6 @@ named!(gjf_molecule<&str, &str>,
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
-named!(gjf_space<&str, &str>,
-       eat_separator!(&b" \t,"[..])
-);
-
 #[derive(Debug)]
 struct GaussianAtom<'a> {
     element_label : &'a str,
@@ -345,23 +374,6 @@ fn test_nom_gjf_atom_mm_params() {
     assert_eq!(None, mm_charge);
 }
 
-// -1, 0, 1, 2, ...
-named!(signed_digit<&str, isize>,
-       map_res!(
-           recognize!
-               (
-                   pair!(opt!(alt!(char!('+') | char!('-'))), digit)
-               ),
-           str::parse
-       )
-);
-
-#[test]
-fn test_nom_signed_digit() {
-    let x = signed_digit("-1");
-    let x = signed_digit("1");
-}
-
 // C-CA--0.25   0   -4.703834   -1.841116   -0.779093 L
 // C-CA--0.25   0   -3.331033   -1.841116   -0.779093 L H-HA-0.1  3
 named!(gjf_atom_oniom_params<&str, (&str, Option<&str>)>,
@@ -384,44 +396,35 @@ fn test_nom_gjf_atom_oniom_params() {
     assert_eq!("L", layer);
 }
 
-
-named!(pub xyz_array2<&str, [f64; 3]>,
-   do_parse!(
-       opt!(space)          >>
-           x: double_s      >>
-           space            >>
-           y: double_s      >>
-           space            >>
-           z: double_s      >>
-           ([x, y, z])
-   )
-);
-
-
 // How about this: C-CA--0.25(fragment=1,iso=13,spin=3) 0 0.0 1.2 3.4 H H-H_
 named!(gjf_atom_line<&str, GaussianAtom>,
    do_parse!
-       (opt!(space)          >>
-        element_label: alphanumeric >>
-        mm_params: opt!(gjf_atom_mm_params) >>
-        properties: opt!(gjf_atom_properties) >>
-        space >>
-        frozen: opt!(signed_digit) >>
-        position: xyz_array2 >>
-        oniom: opt!(gjf_atom_oniom_params) >>
-        tag!("\n") >>
-        (
-            GaussianAtom {
-                element_label: element_label,
-                mm_type: mm_params.and_then(|x| Some(x.0)),
-                mm_charge: mm_params.and_then(|x| x.1),
-                frozen_code: frozen,
-                position: position,
-                properties: if properties.is_some() {properties.unwrap()} else {HashMap::new()},
-                oniom_layer: oniom.and_then(|x| Some(x.0)),
-                ..Default::default()
-            }
-        )
+       (
+                           opt!(space)                 >>
+           element_label : alphanumeric                >>
+           mm_params     : opt!(gjf_atom_mm_params)    >>
+           properties    : opt!(gjf_atom_properties)   >>
+                           space                       >>
+           frozen        : opt!(terminated!(
+                                signed_digit,
+                                space
+                                ))                     >>
+           position      : xyz_array                   >>
+           oniom         : opt!(gjf_atom_oniom_params) >>
+                           opt!(space)                 >>
+                           end_of_line                 >>
+           (
+               GaussianAtom {
+                   element_label: element_label,
+                   mm_type: mm_params.and_then(|x| Some(x.0)),
+                   mm_charge: mm_params.and_then(|x| x.1),
+                   frozen_code: frozen,
+                   position: position,
+                   properties: if properties.is_some() {properties.unwrap()} else {HashMap::new()},
+                   oniom_layer: oniom.and_then(|x| Some(x.0)),
+                   ..Default::default()
+               }
+           )
        )
 );
 
@@ -450,7 +453,7 @@ fn test_gjf_atom_line() {
     assert_eq!(ga.mm_type, Some("CA"));
     assert_eq!(ga.mm_charge, None);
 
-    let (_, ga) = gjf_atom_line("C12(fragment=1)  0.00   0.00   0.00\n").unwrap();
+    let (_, ga) = gjf_atom_line(" C12(fragment=1)  0.00   0.00   0.00\n").unwrap();
     assert_eq!(ga.properties["fragment"], "1");
     assert_eq!(ga.position[0], 0.0);
 }
