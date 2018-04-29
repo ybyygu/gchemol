@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-26 Thu 13:34>
+//       UPDATED:  <2018-04-29 Sun 19:05>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -24,6 +24,7 @@ use {
     Points,
     Atom,
     Bond,
+    lattice::Lattice,
 };
 
 pub type MolGraph = StableUnGraph<Atom, Bond>;
@@ -46,6 +47,8 @@ pub struct MolecularEntity {
     pub name: String,
     /// core data in graph
     pub graph: MolGraph,
+    /// Crystalline lattice for structure using periodic boundary conditions
+    pub lattice: Option<Lattice>,
 
     /// mapping atom index to NodeIndex
     atom_indices: HashMap<usize, NodeIndex>,
@@ -61,6 +64,7 @@ impl Default for Molecule {
         Molecule {
             name: "default".to_string(),
             graph: graph,
+            lattice: None,
             atom_indices: HashMap::new(),
             bond_indices: HashMap::new(),
         }

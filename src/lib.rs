@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-04-26 Thu 19:39>
+//       UPDATED:  <2018-04-29 Sun 18:57>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -30,6 +30,7 @@ pub mod errors {
 }
 
 extern crate petgraph;
+extern crate nalgebra;
 extern crate cgmath;
 #[macro_use]
 extern crate timeit;
@@ -56,6 +57,6 @@ pub mod io;
 pub use io::{write_as_xyz};
 pub mod data;
 pub mod parser;
-pub mod system;
+pub mod lattice;
 pub mod formats;
 // 53cbd3c0-e164-4bad-b535-6fd6df916650 ends here
