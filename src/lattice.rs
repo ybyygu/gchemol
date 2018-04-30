@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-04-29 Sun 19:09>
+//       UPDATED:  <2018-04-30 Mon 09:52>
 //===============================================================================#
 
 use nalgebra::{
@@ -29,6 +29,13 @@ pub struct Lattice {
     origin: Vec3D,
     /// Cached inverse of lattice matrix
     inv_matrix: Option<Mat3D>,
+
+    /// Volume of the unit cell.
+    volume: f64,
+
+    /// The perpendicular widths of the unit cell on each direction,
+    /// i.e. the distance between opposite faces of the unit cell
+    widths: [f64; 3],
 }
 
 impl Default for Lattice {
@@ -37,6 +44,8 @@ impl Default for Lattice {
             matrix     : Mat3D::identity(),
             origin     : Vec3D::zeros(),
             inv_matrix : None,
+            volume     : 0.0,
+            widths     : [0.0; 3],
         }
     }
 }
@@ -52,8 +61,24 @@ impl Lattice {
     }
 
     pub fn new<T: Into<[[f64; 3]; 3]>>(tvs: T) -> Self {
+        let mat = Mat3D::from(tvs.into());
+        let va = mat.column(0);
+        let vb = mat.column(1);
+        let vc = mat.column(2);
+
+        let volume = va.dot(&vb.cross(&vc));
+        let van = va.norm();
+        let vbn = vb.norm();
+        let vcn = vc.norm();
+
+        let wa = volume / (vbn*vcn);
+        let wb = volume / (vcn*van);
+        let wc = volume / (van*vbn);
+
         Lattice {
-            matrix: Mat3D::from(tvs.into()),
+            matrix: mat,
+            widths: [wa, wb, wc],
+            volume: volume,
             ..Default::default()
         }
     }
@@ -107,6 +132,42 @@ impl Lattice {
 }
 // b17e625d-352f-419e-9d10-a84fcdb9ff07 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::83cff231-cc63-4077-b07e-a26a2c2b906d][83cff231-cc63-4077-b07e-a26a2c2b906d]]
+impl Lattice {
+    /// minimal images required for neighborhood search
+    pub fn relevant_images(&self, radius: f64) -> Vec<Vector3<f64>> {
+        let ns = self.n_min_images(radius);
+        let na = ns[0] as isize;
+        let nb = ns[1] as isize;
+        let nc = ns[2] as isize;
+
+        let mut images = vec![];
+        for i in (-na)..(na+1) {
+            for j in (-nb)..(nb+1) {
+                for k in (-nc)..(nc+1) {
+                    let v = Vec3D::from([i as f64, j as f64, k as f64]);
+                    images.push(v);
+                }
+            }
+        }
+
+        images
+    }
+
+    /// Return the minimal number of images for neighborhood search on each cell direction
+    fn n_min_images(&self, radius: f64) -> [usize; 3]{
+        let mut ns = [0; 3];
+
+        for (i, &w) in self.widths.iter().enumerate() {
+            let n = (radius / w).ceil();
+            ns[i] = n as usize;
+        }
+
+        ns
+    }
+}
+// 83cff231-cc63-4077-b07e-a26a2c2b906d ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::4bc21235-f285-4976-a32a-b33506381b58][4bc21235-f285-4976-a32a-b33506381b58]]
 #[test]
 fn test_lattice_init() {
@@ -129,6 +190,52 @@ fn test_lattice_init() {
     assert_relative_eq!(alpha, 90.0, epsilon=1e-4);
     assert_relative_eq!(beta, 90.0, epsilon=1e-4);
     assert_relative_eq!(gamma, 73.5386, epsilon=1e-4);
+}
+
+#[test]
+fn test_lattice_neighborhood() {
+    let lat = Lattice::new([[ 18.256,   0.   ,   0.   ],
+                             [  0.   ,  20.534,   0.   ],
+                             [  0.   ,   0.   ,  15.084]]
+    );
+
+    assert_eq!([1, 1, 1], lat.n_min_images(9.));
+    assert_eq!([2, 1, 2], lat.n_min_images(19.));
+    assert_eq!([2, 1, 2], lat.n_min_images(20.));
+    assert_eq!([2, 2, 2], lat.n_min_images(20.6));
+
+    let expected = [
+        Vec3D::new(-1.0, -1.0, -1.0),
+        Vec3D::new(-1.0, -1.0,  0.0),
+        Vec3D::new(-1.0, -1.0,  1.0),
+        Vec3D::new(-1.0,  0.0, -1.0),
+        Vec3D::new(-1.0,  0.0,  0.0),
+        Vec3D::new(-1.0,  0.0,  1.0),
+        Vec3D::new(-1.0,  1.0, -1.0),
+        Vec3D::new(-1.0,  1.0,  0.0),
+        Vec3D::new(-1.0,  1.0,  1.0),
+        Vec3D::new( 0.0, -1.0, -1.0),
+        Vec3D::new( 0.0, -1.0,  0.0),
+        Vec3D::new( 0.0, -1.0,  1.0),
+        Vec3D::new( 0.0,  0.0, -1.0),
+        Vec3D::new( 0.0,  0.0,  0.0),
+        Vec3D::new( 0.0,  0.0,  1.0),
+        Vec3D::new( 0.0,  1.0, -1.0),
+        Vec3D::new( 0.0,  1.0,  0.0),
+        Vec3D::new( 0.0,  1.0,  1.0),
+        Vec3D::new( 1.0, -1.0, -1.0),
+        Vec3D::new( 1.0, -1.0,  0.0),
+        Vec3D::new( 1.0, -1.0,  1.0),
+        Vec3D::new( 1.0,  0.0, -1.0),
+        Vec3D::new( 1.0,  0.0,  0.0),
+        Vec3D::new( 1.0,  0.0,  1.0),
+        Vec3D::new( 1.0,  1.0, -1.0),
+        Vec3D::new( 1.0,  1.0,  0.0),
+        Vec3D::new( 1.0,  1.0,  1.0)];
+
+    let images = lat.relevant_images(3.0);
+    assert_eq!(expected.len(), images.len());
+    assert_eq!(expected[1][2], images[1][2]);
 }
 
 #[test]
