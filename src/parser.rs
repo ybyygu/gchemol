@@ -1,16 +1,28 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::85054519-f2d5-4c63-994a-78bbe4f9a30f][85054519-f2d5-4c63-994a-78bbe4f9a30f]]
+#![macro_use]
 use std::fmt::Debug;
 use nom::IResult;
-use nom::{alphanumeric,
-          eol,
-          double_s,
-          is_digit,
-          digit,
-          line_ending,
-          space,
-          not_line_ending,
-          alpha,
+pub use nom::{
+    alphanumeric,
+    eol,
+    double_s,
+    is_digit,
+    digit,
+    line_ending,
+    space,
+    not_line_ending,
+    alpha,
 };
+
+/// whitespace including one or more spaces or tabs
+named!(pub space_token<&str, &str>, eat_separator!(&b" \t"[..]));
+macro_rules! sp (
+    ($i:expr, $($args:tt)*) => (
+        {
+            sep!($i, space_token, $($args)*)
+        }
+    )
+);
 
 fn dump<T: Debug>(res: IResult<&str,T>) {
     match res {
@@ -25,7 +37,7 @@ pub fn end_of_line(input: &str) -> IResult<&str, &str> {
 }
 
 // -1, 0, 1, 2, ...
-named!(signed_digit<&str, isize>,
+named!(pub signed_digit<&str, isize>,
        map_res!(
            recognize!
                (
@@ -40,10 +52,17 @@ fn test_nom_signed_digit() {
     let x = signed_digit("-1");
     let x = signed_digit("1");
 }
+
+named!(pub unsigned_digit<&str, usize>,
+    map_res!(
+        digit,
+        str::parse
+    )
+);
 // 85054519-f2d5-4c63-994a-78bbe4f9a30f ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::c755a2a3-458f-42b1-aeb4-7c89071491ef][c755a2a3-458f-42b1-aeb4-7c89071491ef]]
-named!(one_line<&str, &str>,
+named!(pub take_until_end_of_line<&str, &str>,
     terminated!(
         not_line_ending,
         end_of_line
@@ -52,7 +71,7 @@ named!(one_line<&str, &str>,
 
 #[test]
 fn test_nom_one_line() {
-    let x = one_line("this is the end\nok\n").unwrap();
+    let x = take_until_end_of_line("this is the end\nok\n").unwrap();
 }
 
 named!(digit_one_line<&str, usize>,
@@ -93,18 +112,6 @@ named!(pub xyz_array<&str, [f64; 3]>,
         z: double_s >>
         ([x, y, z])
        )
-);
-
-named!(pub xyz_array3<&str, [f64; 3]>,
-    do_parse!(
-          opt!(space)    >>
-        x: double_s      >>
-          space          >>
-        y: double_s      >>
-          space          >>
-        z: ws!(double_s) >>
-        ([x, y, z])
-    )
 );
 
 #[test]
@@ -169,7 +176,7 @@ named!(xyz_molecule<&str, Molecule>,
                 opt!(space)                >>
         n     : digit_one_line             >>
                 opt!(space)                >>
-        title : one_line                   >>
+        title : take_until_end_of_line                   >>
         atoms : many0!(xyz_atom) >>
         (
             new_molecule(title, atoms)
@@ -500,7 +507,7 @@ named!(gjf_molecule<&str, &str>,
         gjf_link0_section >>
         gjf_route_section >>
         title: gjf_title_section >>
-        one_line >>
+        take_until_end_of_line >>
         ("a")
     )
 );

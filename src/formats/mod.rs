@@ -27,11 +27,13 @@ pub trait ChemFileLike {
     }
 
     /// parse molecules from file `filename`
-    fn parse<P: AsRef<Path>>(&self, filename: P) -> Result<Vec<Molecule>>;
+    fn parse<P: AsRef<Path>>(&self, filename: P) -> Result<Vec<Molecule>> {
+        bail!("Not implemented yet.");
+    }
 
     /// format molecules in certain format
     fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
-        bail!("No implemented yet.");
+        bail!("Not implemented yet.");
     }
 
     /// Save multiple molecules in a file
@@ -96,4 +98,6 @@ fn test_formats_plainxyz() {
     assert_eq!(1, mols.len());
     assert_eq!(12, mols[0].natoms());
 }
+
+pub mod vasp;
 // 7faf1529-aae1-4bc5-be68-02d8ccdb9267 ends here

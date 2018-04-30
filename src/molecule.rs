@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-29 Sun 19:05>
+//       UPDATED:  <2018-04-30 Mon 17:16>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -138,6 +138,10 @@ impl Molecule {
     /// TODO
     pub fn set_symbols(&mut self, symbols: Vec<String>) {
         //
+    }
+
+    pub fn set_lattice(&mut self, lat: Lattice) {
+        self.lattice = Some(lat);
     }
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
