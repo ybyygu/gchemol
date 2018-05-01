@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-05-01 Tue 08:35>
+//       UPDATED:  <2018-05-01 Tue 09:48>
 //===============================================================================#
 
 use nalgebra::{
@@ -83,6 +83,39 @@ impl Lattice {
         }
     }
 
+    /// Construct lattice from lattice parameters
+    /// Unit cell angles in degrees, lengths in Angstrom
+    pub fn from_params(a: f64, b: f64, c: f64, alpha: f64, beta: f64, gamma: f64) -> Self {
+        let alpha = alpha.to_radians();
+        let beta  = beta.to_radians();
+        let gamma = gamma.to_radians();
+
+        let acos = alpha.cos();
+        let bcos = beta.cos();
+        let gcos = gamma.cos();
+        let gsin = gamma.sin();
+        let v = (1.
+                 - acos.powi(2)
+                 - bcos.powi(2)
+                 - gcos.powi(2)
+                 + 2.0 * acos * bcos * gcos).sqrt();
+
+        let va = [a,
+                  0.0,
+                  0.0];
+
+        let vb = [b*gcos,
+                  b*gsin,
+                  0.0
+                  ];
+
+        let vc = [c*bcos,
+                  c*(acos - bcos*gcos)/gsin,
+                  c*v/gsin];
+
+        Lattice::new([va, vb, vc])
+    }
+
     /// Set cell origin in Cartesian coordinates
     pub fn set_origin(&mut self, loc: [f64; 3]) {
         self.origin = Vec3D::from(loc);
@@ -109,6 +142,7 @@ impl Lattice {
         )
     }
 
+    /// Scale Lattice by a positive constant
     pub fn scale_by(&mut self, v: f64) {
         debug_assert!(v > 0.);
         self.matrix *= v;
@@ -195,6 +229,10 @@ fn test_lattice_init() {
     assert_relative_eq!(alpha, 90.0, epsilon=1e-4);
     assert_relative_eq!(beta, 90.0, epsilon=1e-4);
     assert_relative_eq!(gamma, 73.5386, epsilon=1e-4);
+
+    let lat = Lattice::from_params(a, b, c, alpha, beta, gamma);
+    assert_eq!((a, b, c), lat.lengths());
+    assert_eq!((alpha, beta, gamma), lat.angles());
 }
 
 #[test]
