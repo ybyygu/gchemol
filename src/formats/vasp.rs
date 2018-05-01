@@ -79,7 +79,6 @@ named!(poscar_select_direct_lines<&str, (&str, &str)>,
 fn test_poscar_select_direct_lines() {
     let x = poscar_select_direct_lines("Selective dynamics
 Direct");
-    println!("{:?}", x);
 }
 
 // 0.05185     0.39121     0.29921  T T T # O
@@ -111,20 +110,20 @@ struct PoscarData<'a> {
 
 named!(poscar_data<&str, PoscarData>,
     do_parse!(
-        title            : take_until_end_of_line  >>
-        lattice_constant : poscar_lattice_constant >>
-        cell_vectors     : poscar_cell_vectors     >>
-        ion_types        : poscar_ion_types        >>
-        poscar_select_direct_lines                 >>
-        ion_positions    : many1!(poscar_position) >>
+        title            : take_until_end_of_line     >>
+        lattice_constant : poscar_lattice_constant    >>
+        cell_vectors     : poscar_cell_vectors        >>
+        ion_types        : poscar_ion_types           >>
+        labels           : poscar_select_direct_lines >>
+        ion_positions    : many1!(poscar_position)    >>
         (
             PoscarData {
                 title,
                 lattice_constant,
                 cell_vectors,
                 ion_types,
-                selective_dynamics: false,
-                direct_coordinates: true,
+                selective_dynamics: labels.0.starts_with("S"),
+                direct_coordinates: labels.1.starts_with("D"),
                 ion_positions,
             }
         )
@@ -137,14 +136,8 @@ fn poscar_molecule(txt: &str) -> Result<Molecule> {
     let mut mol = Molecule::new(poscar.title.trim());
 
     let mut tvs = poscar.cell_vectors;
-    for i in 0..3 {
-        for j in 0..3 {
-            tvs[i][j] *= poscar.lattice_constant;
-        }
-    }
-
-    let lat = Lattice::new(tvs);
-    mol.set_lattice(lat);
+    let mut lat = Lattice::new(tvs);
+    lat.scale_by(poscar.lattice_constant);
 
     let mut symbols = vec![];
     let (syms, nums) = poscar.ion_types;
@@ -160,9 +153,14 @@ fn poscar_molecule(txt: &str) -> Result<Molecule> {
     }
 
     for (&sym, (pos, codes)) in symbols.iter().zip(poscar.ion_positions) {
+        let mut pos = pos;
+        if poscar.direct_coordinates {
+            pos = lat.to_cart(pos);
+        }
         let a = Atom::new(sym, pos);
         mol.add_atom(a);
     }
+    mol.set_lattice(lat);
 
     Ok(mol)
 }

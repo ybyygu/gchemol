@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-04-30 Mon 10:11>
+//       UPDATED:  <2018-05-01 Tue 08:35>
 //===============================================================================#
 
 use nalgebra::{
@@ -107,6 +107,11 @@ impl Lattice {
             va.angle(&vc).to_degrees(),
             va.angle(&vb).to_degrees(),
         )
+    }
+
+    pub fn scale_by(&mut self, v: f64) {
+        debug_assert!(v > 0.);
+        self.matrix *= v;
     }
 
     /// Get cell origin in Cartesian coordinates
