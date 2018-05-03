@@ -95,6 +95,20 @@ named!(atom_record<&str, ([f64; 3], Option<&str>)>,
     )
 );
 
+#[test]
+fn test_pdb_atom() {
+    // let line = "ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474  1.00  0.00      UC1 SI\n";
+    let line = "ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474\n";
+    let x = atom_record(line);
+    println!("{:?}", x);
+}
+// ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::0394bb2f-e054-4466-a090-04a0fbe69e03][0394bb2f-e054-4466-a090-04a0fbe69e03]]
+#[derive(Debug)]
+struct Pair(usize, usize);
+use parser::space_token;
+
 // https://www.wwpdb.org/documentation/file-format-content/format33/sect10.html
 //
 // COLUMNS       DATA  TYPE      FIELD        DEFINITION
@@ -111,33 +125,52 @@ named!(atom_record<&str, ([f64; 3], Option<&str>)>,
 // CONECT 1179  746 1184 1195 1203
 // CONECT 1179 1211 1222
 // CONECT 1021  544 1017 1020 1022
-named!(bond_record<&str, Vec<usize>>,
-    do_parse!(
-        tag!("CONECT") >>
-        sn1: take!(5) >>
-        ons: many_m_n!(1, 4, take!(5)) >>
-            take_until_end_of_line >>
-        // keep only non-empty index
-        (ons.iter().filter_map(|s| s.trim().parse().ok()).collect())
+// Expected to fail if atom index is larger than 9999, which I do not care
+named!(bond_record<&str, Vec<Pair>>, do_parse!(
+         tag!("CONECT")                       >>
+    sns: many_m_n!(2, 5, sp!(unsigned_digit)) >>
+         take_until_end_of_line               >>
+    (
+        {
+            let mut pairs = vec![];
+            let sn0 = sns[0];
+            for &sn in &sns[1..] {
+                pairs.push(Pair(sn0, sn));
+            }
+
+            pairs
+        }
     )
-);
+));
 
 #[test]
 fn test_pdb_bond_record() {
-    let line = "CONECT 1179 1211 1222          ";
+    let line = "CONECT 1179 1211 1222         ";
     let (_, x) = bond_record(line).unwrap();
     assert_eq!(2, x.len());
-    let line = "CONECT 1179  746 1184 1195 1203";
+
+    let line = "CONECT 2041 2040 2042";
     let (_, x) = bond_record(line).unwrap();
-    assert_eq!(4, x.len());
-    assert_eq!(1195, x[2]);
+    assert_eq!(2, x.len());
+
+    let line = "CONECT 1179  746 11        \n";
+    let (r, x) = bond_record(line).unwrap();
+    assert_eq!(2, x.len());
 }
 
+named!(bonds<&str, Vec<Pair>>, do_parse!(
+    bonds: many0!(bond_record) >>
+    (
+        bonds.into_iter().flat_map(|x| x).collect()
+    )
+));
+
 #[test]
-fn test_pdb_atom() {
-    // let line = "ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474  1.00  0.00      UC1 SI\n";
-    let line = "ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474\n";
-    let x = atom_record(line);
-    println!("{:?}", x);
+fn test_pdb_bonds() {
+    let lines = "CONECT 2028 2027 2029
+CONECT 2041 2040 2042
+CONECT 2043 2042 2044            ";
+    let (_, x) = bonds(lines).unwrap();
+    assert_eq!(6, x.len());
 }
-// ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8 ends here
+// 0394bb2f-e054-4466-a090-04a0fbe69e03 ends here
