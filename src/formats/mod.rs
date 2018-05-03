@@ -101,4 +101,5 @@ fn test_formats_plainxyz() {
 
 pub mod vasp;
 pub mod pdb;
+pub mod mol2;
 // 7faf1529-aae1-4bc5-be68-02d8ccdb9267 ends here

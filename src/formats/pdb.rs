@@ -102,6 +102,15 @@ fn test_pdb_atom() {
     let x = atom_record(line);
     println!("{:?}", x);
 }
+
+named!(pdb_atoms<&str, &str>, do_parse!(
+    many1!(atom_record) >>
+    (
+        {
+            "a"
+        }
+    )
+));
 // ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::0394bb2f-e054-4466-a090-04a0fbe69e03][0394bb2f-e054-4466-a090-04a0fbe69e03]]

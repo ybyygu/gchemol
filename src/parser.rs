@@ -24,6 +24,10 @@ macro_rules! sp (
     )
 );
 
+/// not any whitespace character
+/// will not consume "\n" character
+named!(pub not_space<&str, &str>, is_not!(" \t\r\n"));
+
 fn dump<T: Debug>(res: IResult<&str,T>) {
     match res {
         IResult::Done(rest, value) => {println!("Done {:?} {:?}",rest,value)},
