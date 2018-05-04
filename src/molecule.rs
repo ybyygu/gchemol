@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-04 Fri 17:36>
+//       UPDATED:  <2018-05-04 Fri 20:46>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -203,17 +203,45 @@ impl Molecule {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::5916eec2-ec7e-4525-bc6c-fade1d250a16][5916eec2-ec7e-4525-bc6c-fade1d250a16]]
 #[derive(Debug, Clone)]
-pub struct BondView<'a>(&'a MolGraph);
+/// Convenient read-only view of bonds in molecule
+pub struct BondView<'a> {
+    mapping: HashMap<(usize, usize), BondIndex>,
+    parent: &'a Molecule,
+}
+
+impl<'a> BondView<'a> {
+    pub fn new(mol: &'a Molecule) -> Self {
+        // reverse mapping atom id and internal graph node index
+        let mut d = HashMap::new();
+        let mut i = 1;
+        for n in mol.graph.node_indices() {
+            d.insert(n, i);
+            i += 1;
+        }
+        // use a hash map to cache graph edge indices
+        let mut mapping = HashMap::new();
+        for e in mol.graph.edge_indices() {
+            let (ni, nj) = mol.graph.edge_endpoints(e).unwrap();
+            let ai = d[&ni];
+            let aj = d[&nj];
+            mapping.insert((ai, aj), e);
+            mapping.insert((aj, ai), e);
+        }
+
+        BondView {
+            mapping,
+            parent: mol,
+        }
+    }
+}
 
 impl<'a> Index<(usize, usize)> for BondView<'a>
 {
     type Output = Bond;
 
     fn index(&self, bond_index: (usize, usize)) -> &Bond {
-        let i = NodeIndex::new(bond_index.0);
-        let j = NodeIndex::new(bond_index.1);
-        let e = self.0.find_edge(i, j).unwrap();
-        &self.0[e]
+        let e = self.mapping[&bond_index];
+        &self.parent.graph[e]
     }
 }
 
@@ -224,8 +252,14 @@ fn test_bonds_view() {
     let a2 = mol.add_atom(Atom::new("H", [1.0; 3]));
     let a3 = mol.add_atom(Atom::new("H", [2.0; 3]));
     mol.add_bond(a1, a2, Bond::default());
-    let bv = BondView(&mol.graph);
-    let b = &bv[(0, 1)];
+    let bv = BondView::new(&mol);
+    let b = &bv[(1, 2)];
+}
+
+impl Molecule {
+    pub fn view_bonds(&self) -> BondView {
+        BondView::new(&self)
+    }
 }
 // 5916eec2-ec7e-4525-bc6c-fade1d250a16 ends here
 
