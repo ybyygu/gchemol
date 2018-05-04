@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-04-30 Mon 17:16>
+//       UPDATED:  <2018-05-04 Fri 17:36>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -150,33 +150,62 @@ impl Molecule {
 use std::ops::Index;
 
 #[derive(Debug, Clone)]
-pub struct AtomsView<'a>(&'a MolGraph);
+pub struct AtomView<'a> {
+    /// mapping a positive integer to internal graph node index
+    mapping: HashMap<usize, AtomIndex>,
+    /// parent molecule struct
+    parent: &'a Molecule,
+}
 
-impl<'a> Index<usize> for AtomsView<'a>
+impl<'a> AtomView<'a> {
+    pub fn new(mol: &'a Molecule) -> Self {
+        // use a hash map to cache graph node indices
+        let mut mapping = HashMap::new();
+        let mut i = 1;
+        for index in mol.graph.node_indices() {
+            mapping.insert(i, index);
+            i += 1;
+        }
+        AtomView {
+            mapping,
+            parent: mol
+        }
+    }
+}
+
+/// Index the atoms in `Molecule` by index counting from 1
+/// Will panic if index is invalid
+impl<'a> Index<usize> for AtomView<'a>
 {
     type Output = Atom;
 
     fn index(&self, index: usize) -> &Atom {
-        let index = NodeIndex::new(index);
-        &self.0[index]
+        let n = self.mapping[&index];
+        &self.parent.graph[n]
     }
 }
 
 #[test]
-fn test_atoms_view() {
+fn test_atom_view() {
     let mut mol = Molecule::default();
     mol.add_atom(Atom::new("Fe", [0.0; 3]));
 
-    let av = AtomsView(&mol.graph);
-    assert_eq!("Fe", av[0].symbol())
+    let av = AtomView::new(&mol);
+    assert_eq!("Fe", av[1].symbol());
+}
+
+impl Molecule {
+    pub fn view_atoms(&self) -> AtomView {
+        AtomView::new(&self)
+    }
 }
 // e1d0c51a-0dd7-4977-ae54-7928ee46d373 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::5916eec2-ec7e-4525-bc6c-fade1d250a16][5916eec2-ec7e-4525-bc6c-fade1d250a16]]
 #[derive(Debug, Clone)]
-pub struct BondsView<'a>(&'a MolGraph);
+pub struct BondView<'a>(&'a MolGraph);
 
-impl<'a> Index<(usize, usize)> for BondsView<'a>
+impl<'a> Index<(usize, usize)> for BondView<'a>
 {
     type Output = Bond;
 
@@ -195,7 +224,7 @@ fn test_bonds_view() {
     let a2 = mol.add_atom(Atom::new("H", [1.0; 3]));
     let a3 = mol.add_atom(Atom::new("H", [2.0; 3]));
     mol.add_bond(a1, a2, Bond::default());
-    let bv = BondsView(&mol.graph);
+    let bv = BondView(&mol.graph);
     let b = &bv[(0, 1)];
 }
 // 5916eec2-ec7e-4525-bc6c-fade1d250a16 ends here
@@ -208,6 +237,7 @@ impl Molecule {
         let n = self.graph.add_node(atom);
         let atom = self.get_atom_mut(n).unwrap();
         atom.index = n;
+
 
         n
     }

@@ -109,7 +109,3 @@ fn test_mol2_bond() {
     let x = bond_record("1	1	2	1 BACKBONE\n");
 }
 // e6d75d58-cab8-47f3-85ea-e710192a4a82 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::5239f37d-ccc7-4f8f-9200-ecfff68c5751][5239f37d-ccc7-4f8f-9200-ecfff68c5751]]
-
-// 5239f37d-ccc7-4f8f-9200-ecfff68c5751 ends here
