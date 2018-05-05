@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-05-05 Sat 14:33>
+//       UPDATED:  <2018-05-05 Sat 14:45>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -420,7 +420,7 @@ impl Molecule {
         let path = Path::new(&filename);
         let ext = file_extension_lower(&path)?;
         if ext == "xyz" {
-            let symbols: Vec<_> = self.symbols().collect();
+            let symbols = self.symbols();
             let positions = self.positions();
 
             return write_as_xyz(&symbols, &positions, &filename);

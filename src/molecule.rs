@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-05 Sat 14:36>
+//       UPDATED:  <2018-05-05 Sat 14:45>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -113,14 +113,14 @@ impl Molecule {
         self.graph.edge_indices().map(move |e| &self.graph[e])
     }
 
-    /// Return an iterator over positions of all atoms in the molecule.
+    /// Return positions of all atoms in the molecule.
     pub fn positions(&self) -> Vec<Point3D> {
         self.atoms().map(|ref a| a.position()).collect()
     }
 
-    /// Return an iterator over the symbols of all  atoms in the molecule.
-    pub fn symbols(&self) -> impl Iterator<Item = &str> {
-        self.atoms().map(|ref a| a.symbol())
+    /// Return symbols of all  atoms in the molecule.
+    pub fn symbols(&self) -> Vec<&str> {
+        self.atoms().map(|ref a| a.symbol()).collect()
     }
 
     /// Set positions of atoms
