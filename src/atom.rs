@@ -80,6 +80,8 @@ fn test_atom_builder() {
         .element(13)
         .momentum(0.2, 0.2, 0.3)
         .finish();
+
+    assert_eq!(13, a.number());
 }
 // d333cb1f-e622-462f-a892-4906c85b7da0 ends here
 

@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-05-05 Sat 14:45>
+//       UPDATED:  <2018-05-05 Sat 16:52>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -375,6 +375,54 @@ pub fn to_mol2file(molecule: &Molecule, filename: &str) -> Result<()>{
     Ok(())
 }
 // bd8ea4f1-b38f-4c81-a722-96cf78fb53a6 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::d317857c-a18d-4630-9155-119cf3533d5a][d317857c-a18d-4630-9155-119cf3533d5a]]
+type ReadResult = Result<Vec<Molecule>>;
+
+/// Some options for reading chemical file
+pub struct ReadOptions {
+    fmt: Option<String>,
+}
+
+impl Default for ReadOptions {
+    fn default() -> Self {
+        ReadOptions {
+            fmt: None,
+        }
+    }
+}
+
+impl ReadOptions {
+    pub fn new() -> Self {
+        ReadOptions::default()
+    }
+
+    /// set chemfile format
+    pub fn fmt(&mut self, fmt: &str) -> &mut Self {
+        self.fmt = Some(fmt.into()); self
+    }
+
+    /// read molecules from file
+    pub fn read(&self, path: &str) -> ReadResult {
+        bail!("Not implemented yet");
+    }
+
+}
+
+
+/// Read an iterator over `Molecule` from file.
+/// file format will be determined according to the path
+// https://stackoverflow.com/questions/26368288/how-do-i-stop-iteration-and-return-an-error-when-iteratormap-returns-a-result
+pub fn read(path: &str) -> Result<Vec<Molecule>> {
+    ReadOptions::new().read(path)
+}
+
+/// Write molecules into file
+/// file format will be determined according to the path
+pub fn write(path: &str, mols: &Vec<Molecule>) -> Result<()>{
+    Ok(())
+}
+// d317857c-a18d-4630-9155-119cf3533d5a ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::448a8479-f0e8-412a-9e8d-83865581eb43][448a8479-f0e8-412a-9e8d-83865581eb43]]
 use {

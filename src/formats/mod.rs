@@ -37,7 +37,7 @@ pub trait ChemFileLike {
     }
 
     /// Save multiple molecules in a file
-    fn save(&self, mols: &Vec<Molecule>, filename: &str) -> Result<()> {
+    fn to_file(&self, mols: &Vec<Molecule>, filename: &str) -> Result<()> {
         let lines = self.format(mols)?;
         io::write_file(lines, filename)?;
         Ok(())
