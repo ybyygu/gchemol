@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-04-27 Fri 15:44>
+//       UPDATED:  <2018-05-05 Sat 14:33>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -33,7 +33,9 @@ pub fn read_file<P: AsRef<Path>>(filename: P) -> Result<String> {
 
     Ok(buffer)
 }
+// 0f52a1ef-c664-45a9-ab96-6d31741ae8c0 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::4c8cdcee-a364-4ea9-a8b6-eca053456493][4c8cdcee-a364-4ea9-a8b6-eca053456493]]
 /// write string content to an external file
 pub fn write_file<P: AsRef<Path>>(content: String, filename: P) -> Result<()> {
     let path = filename.as_ref();
@@ -56,7 +58,7 @@ pub fn write_lines(lines: Vec<String>, filename: &str) -> Result<()> {
 
     Ok(())
 }
-// 0f52a1ef-c664-45a9-ab96-6d31741ae8c0 ends here
+// 4c8cdcee-a364-4ea9-a8b6-eca053456493 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::618eea82-a702-4d2f-a873-3807ead50d4b][618eea82-a702-4d2f-a873-3807ead50d4b]]
 /// write coordinates in xyz format
@@ -217,7 +219,7 @@ pub fn from_mol2file(filename: &str) -> Result<Molecule> {
             let y: f64 = parts[3].parse().unwrap();
             let z: f64 = parts[4].parse().unwrap();
             let mut atom = Atom::new(symbol, [x, y, z]);
-            atom.name = label.to_string();
+            atom.set_name(label);
             let a = molecule.add_atom(atom);
             atoms.insert(index, a);
         } else {
@@ -329,11 +331,12 @@ pub fn to_mol2file(molecule: &Molecule, filename: &str) -> Result<()>{
     lines.push_str("@<TRIPOS>ATOM\n");
     for (i, &ref atom) in molecule.atoms().enumerate() {
         let symbol = format_mol2_atom_type(atom);
-        let name = &atom.name;
+        let name = atom.name();
+        let position = atom.position();
         let xyz = format!("{:-12.6} {:-12.6} {:-12.6}",
-                          atom.position[0],
-                          atom.position[1],
-                          atom.position[2],
+                          position[0],
+                          position[1],
+                          position[2],
         );
 
         let index = i + 1;
@@ -418,7 +421,7 @@ impl Molecule {
         let ext = file_extension_lower(&path)?;
         if ext == "xyz" {
             let symbols: Vec<_> = self.symbols().collect();
-            let positions: Vec<_> = self.positions().map(|v| *v).collect();
+            let positions = self.positions();
 
             return write_as_xyz(&symbols, &positions, &filename);
         } else if ext == "mol2" {

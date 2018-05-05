@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-04 Fri 20:46>
+//       UPDATED:  <2018-05-05 Sat 14:36>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -114,8 +114,8 @@ impl Molecule {
     }
 
     /// Return an iterator over positions of all atoms in the molecule.
-    pub fn positions(&self) -> impl Iterator<Item = &Point3D> {
-        self.atoms().map(|ref a| &a.position)
+    pub fn positions(&self) -> Vec<Point3D> {
+        self.atoms().map(|ref a| a.position()).collect()
     }
 
     /// Return an iterator over the symbols of all  atoms in the molecule.
@@ -131,7 +131,7 @@ impl Molecule {
 
         for (&index, position) in indices.iter().zip(positions) {
             let mut atom = &mut self.graph[index];
-            atom.position = position;
+            atom.set_position(position);
         }
     }
 
@@ -440,7 +440,7 @@ use data::guess_bond_kind;
 
 impl Molecule {
     pub fn distance_matrix(&self) -> Vec<Vec<f64>>{
-        let positions: Vec<_> = self.positions().map(|a| *a ).collect();
+        let positions = self.positions();
         get_distance_matrix(positions)
     }
 
@@ -506,7 +506,7 @@ impl Molecule {
     /// Set atom position
     pub fn set_position(&mut self, index: AtomIndex, position: Point3D) {
         let atom = &mut self.graph[index];
-        atom.position = position;
+        atom.set_position(position);
     }
 
     /// Return the shortest distance numbered in bonds between two atoms
@@ -529,9 +529,11 @@ impl Molecule {
         let nodes: Vec<_> = self.graph.node_indices().collect();
         for n in nodes {
             let mut atom = &mut self.graph[n];
+            let mut position = atom.position();
             for v in 0..3 {
-                atom.position[v] += loc[v];
+                position[v] += loc[v];
             }
+            atom.set_position(position);
         }
     }
 }
@@ -580,7 +582,7 @@ fn get_distance_bounds_v1(mol: &Molecule) -> Bounds {
                 bound.swap(0, 1);
             }
 
-            let dij = euclidean_distance(atom_i.position, atom_j.position);
+            let dij = atom_i.distance(atom_j);
             // if i and j is directly bonded
             // set covalent radius as the lower bound
             // or set vdw radius as the lower bound if not bonded
@@ -625,7 +627,7 @@ fn find_rigid_pairs(mol: &Molecule, bounds: &mut Bounds) {
     for a in mol.atoms() {
         for b in mol.atoms() {
             if a.index < b.index {
-                let dij = euclidean_distance(a.position, b.position);
+                let dij = a.distance(b);
                 let lij = bounds[&(a.index, b.index)];
                 let uij = bounds[&(b.index, a.index)];
                 if let Some(nb) = mol.nbonds_between(a.index, b.index) {
@@ -658,7 +660,7 @@ fn get_distance_bounds_v2(mol: &Molecule) -> Bounds {
     for a in mol.atoms() {
         for b in mol.atoms() {
             if a.index < b.index {
-                let dij = euclidean_distance(a.position, b.position);
+                let dij = a.distance(b);
                 let bound = mol.distance_bound(a.index, b.index).unwrap();
                 bounds.insert((a.index, b.index), bound[0]);
                 bounds.insert((b.index, a.index), bound[1]);
@@ -689,7 +691,7 @@ fn get_force_between(lij: f64, uij: f64, dij: f64) -> (f64, f64) {
 impl Molecule {
     pub fn set_momentum(&mut self, index: AtomIndex, m: Point3D) {
         let mut atom = &mut self.graph[index];
-        atom.momentum = m;
+        atom.set_momentum(m);
     }
 
     /// Clean up molecule geometry using stress majorization algorithm
@@ -707,7 +709,7 @@ impl Molecule {
             let mut fxz = 0.0;
             for i in 0..nnodes {
                 let node_i = node_indices[i];
-                let mut pi = self.get_atom(node_i).expect("atom i from node_i").position;
+                let mut pi = self.get_atom(node_i).expect("atom i from node_i").position();
                 let mut disp = [0.0; 3];
                 let mut wijs = vec![];
                 let npairs = (nnodes - 1) as f64;
@@ -715,7 +717,7 @@ impl Molecule {
                 for j in 0..nnodes {
                     if i == j {continue};
                     let node_j = node_indices[j];
-                    let pj = self.get_atom(node_j).expect("atom j from node_j").position;
+                    let pj = self.get_atom(node_j).expect("atom j from node_j").position();
                     let dij = euclidean_distance(pi, pj);
                     let mut bound = [
                         bounds[&(node_i, node_j)],
@@ -953,10 +955,10 @@ fn test_molecule_basic() {
     // pick a single atom
     let a = mol.get_atom(0).expect("failed to get atom with index 0");
     assert_eq!("Fe", a.symbol());
-    assert_eq!(1.2, a.position[0]);
+    assert_eq!(1.2, a.position()[0]);
     let a = mol.get_atom(a1).expect("failed to get atom a1");
     assert_eq!("Fe", a.symbol());
-    assert_eq!(1.2, a.position[0]);
+    assert_eq!(1.2, a.position()[0]);
 
 }
 
@@ -974,7 +976,7 @@ fn test_molecule_other() {
                      [-1.97203687,  0.62556577,  0.0081889 ]];
     mol.set_positions(positions.to_vec());
     let a = mol.get_atom(0).expect("failed to get atom with index 0");
-    assert_eq!(a.position[0], -0.90203687);
+    assert_eq!(a.position()[0], -0.90203687);
 
     // loop over fragments
     let frags = mol.fragment();

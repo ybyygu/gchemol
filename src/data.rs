@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-04-24 Tue 21:26>
+//       UPDATED:  <2018-05-05 Sat 14:08>
 //===============================================================================#
 
 use {
@@ -180,7 +180,7 @@ fn get_vdw_radius(element_number: usize) -> Option<f64> {
 pub fn guess_bond_kind(atom1: &Atom, atom2: &Atom) -> BondKind {
     if let Some(cr1) = get_cov_radius(atom1.number(), 1) {
         if let Some(cr2) = get_cov_radius(atom2.number(), 1) {
-            let d12 = euclidean_distance(atom1.position, atom2.position);
+            let d12 = atom1.distance(atom2);
 
             let rcutoff = (cr1 + cr2)*1.15;
             if d12 > rcutoff {
@@ -271,7 +271,7 @@ impl Molecule {
         } else {
             // non-bonding
             // treat as weak bonding if atom pair are already close to each other
-            let dij = euclidean_distance(atom_i.position, atom_j.position);
+            let dij = atom_i.distance(atom_j);
             if dij > srcij1*1.2 && dij < srwij {
                 bound = [srcij1*1.2, srwij];
             } else {
