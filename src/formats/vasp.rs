@@ -213,8 +213,10 @@ impl ChemFileLike for POSCARFile {
         ["POSCAR", "CONTCAR", ".poscar"].to_vec()
     }
 
-    fn parse<P: AsRef<Path>>(&self, filename: P) -> Result<Vec<Molecule>> {
-        let path = filename.as_ref();
+    // fn parse<P: AsRef<Path>>(&self, filename: P) -> Result<Vec<Molecule>> {
+    fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
+        // let path = filename.as_ref();
+        let path = filename;
 
         let txt = io::read_file(path)?;
         // TODO: how to handle parsing error?

@@ -5,6 +5,11 @@ use std::path::{Path, PathBuf};
 use Atom;
 use Molecule;
 
+pub mod vasp;
+pub mod pdb;
+pub mod mol2;
+
+/// Unified behaviors for all chemical file formats
 pub trait ChemFileLike {
     /// file type string
     fn ftype(&self) -> &str;
@@ -13,12 +18,11 @@ pub trait ChemFileLike {
     /// [".xyz", ".mol2"]
     fn extensions(&self) -> Vec<&str>;
 
-    /// test if file `filename` is parable
-    fn parsable<P: AsRef<Path>>(&self, path: P) -> bool {
-        let path = format!("{}", path.as_ref().display());
-        let path = path.to_lowercase();
+    /// Determine if file `filename` is parable according to its supported file extensions
+    fn parsable(&self, filename: &str) -> bool {
+        let filename = filename.to_lowercase();
         for s in self.extensions() {
-        if path.ends_with(&s.to_lowercase()) {
+            if filename.ends_with(&s.to_lowercase()) {
                 return true;
             }
         }
@@ -27,13 +31,13 @@ pub trait ChemFileLike {
     }
 
     /// parse molecules from file `filename`
-    fn parse<P: AsRef<Path>>(&self, filename: P) -> Result<Vec<Molecule>> {
-        bail!("Not implemented yet.");
+    fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
+        unimplemented!();
     }
 
     /// format molecules in certain format
     fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
-        bail!("Not implemented yet.");
+        unimplemented!();
     }
 
     /// Save multiple molecules in a file
@@ -45,6 +49,7 @@ pub trait ChemFileLike {
 }
 
 /// plain xyz coordinates with atom symbols
+#[derive(Debug)]
 pub struct PlainXYZFile();
 
 impl ChemFileLike for PlainXYZFile {
@@ -58,9 +63,8 @@ impl ChemFileLike for PlainXYZFile {
     }
 
     /// parse molecules from file `filename`
-    fn parse<P: AsRef<Path>>(&self, filename: P) -> Result<Vec<Molecule>> {
-        let path = filename.as_ref();
-        let txt = io::read_file(path)?;
+    fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
+        let txt = io::read_file(filename)?;
         let mut mol = Molecule::new("from plain coordinates");
         for line in txt.lines() {
             let line = line.trim();
@@ -99,7 +103,31 @@ fn test_formats_plainxyz() {
     assert_eq!(12, mols[0].natoms());
 }
 
-pub mod vasp;
-pub mod pdb;
-pub mod mol2;
+
+/// guess the most appropriate file format by its file extensions
+pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>>{
+    let backends: Vec<Box<ChemFileLike>> = vec![
+        Box::new(PlainXYZFile()),
+        Box::new(vasp::POSCARFile()),
+    ];
+
+    // 1. by file type
+    if let Some(fmt) = fmt {
+        for x in backends {
+            if x.ftype() == fmt.to_lowercase() {
+                return Some(x);
+            }
+        }
+    // 2. or by file extension
+    } else {
+        for x in backends {
+            if x.parsable(path) {
+                return Some(x);
+            }
+        }
+    }
+
+    // 3. return None if no available backend
+    None
+}
 // 7faf1529-aae1-4bc5-be68-02d8ccdb9267 ends here
