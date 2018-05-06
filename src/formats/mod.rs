@@ -31,11 +31,13 @@ pub trait ChemFileLike {
     }
 
     /// parse molecules from file `filename`
+    /// file will be write-only if not implemented
     fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
         unimplemented!();
     }
 
     /// format molecules in certain format
+    /// file will be read-only if not implemented
     fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
         unimplemented!();
     }
@@ -45,6 +47,14 @@ pub trait ChemFileLike {
         let lines = self.format(mols)?;
         io::write_file(lines, filename)?;
         Ok(())
+    }
+
+
+    /// brief description about a chemical file format
+    fn describe(&self) {
+        println!("filetype: {:?}, possible extensions: {:?}",
+                 self.ftype(),
+                 self.extensions());
     }
 }
 
@@ -103,7 +113,6 @@ fn test_formats_plainxyz() {
     assert_eq!(12, mols[0].natoms());
 }
 
-
 /// guess the most appropriate file format by its file extensions
 pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>>{
     let backends: Vec<Box<ChemFileLike>> = vec![
@@ -127,7 +136,25 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
         }
     }
 
-    // 3. return None if no available backend
+    // 3. return None if no suitable backend
     None
+}
+
+/// description of all backends
+pub fn describe_backends() {
+    let backends: Vec<Box<ChemFileLike>> = vec![
+        Box::new(PlainXYZFile()),
+        Box::new(vasp::POSCARFile()),
+    ];
+
+    for cf in backends {
+        cf.describe();
+    }
+}
+
+#[test]
+#[ignore]
+fn test_formats_descrb() {
+    describe_backends();
 }
 // 7faf1529-aae1-4bc5-be68-02d8ccdb9267 ends here
