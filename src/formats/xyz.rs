@@ -72,65 +72,14 @@ H -13.7062  1.5395  0.0000";
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::c6258370-89a6-4eda-866c-41d60ef03e44][c6258370-89a6-4eda-866c-41d60ef03e44]]
 use std::str;
 use std::fs::File;
-use std::io::{self, BufReader};
 use std::io::prelude::*;
+
+use nom::IResult;
 
 use errors::*;
 use formats::{
     ChemFileLike,
 };
-
-use nom::IResult;
-
-const BUF_SIZE: usize = 8 * 1024;
-fn read_large_file(filename: &str) -> Result<Vec<Molecule>> {
-    let fp = File::open(filename).chain_err(|| "failed")?;
-    let mut reader = BufReader::with_capacity(BUF_SIZE, fp);
-
-    let mut mols: Vec<Molecule> = vec![];
-    let mut remained = String::new();
-    let mut chunk = String::new();
-    'out: loop {
-        let length = {
-            let buffer = reader.fill_buf().chain_err(|| "file buffer reading error")?;
-            let new = str::from_utf8(&buffer).unwrap().to_string();
-            // chunk = buffer + remained
-            chunk.clear();
-            chunk.push_str(&remained);
-            chunk.push_str(&new);
-            loop {
-                // println!("inner {:?}", j);
-                // fill chunk with remained data
-                match get_molecule_from(&chunk) {
-                    IResult::Error(err) => {
-                        eprintln!("{:?}", err);
-                        eprintln!("{:}", chunk);
-                        break 'out;
-                    },
-                    IResult::Done(r, mol) => {
-                        // println!("got mol with {:?} atoms", mol.natoms());
-                        mols.push(mol);
-                        remained = String::from(r);
-                    },
-                    IResult::Incomplete(i) => {
-                        // eprintln!("need data: {:?}", i);
-                        remained = chunk.clone();
-                        break
-                    },
-                }
-                // clear chunk
-                chunk.clear();
-                chunk.push_str(&remained);
-            }
-            buffer.len()
-        };
-
-        if length == 0 { break; }
-        reader.consume(length);
-    }
-
-    Ok(mols)
-}
 
 struct XYZFile();
 
@@ -143,8 +92,8 @@ impl ChemFileLike for XYZFile {
         vec![".xyz"]
     }
 
-    fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
-        read_large_file(filename)
+    fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
+        get_molecule_from(chunk)
     }
 }
 
