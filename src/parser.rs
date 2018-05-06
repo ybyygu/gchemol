@@ -78,7 +78,7 @@ fn test_nom_one_line() {
     let x = take_until_end_of_line("this is the end\nok\n").unwrap();
 }
 
-named!(digit_one_line<&str, usize>,
+named!(pub digit_one_line<&str, usize>,
     map_res!(
         terminated!(digit, end_of_line),
         str::parse
@@ -99,10 +99,6 @@ fn test_nom_digit_one_line() {
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::f1450c5e-a4b0-4dff-a548-af7fe8e52660][f1450c5e-a4b0-4dff-a548-af7fe8e52660]]
 use Atom;
 use Molecule;
-
-named!(maybe_f64_s<&str, f64>,
-    map_res!(is_not_s!(" \t\n"), str::parse)
-);
 
 /// Consume three float numbers separated by one or more spaces
 /// Return position array
@@ -231,6 +227,10 @@ C -10.0949 -0.5455  0.0000
     let (_, mols) = xyz_molecule_many(txt).unwrap();
     assert_eq!(2, mols.len());
 }
+
+named!(maybe_f64_s<&str, f64>,
+       map_res!(is_not_s!(" \t\n"), str::parse)
+);
 // f1450c5e-a4b0-4dff-a548-af7fe8e52660 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc][c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc]]

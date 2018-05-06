@@ -5,9 +5,10 @@ use std::path::{Path, PathBuf};
 use Atom;
 use Molecule;
 
-pub mod vasp;
-pub mod pdb;
+pub mod xyz;
 pub mod mol2;
+pub mod pdb;
+pub mod vasp;
 
 /// Unified behaviors for all chemical file formats
 pub trait ChemFileLike {
@@ -141,6 +142,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
 }
 
 /// description of all backends
+// FIXME:
 pub fn describe_backends() {
     let backends: Vec<Box<ChemFileLike>> = vec![
         Box::new(PlainXYZFile()),
