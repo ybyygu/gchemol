@@ -95,6 +95,25 @@ impl ChemFileLike for XYZFile {
     fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
         get_molecule_from(chunk)
     }
+
+    fn format_molecule(&self, mol: &Molecule) -> Result<String> {
+        // meta information
+        let mut lines = String::new();
+        lines.push_str(&format!("{}\n", mol.natoms()));
+        lines.push_str(&format!("{}\n", mol.title()));
+
+        // coordinates
+        for a in mol.atoms() {
+            let p = a.position();
+            let sym = a.symbol();
+            let s = format!("{:6} {:-18.6}{:-18.6}{:-18.6}\n",
+                            sym,
+                            p[0], p[1], p[2]);
+            lines.push_str(&s);
+        }
+
+        Ok(lines)
+    }
 }
 
 #[test]

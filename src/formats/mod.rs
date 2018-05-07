@@ -38,10 +38,21 @@ pub trait ChemFileLike {
         false
     }
 
+    /// Formatted representation of a molecule
+    fn format_molecule(&self, mol: &Molecule) -> Result<String> {
+        unimplemented!()
+    }
+
     /// format molecules in certain format
     /// file will be read-only if not implemented
     fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
-        unimplemented!();
+        let mut ms = String::new();
+        for mol in mols {
+            let m = self.format_molecule(mol)?;
+            ms.push_str(&m);
+        }
+
+        Ok(ms)
     }
 
     /// Save multiple molecules in a file
