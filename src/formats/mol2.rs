@@ -1,5 +1,6 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ff90f63c-4f42-4a44-8333-59dac76a029f][ff90f63c-4f42-4a44-8333-59dac76a029f]]
 use Atom;
+
 use parser::{
     end_of_line,
     unsigned_digit,
@@ -70,9 +71,44 @@ fn test_mol2_atom() {
     let (r, a) = atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE	0.000").unwrap();
     assert_eq!("C", a.symbol());
 }
+
+fn format_atom(a: &Atom) -> String {
+    let position = a.position();
+    format!("{name} {x} {y} {z} {symbol} {subst_id} {subst_name} {charge}\n",
+            name  = a.name(),
+            x = position[0],
+            y = position[1],
+            z = position[2],
+            // FIXME:
+            subst_id = 1,
+            subst_name = "SUBUNIT",
+            symbol = get_atom_type(a),
+            charge = 0.0,
+    )
+}
+
+/// simple translation without considering the bonding pattern
+/// http://www.sdsc.edu/CCMS/Packages/cambridge/pluto/atom_types.html
+/// I just want material studio happy to accept my .mol2 file
+fn get_atom_type(atom: &Atom) -> &str {
+    match atom.symbol() {
+        "C" => "C.3",
+        "P" => "P.3",
+        "Co" => "Co.oh",
+        "Ru" => "Ru.oh",
+        "O" => "O.2",
+        "N" => "N.3",
+        "S" => "S.2",
+        "Ti" => "Ti.oh",
+        "Cr" => "Cr.oh",
+        _ => atom.symbol(),
+    }
+}
 // ff90f63c-4f42-4a44-8333-59dac76a029f ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::e6d75d58-cab8-47f3-85ea-e710192a4a82][e6d75d58-cab8-47f3-85ea-e710192a4a82]]
+use bond::{Bond, BondKind};
+
 use parser::{
     alphanumeric,
     space_token,
@@ -131,6 +167,23 @@ fn test_mol2_bonds() {
 
     let (_, x) = get_bonds_from("@<TRIPOS>BOND\n").unwrap();
     assert_eq!(0, x.len());
+}
+
+
+fn format_bond_order(bond: &Bond) -> &str {
+    match bond.kind {
+        BondKind::Single    => "1",
+        BondKind::Double    => "2",
+        BondKind::Triple    => "3",
+        BondKind::Quadruple => "4",
+        BondKind::Aromatic  => "ar",
+        BondKind::Partial   => "wk", // gaussian view use this
+        BondKind::Dummy     => "nc",
+    }
+}
+
+fn format_bond(bond: &Bond) -> String {
+    unimplemented!()
 }
 // e6d75d58-cab8-47f3-85ea-e710192a4a82 ends here
 
@@ -196,6 +249,7 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
             if natoms != atoms.len() {
                 eprintln!("Inconsistency: expected {} atoms, but found {}", natoms, atoms.len());
             }
+
             let mut mol = Molecule::new(title);
             // assign atoms
             for a in atoms {
@@ -306,6 +360,67 @@ impl ChemFileLike for Mol2File {
 
     fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
         get_molecule_from(chunk)
+    }
+
+    fn format_molecule(&self, mol: &Molecule) -> Result<String> {
+        let natoms = mol.natoms();
+        let nbonds = mol.nbonds();
+
+        let mut lines = String::new();
+        lines.push_str("#	Created by:	gchemol\n");
+        lines.push_str("\n");
+        lines.push_str("@<TRIPOS>MOLECULE\n");
+        lines.push_str(&format!("{}\n", mol.name));
+
+        // atom count, bond numbers, substructure numbers
+        lines.push_str(&format!("{:>5} {:>5}\n",
+                                natoms,
+                                nbonds));
+        // molecule type
+        lines.push_str("SMALL\n");
+        // customed charges
+        lines.push_str("USER CHARGES\n");
+        // atoms
+        lines.push_str("@<TRIPOS>ATOM\n");
+
+        // format atoms
+        let mut i = 1;
+        for a in mol.atoms() {
+            let line = format!("{} {}", i, format_atom(&a));
+            lines.push_str(&line);
+            i += 1;
+        }
+
+        // TODO: format bonds
+        if nbonds > 0 {
+            lines.push_str("@<TRIPOS>BOND\n");
+            let mut i = 0;
+            for b in mol.bonds() {
+                let line = format!("{} {}", i, format_bond(&b));
+                lines.push_str(&line);
+                i += 1;
+            }
+        }
+
+        // format crystal
+        if let Some(lat) = &mol.lattice {
+            lines.push_str("@<TRIPOS>CRYSIN\n");
+            let (a, b, c) = lat.lengths();
+            let (alpha, beta, gamma) = lat.angles();
+            let line = format!("{a:10.4} {b:10.4} {c:10.4} {alpha:5.2} {beta:5.2} {gamma:5.2} {sgrp} 1\n",
+                               a     = a,
+                               b     = b,
+                               c     = c,
+                               alpha = alpha,
+                               beta  = beta,
+                               gamma = gamma,
+                               // FIXME: crystal space group
+                               sgrp  = 4);
+
+            lines.push_str(&line);
+        }
+
+        Ok(lines)
     }
 }
 
