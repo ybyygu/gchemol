@@ -81,7 +81,7 @@ use formats::{
     ChemFileLike,
 };
 
-struct XYZFile();
+pub struct XYZFile();
 
 impl ChemFileLike for XYZFile {
     fn ftype(&self) -> &str {

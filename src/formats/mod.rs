@@ -51,7 +51,6 @@ pub trait ChemFileLike {
         Ok(())
     }
 
-
     /// brief description about a chemical file format
     fn describe(&self) {
         println!("filetype: {:?}, possible extensions: {:?}",
@@ -143,7 +142,7 @@ impl ChemFileLike for PlainXYZFile {
             mol.add_atom(a);
         }
 
-        Ok([mol].to_vec())
+        Ok(vec![mol])
     }
 
     /// Return a string representation of the last molecule in the list
@@ -174,7 +173,9 @@ fn test_formats_plainxyz() {
 /// guess the most appropriate file format by its file extensions
 pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>>{
     let backends: Vec<Box<ChemFileLike>> = vec![
+        Box::new(xyz::XYZFile()),
         Box::new(PlainXYZFile()),
+        Box::new(mol2::Mol2File()),
         Box::new(vasp::POSCARFile()),
     ];
 
@@ -202,6 +203,8 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
 // FIXME:
 pub fn describe_backends() {
     let backends: Vec<Box<ChemFileLike>> = vec![
+        Box::new(xyz::XYZFile()),
+        Box::new(mol2::Mol2File()),
         Box::new(PlainXYZFile()),
         Box::new(vasp::POSCARFile()),
     ];
