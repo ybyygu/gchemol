@@ -65,6 +65,30 @@ impl Bond {
             }
         }
     }
+
+    /// Create a single bond
+    pub fn single() -> Self {
+        Bond {
+            kind: BondKind::Single,
+            ..Default::default()
+        }
+    }
+
+    /// Create a double bond
+    pub fn double() -> Self {
+        Bond {
+            kind: BondKind::Double,
+            ..Default::default()
+        }
+    }
+
+    /// Create a triple bond
+    pub fn triple() -> Self {
+        Bond {
+            kind: BondKind::Triple,
+            ..Default::default()
+        }
+    }
 }
 // 75287fd8-649d-496d-8c50-40f9247a4c10 ends here
 
