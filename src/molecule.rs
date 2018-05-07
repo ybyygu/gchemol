@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-07 Mon 16:07>
+//       UPDATED:  <2018-05-07 Mon 20:18>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -296,9 +296,12 @@ impl Molecule {
 
     /// Add a single bond into molecule specified by atom indices
     /// Will panic if corresponding atoms does not exist
-    pub fn add_bond<T: IntoAtomIndex>(&mut self, index1: T, index2: T, bond: Bond) -> BondIndex {
-        let n1 = index1.into_atom_index();
-        let n2 = index2.into_atom_index();
+    /// The existing bond data will be replaced if n1 already bonded with n2
+    /// Return a bond index pointing to bond data
+    // pub fn add_bond<T: IntoAtomIndex>(&mut self, index1: T, index2: T, bond: Bond) -> BondIndex {
+    pub fn add_bond(&mut self, n1: AtomIndex, n2: AtomIndex, bond: Bond) -> BondIndex {
+        // let n1 = index1.into_atom_index();
+        // let n2 = index2.into_atom_index();
         let e = self.graph.update_edge(n1, n2, bond);
 
         // cache atom indices of the bonded pair
@@ -426,8 +429,28 @@ impl Molecule {
         Ok(())
     }
 
-    pub fn add_bonds_from(&mut self) {
-        unimplemented!()
+    pub fn add_bonds(&mut self, bonds: HashMap<(String, String), Bond>) -> Result<()>{
+        for ((ki, kj), b) in bonds {
+            if ki == kj {
+                bail!("Bonding with self is not allowed.");
+            }
+
+            if let Some(&ni) = self.atom_indices.get(&ki) {
+                if let Some(&nj) = self.atom_indices.get(&kj) {
+                    // get bond key from the user
+                    let kij = if ki < kj {[ki, kj]} else {[kj, ki]};
+                    // get internal graph edge index
+                    let e = self.add_bond(ni, nj, b);
+                    self.bond_indices.insert(kij, e);
+                } else {
+                    bail!("atom {} is not presented in molecule.", kj);
+                }
+            } else {
+                bail!("atom {} is not presented in molecule.", ki);
+            }
+        }
+
+        Ok(())
     }
 
     pub fn remove_atoms_from(&mut self) {
