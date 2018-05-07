@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-05 Sat 14:45>
+//       UPDATED:  <2018-05-07 Mon 16:07>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -51,9 +51,9 @@ pub struct MolecularEntity {
     pub lattice: Option<Lattice>,
 
     /// mapping atom index to NodeIndex
-    atom_indices: HashMap<usize, NodeIndex>,
+    atom_indices: HashMap<String, NodeIndex>,
     /// mapping bond tuple to EdgeIndex
-    bond_indices: HashMap<[usize; 2], EdgeIndex>,
+    bond_indices: HashMap<[String; 2], EdgeIndex>,
 }
 
 pub type Molecule = MolecularEntity;
@@ -272,7 +272,6 @@ impl Molecule {
         let atom = self.get_atom_mut(n).unwrap();
         atom.index = n;
 
-
         n
     }
 
@@ -414,21 +413,29 @@ impl IntoBondIndex for Bond {
 // be29e151-18c6-43cb-9586-aba0e708d38c ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::72dd0c31-26e5-430b-9f67-1c5bd5220a84][72dd0c31-26e5-430b-9f67-1c5bd5220a84]]
+use std::hash::Hash;
+
 impl Molecule {
-    pub fn add_atoms_from(&mut self) {
-        //
+    /// add many atoms from a hashmap
+    pub fn add_atoms(&mut self, atoms: HashMap<String, Atom>) -> Result<()>{
+        for (k, a) in atoms {
+            let n = self.add_atom(a);
+            self.atom_indices.insert(k, n);
+        }
+
+        Ok(())
     }
 
     pub fn add_bonds_from(&mut self) {
-        //
+        unimplemented!()
     }
 
     pub fn remove_atoms_from(&mut self) {
-        //
+        unimplemented!()
     }
 
     pub fn remove_bonds_from(&mut self) {
-        //
+        unimplemented!()
     }
 }
 // 72dd0c31-26e5-430b-9f67-1c5bd5220a84 ends here
