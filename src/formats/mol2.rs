@@ -134,6 +134,35 @@ fn test_mol2_bonds() {
 }
 // e6d75d58-cab8-47f3-85ea-e710192a4a82 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::aa5c8cd2-1665-445b-9737-b1c0ab567ffd][aa5c8cd2-1665-445b-9737-b1c0ab567ffd]]
+use lattice::Lattice;
+
+// Format
+// ------
+// @<TRIPOS>CRYSIN
+// cell cell cell cell cell cell space_grp setting
+named!(get_lattice_from<&str, Lattice>, do_parse!(
+                tag!("@<TRIPOS>CRYSIN") >>
+                take_until_end_of_line  >>
+    a         : sp!(double_s)           >>
+    b         : sp!(double_s)           >>
+    c         : sp!(double_s)           >>
+    alpha     : sp!(double_s)           >>
+    beta      : sp!(double_s)           >>
+    gamma     : sp!(double_s)           >>
+    space_grp : sp!(unsigned_digit)     >>
+    setting   : sp!(unsigned_digit)     >>
+                take_until_end_of_line  >>
+    (Lattice::from_params(a, b, c, alpha, beta, gamma))
+));
+
+#[test]
+fn test_mol2_crystal() {
+    let (_, x) = get_lattice_from("@<TRIPOS>CRYSIN
+12.312000 4.959000 15.876000 90.000000 99.070000 90.000000 4 1").unwrap();
+}
+// aa5c8cd2-1665-445b-9737-b1c0ab567ffd ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::13916972-0d19-4b09-807f-e1d45ac3ab2b][13916972-0d19-4b09-807f-e1d45ac3ab2b]]
 use Molecule;
 
@@ -159,17 +188,24 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
                   take_until1!("@<TRIPOS>ATOM")        >>
                   take_until_end_of_line               >>
     atoms       : many1!(atom_record)                  >>
-                  take_until!("@<TRIPOS>")         >>
-    bonds       : opt!(get_bonds_from)                 >>
+                  take_until!("@<TRIPOS>")             >>
+    bonds       : opt!(complete!(get_bonds_from))      >>
+    lattice     : opt!(complete!(get_lattice_from))    >>
     (
         {
             if natoms != atoms.len() {
                 eprintln!("Inconsistency: expected {} atoms, but found {}", natoms, atoms.len());
             }
             let mut mol = Molecule::new(title);
+            // assign atoms
             for a in atoms {
                 mol.add_atom(a);
             }
+
+            // assign optional bonds
+            // TODO
+
+            mol.lattice = lattice;
 
             mol
         }
@@ -177,7 +213,7 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
 ));
 
 #[test]
-fn test_formats_mol2() {
+fn test_mol2_molecule() {
     let x = get_molecule_from("# created with PyMOL 2.1.0
 @<TRIPOS>MOLECULE
 Molecule Name
@@ -212,8 +248,6 @@ USER_CHARGES
 @<TRIPOS>SUBSTRUCTURE
 1	UNK0	1	GROUP	1 ****	UNK");
 
-    println!("{:?}", x);
-
     let x = get_molecule_from("# created with PyMOL 2.1.0
 @<TRIPOS>MOLECULE
 Molecule Name
@@ -236,6 +270,7 @@ USER_CHARGES
 
 @<TRIPOS>SUBSTRUCTURE
 1	UNK0	1	GROUP	1 ****	UNK");
+
 }
 // 13916972-0d19-4b09-807f-e1d45ac3ab2b ends here
 
@@ -251,6 +286,13 @@ use formats::{
     ChemFileLike,
 };
 
+/// Tripos Mol2 File Format
+///
+/// Reference
+/// ---------
+/// http://tripos.com/tripos_resources/fileroot/pdfs/mol2_format.pdf
+/// http://chemyang.ccnu.edu.cn/ccb/server/AIMMS/mol2.pdf
+///
 pub struct Mol2File();
 
 impl ChemFileLike for Mol2File {
@@ -268,9 +310,12 @@ impl ChemFileLike for Mol2File {
 }
 
 #[test]
-fn test_formats_xyz() {
+fn test_formats_mol2() {
     let file = Mol2File();
     let mols = file.parse("tests/files/mol2/multi-obabel.mol2").unwrap();
     assert_eq!(6, mols.len());
+    let mols = file.parse("tests/files/mol2/LTL-crysin-ds.mol2").unwrap();
+    assert_eq!(1, mols.len());
+    assert!(mols[0].lattice.is_some());
 }
 // 91746805-686b-489a-b077-2b7182f18e3b ends here
