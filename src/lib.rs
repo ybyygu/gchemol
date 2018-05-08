@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-05-06 Sun 14:23>
+//       UPDATED:  <2018-05-08 Tue 14:26>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -29,6 +29,7 @@ pub mod errors {
 }
 
 extern crate petgraph;
+extern crate indexmap;
 extern crate nalgebra;
 extern crate cgmath;
 #[macro_use]
@@ -42,15 +43,16 @@ pub type Point3D = [f64; 3];
 pub type Points = Vec<Point3D>;
 
 pub mod geometry;
-pub mod element;
-pub use element::{AtomKind};
-pub use element::AtomKind::{Element, Dummy};
-pub mod atom;
-pub use atom::{Atom};
-pub mod bond;
-pub use bond::{Bond};
 pub mod molecule;
-pub use molecule::{Molecule};
+pub use molecule::{
+    AtomKind,
+    AtomKind::Element,
+    AtomKind::Dummy,
+    Atom,
+    Bond,
+    BondKind,
+    Molecule};
+
 pub mod topology;
 pub mod io;
 pub use io::{write_as_xyz};

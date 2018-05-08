@@ -107,7 +107,8 @@ fn get_atom_type(atom: &Atom) -> &str {
 // ff90f63c-4f42-4a44-8333-59dac76a029f ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::e6d75d58-cab8-47f3-85ea-e710192a4a82][e6d75d58-cab8-47f3-85ea-e710192a4a82]]
-use bond::{Bond, BondKind};
+use Bond;
+use BondKind;
 
 use parser::{
     alphanumeric,

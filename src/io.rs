@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-05-06 Sun 12:41>
+//       UPDATED:  <2018-05-08 Tue 14:08>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -270,7 +270,8 @@ fn test_from_mol2file() {
 // 01bb2894-4548-42f3-9977-84164657219c ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::bd8ea4f1-b38f-4c81-a722-96cf78fb53a6][bd8ea4f1-b38f-4c81-a722-96cf78fb53a6]]
-use bond::{Bond, BondKind};
+use Bond;
+use BondKind;
 
 fn format_bond_order(bond: &Bond) -> &str {
     match bond.kind {

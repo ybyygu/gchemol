@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-07 Mon 20:18>
+//       UPDATED:  <2018-05-08 Tue 14:29>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -22,8 +22,6 @@ use errors::*;
 use {
     Point3D,
     Points,
-    Atom,
-    Bond,
     lattice::Lattice,
 };
 
@@ -50,9 +48,9 @@ pub struct MolecularEntity {
     /// Crystalline lattice for structure using periodic boundary conditions
     pub lattice: Option<Lattice>,
 
-    /// mapping atom index to NodeIndex
+    /// Mapping user defined atom index to internal graph node index
     atom_indices: HashMap<String, NodeIndex>,
-    /// mapping bond tuple to EdgeIndex
+    /// Mapping bond tuple to EdgeIndex
     bond_indices: HashMap<[String; 2], EdgeIndex>,
 }
 
@@ -145,6 +143,536 @@ impl Molecule {
     }
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::a806642c-37da-4ce1-aa7b-0fb8d00233e3][a806642c-37da-4ce1-aa7b-0fb8d00233e3]]
+use std::fmt::{self, Debug, Display};
+
+const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
+    ("H", "hydrogen"),
+    ("He", "helium"),
+    ("Li", "lithium"),
+    ("Be", "beryllium"),
+    ("B", "boron"),
+    ("C", "carbon"),
+    ("N", "nitrogen"),
+    ("O", "oxygen"),
+    ("F", "fluorine"),
+    ("Ne", "neon"),
+    ("Na", "sodium"),
+    ("Mg", "magnesium"),
+    ("Al", "aluminum"),
+    ("Si", "silicon"),
+    ("P", "phosphorus"),
+    ("S", "sulfur"),
+    ("Cl", "chlorine"),
+    ("Ar", "argon"),
+    ("K", "potassium"),
+    ("Ca", "calcium"),
+    ("Sc", "scandium"),
+    ("Ti", "titanium"),
+    ("V", "vanadium"),
+    ("Cr", "chromium"),
+    ("Mn", "manganese"),
+    ("Fe", "iron"),
+    ("Co", "cobalt"),
+    ("Ni", "nickel"),
+    ("Cu", "copper"),
+    ("Zn", "zinc"),
+    ("Ga", "gallium"),
+    ("Ge", "germanium"),
+    ("As", "arsenic"),
+    ("Se", "selenium"),
+    ("Br", "bromine"),
+    ("Kr", "krypton"),
+    ("Rb", "rubidium"),
+    ("Sr", "strontium"),
+    ("Y", "yttrium"),
+    ("Zr", "zirconium"),
+    ("Nb", "niobium"),
+    ("Mo", "molybdenum"),
+    ("Tc", "technetium"),
+    ("Ru", "ruthenium"),
+    ("Rh", "rhodium"),
+    ("Pd", "palladium"),
+    ("Ag", "silver"),
+    ("Cd", "cadmium"),
+    ("In", "indium"),
+    ("Sn", "tin"),
+    ("Sb", "antimony"),
+    ("Te", "tellurium"),
+    ("I", "iodine"),
+    ("Xe", "xenon"),
+    ("Cs", "cesium"),
+    ("Ba", "barium"),
+    ("La", "lanthanum"),
+    ("Ce", "cerium"),
+    ("Pr", "praesodymium"),
+    ("Nd", "neodymium"),
+    ("Pm", "promethium"),
+    ("Sm", "samarium"),
+    ("Eu", "europium"),
+    ("Gd", "gadolinium"),
+    ("Tb", "terbium"),
+    ("Dy", "dyprosium"),
+    ("Ho", "holmium"),
+    ("Er", "erbium"),
+    ("Tm", "thulium"),
+    ("Yb", "ytterbium"),
+    ("Lu", "lutetium"),
+    ("Hf", "hafnium"),
+    ("Ta", "tantalium"),
+    ("W", "wolfram"),
+    ("Re", "rhenium"),
+    ("Os", "osmium"),
+    ("Ir", "iridium"),
+    ("Pt", "platinum"),
+    ("Au", "gold"),
+    ("Hg", "mercury"),
+    ("Tl", "thallium"),
+    ("Pb", "lead"),
+    ("Bi", "bismuth"),
+    ("Po", "polonium"),
+    ("At", "astatine"),
+    ("Rn", "radon"),
+    ("Fr", "francium"),
+    ("Ra", "radium"),
+    ("Ac", "actinium"),
+    ("Th", "thorium"),
+    ("Pa", "protactinium"),
+    ("U", "uranium"),
+    ("Np", "neptunium"),
+    ("Pu", "plutonium"),
+    ("Am", "americium"),
+    ("Cm", "curium"),
+    ("Bk", "berkelium"),
+    ("Cf", "californium"),
+    ("Es", "einsteinium"),
+    ("Fm", "fermium"),
+    ("Mv", "mendelevium"),
+    ("No", "nobelium"),
+    ("Lr", "lawrencium"),
+    ("Rf", "rutherfordium"),
+    ("Db", "dubnium"),
+    ("Sg", "seaborgium"),
+    ("Bh", "bohrium"),
+    ("Hs", "hassium"),
+    ("Mt", "meitnerium"),
+    ("Uun", "ununnilium"),
+    ("Uuu", "unununium"),
+    ("Uub", "ununbium"),
+    ("Uut", "ununtrium"),
+    ("Uuq", "ununquadium"),
+    ("Uup", "ununpentium"),
+    ("Uuh", "ununhexium"),
+    ("Uus", "ununseptium"),
+    ("Uuo", "ununoctium")];
+// a806642c-37da-4ce1-aa7b-0fb8d00233e3 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::731651b9-ebba-4df3-86f7-083f837e4065][731651b9-ebba-4df3-86f7-083f837e4065]]
+#[derive(Debug, Clone, PartialEq)]
+pub enum AtomKind {
+    /// physical elements
+    Element(usize),
+    /// a dummy-atom is not a real atom
+    Dummy(String),
+}
+
+impl AtomKind {
+    pub fn symbol(&self) -> &str {
+        match self {
+            &Element(num) => ELEMENT_DATA[num-1].0,
+            &Dummy(ref sym) => sym
+        }
+    }
+
+    pub fn number(&self) -> usize {
+        match self {
+            &Element(num) => num,
+            &Dummy(ref sym) => 0,
+        }
+    }
+
+    pub fn name(&self) -> String {
+        match self {
+            &Element(num) => ELEMENT_DATA[num-1].1.to_string(),
+            &Dummy(ref sym) => format!("dummy atom {}", sym),
+        }
+    }
+}
+
+impl fmt::Display for AtomKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            &Element(num) => write!(f, "{:}", self.symbol()),
+            &Dummy(ref sym) =>  write!(f, "{:}", self.symbol()),
+        }
+    }
+}
+// 731651b9-ebba-4df3-86f7-083f837e4065 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::b95edc21-e696-4625-ba99-94257394772d][b95edc21-e696-4625-ba99-94257394772d]]
+use self::AtomKind::{Element, Dummy};
+
+/// Return AtomKind using common sense
+pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
+    let sym = sym.into();
+
+    // element specified in number
+    if let Ok(x) = sym.parse::<usize>() {
+        return Element(x);
+    }
+
+    // element specified in symbol or long name
+    for (i, &(s, n) ) in ELEMENT_DATA.iter().enumerate() {
+        if s == sym  || n == sym {
+            return Element(i+1);
+        }
+    }
+
+    // treat as dummy atom for the last resort
+    Dummy(sym)
+}
+
+#[test]
+fn test_element() {
+    let x = Element(12);
+    assert_eq!(12, x.number());
+    assert_eq!("Mg", x.symbol());
+    assert_eq!("magnesium", x.name());
+
+    let x = Dummy("X".to_string());
+    assert_eq!("X", x.symbol());
+    assert_eq!(0, x.number());
+
+    let k = atom_kind_from_string("11");
+    assert_eq!(k.number(), 11);
+    assert_eq!(k.symbol(), "Na");
+}
+// b95edc21-e696-4625-ba99-94257394772d ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::d333cb1f-e622-462f-a892-4906c85b7da0][d333cb1f-e622-462f-a892-4906c85b7da0]]
+#[derive(Debug, Clone)]
+pub struct AtomData {
+    /// Atom type, could be an element or a pseudo-atom
+    kind: AtomKind,
+    /// Cartesian coordinates
+    position: Point3D,
+    /// Atom nick name
+    name: String,
+    /// Atomic momentum vector
+    momentum: Point3D,
+}
+
+impl Default for AtomData {
+    fn default()  -> Self {
+        AtomData {
+            kind: Element(6),   // carbon atom
+            position: [0.0; 3],
+            momentum: [0.0; 3],
+            name: "carbon".into(),
+        }
+    }
+}
+
+impl AtomData {
+    pub fn new() -> Self {
+        AtomData::default()
+    }
+
+    /// Set atom position
+    #[inline]
+    pub fn position(&mut self, x: f64, y: f64, z: f64) -> &mut Self {
+        self.position = [x, y, z]; self
+    }
+
+    /// Set atom kink using element number
+    #[inline]
+    pub fn element(&mut self, n: usize) -> &mut Self {
+        self.kind = Element(n); self
+    }
+
+    /// Set atom kind using element symbol
+    #[inline]
+    pub fn symbol<T: Into<String>>(&mut self, s: T) -> &mut Self {
+        self.kind = atom_kind_from_string(s.into()); self
+    }
+
+    #[inline]
+    pub fn momentum(&mut self, x: f64, y: f64, z: f64) -> &mut Self {
+        self.momentum = [x, y, z]; self
+    }
+
+    /// return a new `Atom` struct
+    pub fn finish(&self) -> Atom {
+        let mut atom = Atom::default();
+        atom.data = self.clone();
+
+        atom
+    }
+}
+
+impl Atom {
+    pub fn new<T: Into<String>>(s: T, p: Point3D) -> Self {
+        AtomData::new()
+            .symbol(s)
+            .position(p[0], p[1], p[2])
+            .finish()
+    }
+
+    pub fn build() -> AtomData {
+        AtomData::new()
+    }
+}
+
+#[test]
+fn test_atom_builder() {
+    let a = Atom::build()
+        .position(0.0, 0.0, 1.2)
+        .symbol("Fe")
+        .element(13)
+        .momentum(0.2, 0.2, 0.3)
+        .finish();
+
+    assert_eq!(13, a.number());
+}
+// d333cb1f-e622-462f-a892-4906c85b7da0 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::150189fd-57d9-4e19-a888-d64497f5ba7e][150189fd-57d9-4e19-a888-d64497f5ba7e]]
+use std::hash::{Hash, Hasher};
+use std::cmp::Ordering;
+
+#[derive (Debug, Clone)]
+/// simple atom data structure
+pub struct Atom {
+    /// Would be managed by its parent molecule
+    pub index: AtomIndex,
+
+    /// private atom data
+    data: AtomData,
+}
+
+impl Default for Atom {
+    fn default() -> Self {
+        Atom {
+            index: AtomIndex::new(0),
+            data: AtomData::default(),
+        }
+    }
+}
+
+impl Atom {
+    /// shortcut for accessing atom symbol
+    pub fn symbol(&self) -> &str {
+        self.data.kind.symbol()
+    }
+
+    /// shortcut for accessing atom number
+    pub fn number(&self) -> usize {
+        self.data.kind.number()
+    }
+
+    /// shortcut for accessing atom position
+    pub fn position(&self) -> Point3D {
+        self.data.position
+    }
+
+    #[inline]
+    pub fn set_position(&mut self, p: Point3D) {
+        self.data.position = p;
+    }
+
+    #[inline]
+    pub fn set_momentum(&mut self, m: Point3D) {
+        self.data.momentum = m;
+    }
+
+    pub fn name(&self) -> &str {
+        &self.data.name
+    }
+
+    #[inline]
+    pub fn set_name<T: Into<String>>(&mut self, s: T) {
+        self.data.name = s.into();
+    }
+}
+// 150189fd-57d9-4e19-a888-d64497f5ba7e ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::b6d1e417-27da-4384-879a-db28960ed161][b6d1e417-27da-4384-879a-db28960ed161]]
+use geometry::euclidean_distance;
+
+impl Atom {
+    pub fn distance(&self, other: &Atom) -> f64 {
+        euclidean_distance(self.position(), other.position())
+    }
+}
+// b6d1e417-27da-4384-879a-db28960ed161 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::7e463bf4-a6ab-4648-a8a2-4b2023d1c588][7e463bf4-a6ab-4648-a8a2-4b2023d1c588]]
+use std::str::FromStr;
+use errors::*;
+
+impl FromStr for Atom {
+    type Err = Error;
+
+    fn from_str(line: &str) -> Result<Self> {
+        let parts: Vec<_> = line.split_whitespace().collect();
+        if parts.len() != 4 {
+            bail!("Incorrect number of data fields: {:?}", line);
+        }
+
+        let sym = parts[0];
+        let msg = format!("Incorrect coordindate fields: {:}", parts[1]);
+        let px: f64 = parts[1].parse().chain_err(|| msg)?;
+        let msg = format!("Incorrect coordindate fields: {:}", parts[2]);
+        let py: f64 = parts[2].parse().chain_err(|| msg)?;
+        let msg = format!("Incorrect coordindate fields: {:}", parts[3]);
+        let pz: f64 = parts[3].parse().chain_err(|| msg)?;
+
+        let mut atom = Atom::new(sym, [px, py, pz]);
+        atom.set_name(sym);
+
+        Ok(atom)
+    }
+}
+
+impl fmt::Display for Atom {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:6} {:-12.6} {:-12.6} {:-12.6}",
+               self.symbol(),
+               self.data.position[0],
+               self.data.position[1],
+               self.data.position[2]
+        )
+    }
+}
+// 7e463bf4-a6ab-4648-a8a2-4b2023d1c588 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::b88435fd-d51c-48b8-880c-425b94b905e9][b88435fd-d51c-48b8-880c-425b94b905e9]]
+#[test]
+fn test_atom_init() {
+    let atom = Atom::default();
+    let atom = Atom::new("Fe", [9.3; 3]);
+    assert_eq!(9.3, atom.position()[0]);
+    assert_eq!("Fe", atom.symbol());
+    assert_eq!(26, atom.number());
+
+    let atom = Atom::new("dummy", [9.3; 3]);
+    assert_eq!("dummy", atom.symbol());
+    assert_eq!(0, atom.number());
+}
+// b88435fd-d51c-48b8-880c-425b94b905e9 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::cfdf0fc1-97a2-4da4-b0bb-a9baee31d275][cfdf0fc1-97a2-4da4-b0bb-a9baee31d275]]
+#[test]
+fn test_atom_string_conversion() {
+    let line = "H 1.0 1.0 1.0";
+    let a: Atom = line.parse().unwrap();
+    assert_eq!(1, a.number());
+    let line = a.to_string();
+    let b: Atom = line.parse().unwrap();
+    assert_eq!(a.symbol(), b.symbol());
+    assert_eq!(a.position(), b.position());
+    let line = "24 0.124 1.230 2.349";
+    let a: Atom = line.parse().unwrap();
+}
+// cfdf0fc1-97a2-4da4-b0bb-a9baee31d275 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::7ff70329-69ef-4221-a539-fb097258d0a6][7ff70329-69ef-4221-a539-fb097258d0a6]]
+/// https://en.wikipedia.org/wiki/Bond_order
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq)]
+pub enum BondKind {
+    Dummy,
+    Partial,
+    Single,
+    Aromatic,
+    Double,
+    Triple,
+    Quadruple,
+}
+
+#[derive(Debug, Clone)]
+pub struct Bond {
+    pub kind : BondKind,
+    pub name : String,
+    /// will be managed by molecule
+    pub index: BondIndex,
+
+    /// set this attribute for arbitrary bond order
+    order    : Option<f64>,
+}
+
+impl Default for Bond {
+    fn default() -> Self {
+        Bond {
+            order : None,
+            kind  : BondKind::Single,
+            name  : String::default(),
+            index : BondIndex::new(0),
+        }
+    }
+}
+
+impl Bond {
+    pub fn new(order: f64) -> Self {
+        debug_assert!(order >= 0.0);
+
+        Bond {
+            order: Some(order),
+            ..Default::default()
+        }
+    }
+
+    /// Return bond order
+    pub fn order(&self) -> f64 {
+        if let Some(order) = self.order {
+            order
+        } else {
+            match self.kind {
+                BondKind::Dummy     => 0.0,
+                BondKind::Partial   => 0.5,
+                BondKind::Single    => 1.0,
+                BondKind::Aromatic  => 1.5,
+                BondKind::Double    => 2.0,
+                BondKind::Triple    => 3.0,
+                BondKind::Quadruple => 4.0,
+            }
+        }
+    }
+
+    /// Create a single bond
+    pub fn single() -> Self {
+        Bond {
+            kind: BondKind::Single,
+            ..Default::default()
+        }
+    }
+
+    /// Create a double bond
+    pub fn double() -> Self {
+        Bond {
+            kind: BondKind::Double,
+            ..Default::default()
+        }
+    }
+
+    /// Create a triple bond
+    pub fn triple() -> Self {
+        Bond {
+            kind: BondKind::Triple,
+            ..Default::default()
+        }
+    }
+}
+// 7ff70329-69ef-4221-a539-fb097258d0a6 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::486bd5a4-e762-46bf-a237-e692393a795d][486bd5a4-e762-46bf-a237-e692393a795d]]
+#[test]
+fn test_bond() {
+    let b = Bond::default();
+    let b = Bond::new(1.5);
+    assert_eq!(1.5, b.order());
+}
+// 486bd5a4-e762-46bf-a237-e692393a795d ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::e1d0c51a-0dd7-4977-ae54-7928ee46d373][e1d0c51a-0dd7-4977-ae54-7928ee46d373]]
 use std::ops::Index;
@@ -298,7 +826,6 @@ impl Molecule {
     /// Will panic if corresponding atoms does not exist
     /// The existing bond data will be replaced if n1 already bonded with n2
     /// Return a bond index pointing to bond data
-    // pub fn add_bond<T: IntoAtomIndex>(&mut self, index1: T, index2: T, bond: Bond) -> BondIndex {
     pub fn add_bond(&mut self, n1: AtomIndex, n2: AtomIndex, bond: Bond) -> BondIndex {
         // let n1 = index1.into_atom_index();
         // let n2 = index2.into_atom_index();
@@ -416,11 +943,9 @@ impl IntoBondIndex for Bond {
 // be29e151-18c6-43cb-9586-aba0e708d38c ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::72dd0c31-26e5-430b-9f67-1c5bd5220a84][72dd0c31-26e5-430b-9f67-1c5bd5220a84]]
-use std::hash::Hash;
-
 impl Molecule {
     /// add many atoms from a hashmap
-    pub fn add_atoms(&mut self, atoms: HashMap<String, Atom>) -> Result<()>{
+    pub fn add_atoms_from(&mut self, atoms: HashMap<String, Atom>) -> Result<()>{
         for (k, a) in atoms {
             let n = self.add_atom(a);
             self.atom_indices.insert(k, n);
@@ -429,7 +954,7 @@ impl Molecule {
         Ok(())
     }
 
-    pub fn add_bonds(&mut self, bonds: HashMap<(String, String), Bond>) -> Result<()>{
+    pub fn add_bonds_from(&mut self, bonds: HashMap<(String, String), Bond>) -> Result<()>{
         for ((ki, kj), b) in bonds {
             if ki == kj {
                 bail!("Bonding with self is not allowed.");
@@ -465,7 +990,6 @@ impl Molecule {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3][a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3]]
 use geometry::get_distance_matrix;
-use bond::BondKind;
 use data::guess_bond_kind;
 
 impl Molecule {
@@ -527,7 +1051,6 @@ impl Molecule {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::2a27ca30-0a99-4d5d-b544-5f5900304bbb][2a27ca30-0a99-4d5d-b544-5f5900304bbb]]
 use petgraph::algo;
-use geometry::euclidean_distance;
 use rand::{thread_rng, Rng};
 
 const EPSILON: f64 = 1.0E-6;
@@ -866,7 +1389,6 @@ fn connected_component_subgraphs(graph: &MolGraph) -> Vec<MolGraph>{
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ddf54b1b-6bda-496a-8444-b9762645cc94][ddf54b1b-6bda-496a-8444-b9762645cc94]]
 use std::iter::IntoIterator;
-use std::fmt;
 
 pub fn get_reduced_formula<'a, I>(symbols: I) -> String
 where

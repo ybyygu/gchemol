@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-05-05 Sat 14:08>
+//       UPDATED:  <2018-05-08 Tue 14:11>
 //===============================================================================#
 
 use {
@@ -16,7 +16,7 @@ use {
     Bond,
     Molecule,
     molecule::AtomIndex,
-    bond::BondKind,
+    BondKind,
     geometry::euclidean_distance,
 };
 use errors::*;
