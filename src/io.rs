@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-05-08 Tue 14:08>
+//       UPDATED:  <2018-05-08 Tue 15:08>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -341,7 +341,7 @@ pub fn to_mol2file(molecule: &Molecule, filename: &str) -> Result<()>{
         );
 
         let index = i + 1;
-        user_indices.insert(atom.index, index);
+        user_indices.insert(atom.index(), index);
         let line = format!("{:} {:4} {:40} {:8}\n",
                            index,
                            name,

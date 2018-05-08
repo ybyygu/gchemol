@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-08 Tue 14:29>
+//       UPDATED:  <2018-05-08 Tue 15:09>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -350,6 +350,78 @@ fn test_element() {
 }
 // b95edc21-e696-4625-ba99-94257394772d ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::150189fd-57d9-4e19-a888-d64497f5ba7e][150189fd-57d9-4e19-a888-d64497f5ba7e]]
+use std::hash::{Hash, Hasher};
+use std::cmp::Ordering;
+
+#[derive (Debug, Clone)]
+/// simple atom data structure
+pub struct Atom {
+    /// Would be managed by its parent molecule
+    index: AtomIndex,
+
+    /// private atom data
+    data: AtomData,
+}
+
+impl Default for Atom {
+    fn default() -> Self {
+        Atom {
+            index: AtomIndex::new(0),
+            data: AtomData::default(),
+        }
+    }
+}
+
+impl Atom {
+    /// shortcut for accessing atom symbol
+    pub fn symbol(&self) -> &str {
+        self.data.kind.symbol()
+    }
+
+    /// Provide read-only access to atom index
+    pub fn index(&self) -> AtomIndex {
+        self.index
+    }
+
+    /// shortcut for accessing atom number
+    pub fn number(&self) -> usize {
+        self.data.kind.number()
+    }
+
+    /// shortcut for accessing atom position
+    pub fn position(&self) -> Point3D {
+        self.data.position
+    }
+
+    pub fn set_position(&mut self, p: Point3D) {
+        self.data.position = p;
+    }
+
+    pub fn set_momentum(&mut self, m: Point3D) {
+        self.data.momentum = m;
+    }
+
+    pub fn name(&self) -> &str {
+        &self.data.name
+    }
+
+    pub fn set_name<T: Into<String>>(&mut self, s: T) {
+        self.data.name = s.into();
+    }
+}
+// 150189fd-57d9-4e19-a888-d64497f5ba7e ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::b6d1e417-27da-4384-879a-db28960ed161][b6d1e417-27da-4384-879a-db28960ed161]]
+use geometry::euclidean_distance;
+
+impl Atom {
+    pub fn distance(&self, other: &Atom) -> f64 {
+        euclidean_distance(self.position(), other.position())
+    }
+}
+// b6d1e417-27da-4384-879a-db28960ed161 ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::d333cb1f-e622-462f-a892-4906c85b7da0][d333cb1f-e622-462f-a892-4906c85b7da0]]
 #[derive(Debug, Clone)]
 pub struct AtomData {
@@ -436,76 +508,6 @@ fn test_atom_builder() {
     assert_eq!(13, a.number());
 }
 // d333cb1f-e622-462f-a892-4906c85b7da0 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::150189fd-57d9-4e19-a888-d64497f5ba7e][150189fd-57d9-4e19-a888-d64497f5ba7e]]
-use std::hash::{Hash, Hasher};
-use std::cmp::Ordering;
-
-#[derive (Debug, Clone)]
-/// simple atom data structure
-pub struct Atom {
-    /// Would be managed by its parent molecule
-    pub index: AtomIndex,
-
-    /// private atom data
-    data: AtomData,
-}
-
-impl Default for Atom {
-    fn default() -> Self {
-        Atom {
-            index: AtomIndex::new(0),
-            data: AtomData::default(),
-        }
-    }
-}
-
-impl Atom {
-    /// shortcut for accessing atom symbol
-    pub fn symbol(&self) -> &str {
-        self.data.kind.symbol()
-    }
-
-    /// shortcut for accessing atom number
-    pub fn number(&self) -> usize {
-        self.data.kind.number()
-    }
-
-    /// shortcut for accessing atom position
-    pub fn position(&self) -> Point3D {
-        self.data.position
-    }
-
-    #[inline]
-    pub fn set_position(&mut self, p: Point3D) {
-        self.data.position = p;
-    }
-
-    #[inline]
-    pub fn set_momentum(&mut self, m: Point3D) {
-        self.data.momentum = m;
-    }
-
-    pub fn name(&self) -> &str {
-        &self.data.name
-    }
-
-    #[inline]
-    pub fn set_name<T: Into<String>>(&mut self, s: T) {
-        self.data.name = s.into();
-    }
-}
-// 150189fd-57d9-4e19-a888-d64497f5ba7e ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::b6d1e417-27da-4384-879a-db28960ed161][b6d1e417-27da-4384-879a-db28960ed161]]
-use geometry::euclidean_distance;
-
-impl Atom {
-    pub fn distance(&self, other: &Atom) -> f64 {
-        euclidean_distance(self.position(), other.position())
-    }
-}
-// b6d1e417-27da-4384-879a-db28960ed161 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::7e463bf4-a6ab-4648-a8a2-4b2023d1c588][7e463bf4-a6ab-4648-a8a2-4b2023d1c588]]
 use std::str::FromStr;
@@ -594,8 +596,9 @@ pub enum BondKind {
 pub struct Bond {
     pub kind : BondKind,
     pub name : String,
+
     /// will be managed by molecule
-    pub index: BondIndex,
+    index: BondIndex,
 
     /// set this attribute for arbitrary bond order
     order    : Option<f64>,
@@ -661,6 +664,11 @@ impl Bond {
             kind: BondKind::Triple,
             ..Default::default()
         }
+    }
+
+    /// read-only access of bond index
+    pub fn index(&self) -> BondIndex {
+        self.index
     }
 }
 // 7ff70329-69ef-4221-a539-fb097258d0a6 ends here

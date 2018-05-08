@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-05-08 Tue 14:11>
+//       UPDATED:  <2018-05-08 Tue 15:10>
 //===============================================================================#
 
 use {
@@ -294,8 +294,8 @@ fn test_molecule_distance_bound() {
     let mol = Molecule::from_file("/tmp/test.mol2").unwrap();
     for a in mol.atoms() {
         for b in mol.atoms() {
-            let ai = a.index;
-            let bi = b.index;
+            let ai = a.index();
+            let bi = b.index();
             if ai < bi {
                 let bound = mol.distance_bound(ai, bi);
                 println!("{:?}", (ai, bi, bound));
