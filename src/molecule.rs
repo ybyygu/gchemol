@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-08 Tue 18:04>
+//       UPDATED:  <2018-05-08 Tue 18:39>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -429,6 +429,15 @@ impl Atom {
     pub fn set_name<T: Into<String>>(&mut self, s: T) {
         self.data.name = s.into();
     }
+
+    pub fn neighbors<'a>(&self, parent: &'a Molecule) -> Vec<&'a Atom>{
+        let atoms: Vec<_> = parent.graph
+            .neighbors(self.index)
+            .map(|n| &parent.graph[n])
+            .collect();
+
+        atoms
+    }
 }
 // 150189fd-57d9-4e19-a888-d64497f5ba7e ends here
 
@@ -581,6 +590,8 @@ fn test_atom_init() {
     let atom = Atom::new("dummy", [9.3; 3]);
     assert_eq!("dummy", atom.symbol());
     assert_eq!(0, atom.number());
+
+
 }
 // b88435fd-d51c-48b8-880c-425b94b905e9 ends here
 
@@ -1599,6 +1610,23 @@ mod test {
         assert_eq!(0, mol.nbonds());
         mol.rebond();
         assert_eq!(4, mol.nbonds());
+    }
+
+    #[test]
+    fn test_molecule_neighbors() {
+        let mol = Molecule::from_file("tests/files/mol2/alanine-gv.mol2").unwrap();
+        assert_eq!(12, mol.natoms());
+
+        let atoms = mol.view_atoms();
+        let a3 = &atoms[3];
+
+        let ns = a3.neighbors(&mol);
+        assert_eq!(4, ns.len());
+
+        let bonds = mol.view_bonds();
+        let b35 = &bonds[(3, 5)];
+
+        let (p1, p2) = b35.partners(&mol).unwrap();
     }
 }
 // 5052eafc-f1ab-4612-90d7-0924c3bacb16 ends here
