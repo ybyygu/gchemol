@@ -183,8 +183,18 @@ fn format_bond_order(bond: &Bond) -> &str {
     }
 }
 
-fn format_bond(bond: &Bond) -> String {
-    unimplemented!()
+fn format_bond(bond: &Bond, parent: &Molecule) -> String {
+    let (ai, aj) = bond.partners(parent).unwrap();
+    let li = ai.label();
+    let lj = ai.label();
+    let order = bond.order();
+
+    format!(
+        "{} {} {}",
+        li,
+        lj,
+        order
+    )
 }
 // e6d75d58-cab8-47f3-85ea-e710192a4a82 ends here
 
@@ -397,7 +407,7 @@ impl ChemFileLike for Mol2File {
             lines.push_str("@<TRIPOS>BOND\n");
             let mut i = 0;
             for b in mol.bonds() {
-                let line = format!("{} {}", i, format_bond(&b));
+                let line = format!("{} {}", i, format_bond(&b, &mol));
                 lines.push_str(&line);
                 i += 1;
             }

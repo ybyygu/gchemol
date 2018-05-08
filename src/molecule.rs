@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-08 Tue 15:09>
+//       UPDATED:  <2018-05-08 Tue 18:04>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -52,6 +52,8 @@ pub struct MolecularEntity {
     atom_indices: HashMap<String, NodeIndex>,
     /// Mapping bond tuple to EdgeIndex
     bond_indices: HashMap<[String; 2], EdgeIndex>,
+    /// User defined atom labels
+    pub atom_labels: HashMap<AtomIndex, String>,
 }
 
 pub type Molecule = MolecularEntity;
@@ -65,6 +67,7 @@ impl Default for Molecule {
             lattice: None,
             atom_indices: HashMap::new(),
             bond_indices: HashMap::new(),
+            atom_labels: HashMap::new(),
         }
     }
 }
@@ -360,6 +363,8 @@ pub struct Atom {
     /// Would be managed by its parent molecule
     index: AtomIndex,
 
+    label: Option<String>,
+
     /// private atom data
     data: AtomData,
 }
@@ -369,6 +374,7 @@ impl Default for Atom {
         Atom {
             index: AtomIndex::new(0),
             data: AtomData::default(),
+            label: None,
         }
     }
 }
@@ -400,6 +406,20 @@ impl Atom {
 
     pub fn set_momentum(&mut self, m: Point3D) {
         self.data.momentum = m;
+    }
+
+    pub fn set_label(&mut self, lbl: &str) {
+        self.label = Some(lbl.into());
+    }
+
+    pub fn label(&self) -> String {
+        if let Some(ref l) = self.label {
+            return l.to_owned();
+        }
+
+        // FIXME: Looks ugly.
+        // counting from 1 instead of 0
+        format!("{}", self.index.index() + 1)
     }
 
     pub fn name(&self) -> &str {
@@ -602,6 +622,9 @@ pub struct Bond {
 
     /// set this attribute for arbitrary bond order
     order    : Option<f64>,
+    /// Indices of the two atoms hold by the bond
+    node_i: Option<AtomIndex>,
+    node_j: Option<AtomIndex>,
 }
 
 impl Default for Bond {
@@ -609,8 +632,12 @@ impl Default for Bond {
         Bond {
             order : None,
             kind  : BondKind::Single,
+
+            // private
             name  : String::default(),
             index : BondIndex::new(0),
+            node_i: None,
+            node_j: None,
         }
     }
 }
@@ -669,6 +696,17 @@ impl Bond {
     /// read-only access of bond index
     pub fn index(&self) -> BondIndex {
         self.index
+    }
+
+    /// Return indices to atoms in parent molecule hold by the bond
+    pub fn partners<'a>(&self, parent: &'a Molecule) -> Option<(&'a Atom, &'a Atom)> {
+        if let Some((n1, n2)) = parent.graph.edge_endpoints(self.index) {
+            let a1 = &parent.graph[n1];
+            let a2 = &parent.graph[n2];
+            return Some((a1, a2));
+        }
+
+        None
     }
 }
 // 7ff70329-69ef-4221-a539-fb097258d0a6 ends here
@@ -835,11 +873,9 @@ impl Molecule {
     /// The existing bond data will be replaced if n1 already bonded with n2
     /// Return a bond index pointing to bond data
     pub fn add_bond(&mut self, n1: AtomIndex, n2: AtomIndex, bond: Bond) -> BondIndex {
-        // let n1 = index1.into_atom_index();
-        // let n2 = index2.into_atom_index();
         let e = self.graph.update_edge(n1, n2, bond);
 
-        // cache atom indices of the bonded pair
+        // cache the pair of atoms
         let mut bond = &mut self.graph[e];
         bond.index = e;
 
@@ -942,21 +978,16 @@ impl IntoBondIndex for BondIndex {
         *self
     }
 }
-
-impl IntoBondIndex for Bond {
-    fn into_bond_index(&self) -> BondIndex {
-        self.index
-    }
-}
 // be29e151-18c6-43cb-9586-aba0e708d38c ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::72dd0c31-26e5-430b-9f67-1c5bd5220a84][72dd0c31-26e5-430b-9f67-1c5bd5220a84]]
 impl Molecule {
     /// add many atoms from a hashmap
-    pub fn add_atoms_from(&mut self, atoms: HashMap<String, Atom>) -> Result<()>{
+    pub fn add_atoms_from(&mut self, atoms: HashMap<&str, Atom>) -> Result<()>{
         for (k, a) in atoms {
             let n = self.add_atom(a);
-            self.atom_indices.insert(k, n);
+            self.atom_labels.insert(n, k.into());
+            self.atom_indices.insert(k.into(), n);
         }
 
         Ok(())
@@ -1460,109 +1491,114 @@ fn test_formula() {
 // ddf54b1b-6bda-496a-8444-b9762645cc94 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::5052eafc-f1ab-4612-90d7-0924c3bacb16][5052eafc-f1ab-4612-90d7-0924c3bacb16]]
-#[test]
-fn test_molecule_basic() {
-    // construct molecule
-    let mut mol = Molecule::new("test");
-    assert_eq!("test", mol.name);
+#[cfg(test)]
+mod test {
+    use super::*;
 
-    let mut mol = Molecule::default();
-    let atom1 = Atom::new("Fe", [1.2; 3]);
-    let atom2 = Atom::new("Fe", [1.0; 3]);
-    let atom3 = Atom::new("C", [0.0; 3]);
-    let atom4 = Atom::new("O", [2.1; 3]);
-    let a1 = mol.add_atom(atom1);
-    let a2 = mol.add_atom(atom2);
-    let a3 = mol.add_atom(atom3);
-    let a4 = mol.add_atom(atom4);
-    assert_eq!(4, mol.natoms());
+    #[test]
+    fn test_molecule_basic() {
+        // construct molecule
+        let mut mol = Molecule::new("test");
+        assert_eq!("test", mol.name);
 
-    let b1 = mol.add_bond(a1, a2, Bond::default());
-    let b2 = mol.add_bond(a3, a4, Bond::default());
-    assert_eq!(2, mol.nbonds());
-    mol.remove_bond_between(a1, a2).expect("failed to remove bond between a1 and a2");
-    mol.remove_bond(b2).expect("failed to remove bond b2");
-    assert_eq!(0, mol.nbonds());
-    let b14 = mol.add_bond(a1, a4, Bond::default());
-    assert_eq!(1, mol.nbonds());
+        let mut mol = Molecule::default();
+        let atom1 = Atom::new("Fe", [1.2; 3]);
+        let atom2 = Atom::new("Fe", [1.0; 3]);
+        let atom3 = Atom::new("C", [0.0; 3]);
+        let atom4 = Atom::new("O", [2.1; 3]);
+        let a1 = mol.add_atom(atom1);
+        let a2 = mol.add_atom(atom2);
+        let a3 = mol.add_atom(atom3);
+        let a4 = mol.add_atom(atom4);
+        assert_eq!(4, mol.natoms());
 
-    // bonded partners
-    let real_b14 = mol.get_bond(b14).expect("failed to get bond b14");
-    assert_eq!(real_b14.index, b14);
-    let (n1, n4) = mol.partners(&b14).expect("failed to get bond partners using bond index");
-    assert_eq!(n1.index(), a1.index());
-    assert_eq!(n4.index(), a4.index());
-    // get partners using bond
-    let (n1, n4) = mol.partners(real_b14).expect("failed to get bond partners using bond struct");
-    assert_eq!(n1.index(), a1.index());
-    assert_eq!(n4.index(), a4.index());
+        let b1 = mol.add_bond(a1, a2, Bond::default());
+        let b2 = mol.add_bond(a3, a4, Bond::default());
+        assert_eq!(2, mol.nbonds());
+        mol.remove_bond_between(a1, a2).expect("failed to remove bond between a1 and a2");
+        mol.remove_bond(b2).expect("failed to remove bond b2");
+        assert_eq!(0, mol.nbonds());
+        let b14 = mol.add_bond(a1, a4, Bond::default());
+        assert_eq!(1, mol.nbonds());
 
-    // get atom neighbors
-    let indices = mol.neighbors(a1);
-    assert_eq!(1, indices.len());
-    assert!(indices.contains(&a4));
+        // bonded partners
+        let real_b14 = mol.get_bond(b14).expect("failed to get bond b14");
+        assert_eq!(real_b14.index(), b14);
+        let (n1, n4) = mol.partners(&b14).expect("failed to get bond partners using bond index");
+        assert_eq!(n1.index(), a1.index());
+        assert_eq!(n4.index(), a4.index());
+        // get partners using bond
+        let (n1, n4) = real_b14.partners(&mol).expect("failed to get bond partners using bond struct");
+        assert_eq!(n1.index(), a1);
+        assert_eq!(n4.index(), a4);
 
-    // loop over atoms
-    for a in mol.atoms() {
-        //
+        // get atom neighbors
+        let indices = mol.neighbors(a1);
+        assert_eq!(1, indices.len());
+        assert!(indices.contains(&a4));
+
+        // loop over atoms
+        for a in mol.atoms() {
+            //
+        }
+
+        // loop over bonds
+        for b in mol.bonds() {
+            //
+        }
+
+        // pick a single atom
+        let a = mol.get_atom(0).expect("failed to get atom with index 0");
+        assert_eq!("Fe", a.symbol());
+        assert_eq!(1.2, a.position()[0]);
+        let a = mol.get_atom(a1).expect("failed to get atom a1");
+        assert_eq!("Fe", a.symbol());
+        assert_eq!(1.2, a.position()[0]);
+
     }
 
-    // loop over bonds
-    for b in mol.bonds() {
-        //
+    #[test]
+    fn test_molecule_other() {
+        let mut mol = Molecule::default();
+        mol.add_atom(Atom::default());
+        mol.add_atom(Atom::default());
+        mol.add_atom(Atom::default());
+        mol.add_atom(Atom::default());
+        //set atom positions
+        let positions = [[-0.90203687,  0.62555259,  0.0081889 ],
+                         [-0.54538244, -0.38325741,  0.0081889 ],
+                         [-0.54536403,  1.12995078, -0.8654626 ],
+                         [-1.97203687,  0.62556577,  0.0081889 ]];
+        mol.set_positions(positions.to_vec());
+        let a = mol.get_atom(0).expect("failed to get atom with index 0");
+        assert_eq!(a.position()[0], -0.90203687);
+
+        // loop over fragments
+        let frags = mol.fragment();
+        for m in frags {
+            m.formula();
+        }
     }
 
-    // pick a single atom
-    let a = mol.get_atom(0).expect("failed to get atom with index 0");
-    assert_eq!("Fe", a.symbol());
-    assert_eq!(1.2, a.position()[0]);
-    let a = mol.get_atom(a1).expect("failed to get atom a1");
-    assert_eq!("Fe", a.symbol());
-    assert_eq!(1.2, a.position()[0]);
+    #[test]
+    fn test_molecule_rebond() {
+        let atom1 = Atom::new("C", [-0.90203687,  0.62555259,  0.0081889 ]);
+        let atom2 = Atom::new("H", [-0.54538244, -0.38325741,  0.0081889 ]);
+        let atom3 = Atom::new("H", [-0.54536403,  1.12995078,  0.88184041]);
+        let atom4 = Atom::new("H", [-0.54536403,  1.12995078, -0.8654626 ]);
+        let atom5 = Atom::new("H", [-1.97203687,  0.62556577,  0.0081889 ]);
 
-}
+        let mut mol = Molecule::default();
+        mol.add_atom(atom1);
+        mol.add_atom(atom2);
+        mol.add_atom(atom3);
+        mol.add_atom(atom4);
+        mol.add_atom(atom5);
 
-#[test]
-fn test_molecule_other() {
-    let mut mol = Molecule::default();
-    mol.add_atom(Atom::default());
-    mol.add_atom(Atom::default());
-    mol.add_atom(Atom::default());
-    mol.add_atom(Atom::default());
-    //set atom positions
-    let positions = [[-0.90203687,  0.62555259,  0.0081889 ],
-                     [-0.54538244, -0.38325741,  0.0081889 ],
-                     [-0.54536403,  1.12995078, -0.8654626 ],
-                     [-1.97203687,  0.62556577,  0.0081889 ]];
-    mol.set_positions(positions.to_vec());
-    let a = mol.get_atom(0).expect("failed to get atom with index 0");
-    assert_eq!(a.position()[0], -0.90203687);
-
-    // loop over fragments
-    let frags = mol.fragment();
-    for m in frags {
-        m.formula();
+        assert_eq!(5, mol.natoms());
+        assert_eq!(0, mol.nbonds());
+        mol.rebond();
+        assert_eq!(4, mol.nbonds());
     }
-}
-
-#[test]
-fn test_molecule_rebond() {
-    let atom1 = Atom::new("C", [-0.90203687,  0.62555259,  0.0081889 ]);
-    let atom2 = Atom::new("H", [-0.54538244, -0.38325741,  0.0081889 ]);
-    let atom3 = Atom::new("H", [-0.54536403,  1.12995078,  0.88184041]);
-    let atom4 = Atom::new("H", [-0.54536403,  1.12995078, -0.8654626 ]);
-    let atom5 = Atom::new("H", [-1.97203687,  0.62556577,  0.0081889 ]);
-
-    let mut mol = Molecule::default();
-    mol.add_atom(atom1);
-    mol.add_atom(atom2);
-    mol.add_atom(atom3);
-    mol.add_atom(atom4);
-    mol.add_atom(atom5);
-
-    assert_eq!(5, mol.natoms());
-    assert_eq!(0, mol.nbonds());
-    mol.rebond();
-    assert_eq!(4, mol.nbonds());
 }
 // 5052eafc-f1ab-4612-90d7-0924c3bacb16 ends here
