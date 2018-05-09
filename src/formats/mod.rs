@@ -14,6 +14,7 @@ pub mod mol2;
 pub mod pdb;
 pub mod vasp;
 pub mod sdf;
+pub mod cif;
 
 const BUF_SIZE: usize = 8 * 1024;
 
@@ -189,6 +190,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
         Box::new(PlainXYZFile()),
         Box::new(mol2::Mol2File()),
         Box::new(vasp::POSCARFile()),
+        Box::new(cif::CifFile()),
     ];
 
     // 1. by file type
@@ -219,6 +221,7 @@ pub fn describe_backends() {
         Box::new(mol2::Mol2File()),
         Box::new(PlainXYZFile()),
         Box::new(vasp::POSCARFile()),
+        Box::new(cif::CifFile()),
     ];
 
     for cf in backends {

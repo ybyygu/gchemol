@@ -69,8 +69,6 @@ pub fn translate(points: &mut Points, loc: Point3D) {
 use rand::{self, Rng};
 use rand::distributions::{Distribution, Range, Normal};
 
-use itertools::Itertools;
-
 /// create a random point within a sphere
 /// References
 /// ----------
