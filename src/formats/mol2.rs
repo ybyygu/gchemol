@@ -187,7 +187,7 @@ fn format_bond(bond: &Bond, parent: &Molecule) -> String {
     let (ai, aj) = bond.partners(parent).unwrap();
     let li = ai.label();
     let lj = ai.label();
-    let order = bond.order();
+    let order = format_bond_order(bond);
 
     format!(
         "{} {} {}",

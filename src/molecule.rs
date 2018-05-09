@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-08 Tue 18:39>
+//       UPDATED:  <2018-05-08 Tue 18:48>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -633,9 +633,6 @@ pub struct Bond {
 
     /// set this attribute for arbitrary bond order
     order    : Option<f64>,
-    /// Indices of the two atoms hold by the bond
-    node_i: Option<AtomIndex>,
-    node_j: Option<AtomIndex>,
 }
 
 impl Default for Bond {
@@ -647,8 +644,6 @@ impl Default for Bond {
             // private
             name  : String::default(),
             index : BondIndex::new(0),
-            node_i: None,
-            node_j: None,
         }
     }
 }

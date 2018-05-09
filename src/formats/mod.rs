@@ -13,6 +13,7 @@ pub mod xyz;
 pub mod mol2;
 pub mod pdb;
 pub mod vasp;
+pub mod sdf;
 
 const BUF_SIZE: usize = 8 * 1024;
 
