@@ -1,6 +1,6 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::891f59cf-3963-4dbe-a7d2-48279723b72e][891f59cf-3963-4dbe-a7d2-48279723b72e]]
 //===============================================================================#
-//   DESCRIPTION:  represents 3D periodic lattices
+//   DESCRIPTION:  Represents 3D periodic lattices
 //
 //       OPTIONS:  ---
 //  REQUIREMENTS:  ---
@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-05-01 Tue 09:48>
+//       UPDATED:  <2018-05-10 Thu 11:17>
 //===============================================================================#
 
 use nalgebra::{
@@ -21,36 +21,88 @@ type Vec3D = Vector3<f64>;
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::b17e625d-352f-419e-9d10-a84fcdb9ff07][b17e625d-352f-419e-9d10-a84fcdb9ff07]]
-#[derive(Debug, Clone)]
+/// Periodic 3D lattice
+#[derive(Debug, Clone, Copy)]
 pub struct Lattice {
     /// internal translation matrix
     matrix: Mat3D,
     /// Lattice origin
     origin: Vec3D,
+
     /// Cached inverse of lattice matrix
     inv_matrix: Option<Mat3D>,
 
-    /// Volume of the unit cell.
-    volume: f64,
+    /// Cached volume of the unit cell.
+    volume: Option<f64>,
 
     /// The perpendicular widths of the unit cell on each direction,
     /// i.e. the distance between opposite faces of the unit cell
-    widths: [f64; 3],
+    widths: Option<[f64; 3]>,
+
+    /// Cached cell lengths parameters
+    lengths: Option<[f64; 3]>,
+
+    /// Cached cell angles parameters
+    angles: Option<[f64; 3]>,
+}
+
+// matrix inversion
+fn get_inv_matrix(matrix: Mat3D) -> Mat3D {
+    matrix.try_inverse().expect("bad matrix")
+}
+
+// cell volume
+fn get_cell_volume(mat: Mat3D) -> f64 {
+    let va = mat.column(0);
+    let vb = mat.column(1);
+    let vc = mat.column(2);
+    va.dot(&vb.cross(&vc))
+}
+
+// return cell length parameters
+fn get_cell_lengths(mat: Mat3D) -> [f64; 3] {
+    [
+        mat.column(0).norm(),
+        mat.column(1).norm(),
+        mat.column(2).norm()
+    ]
+}
+
+// return cell angle parameters in degrees
+fn get_cell_angles(mat: Mat3D) -> [f64; 3] {
+    let va = mat.column(0);
+    let vb = mat.column(1);
+    let vc = mat.column(2);
+    [
+        vb.angle(&vc).to_degrees(),
+        va.angle(&vc).to_degrees(),
+        va.angle(&vb).to_degrees(),
+    ]
 }
 
 impl Default for Lattice {
     fn default() -> Self {
         Lattice {
-            matrix     : Mat3D::identity(),
-            origin     : Vec3D::zeros(),
-            inv_matrix : None,
-            volume     : 0.0,
-            widths     : [0.0; 3],
+            matrix: Mat3D::identity(),
+            origin: Vec3D::zeros(),
+
+            inv_matrix: None,
+            volume: None,
+            widths: None,
+            lengths: None,
+            angles: None,
         }
     }
 }
 
 impl Lattice {
+    pub fn new<T: Into<[[f64; 3]; 3]>>(tvs: T) -> Self {
+        Lattice {
+            matrix: Mat3D::from(tvs.into()),
+            ..Default::default()
+        }
+    }
+
     /// using a cache to reduce the expensive matrix inversion calculations
     fn inv_matrix(&mut self) -> Mat3D {
         // make a readonly reference
@@ -60,27 +112,36 @@ impl Lattice {
         *im
     }
 
-    pub fn new<T: Into<[[f64; 3]; 3]>>(tvs: T) -> Self {
-        let mat = Mat3D::from(tvs.into());
-        let va = mat.column(0);
-        let vb = mat.column(1);
-        let vc = mat.column(2);
-
-        let volume = va.dot(&vb.cross(&vc));
-        let van = va.norm();
-        let vbn = vb.norm();
-        let vcn = vc.norm();
+    fn get_cell_widths(&mut self)  -> [f64; 3] {
+        let volume = self.volume();
+        let (van, vbn, vcn) = self.lengths();
 
         let wa = volume / (vbn*vcn);
         let wb = volume / (vcn*van);
         let wc = volume / (van*vbn);
 
-        Lattice {
-            matrix: mat,
-            widths: [wa, wb, wc],
-            volume: volume,
-            ..Default::default()
+        [wa, wb, wc]
+    }
+
+    pub fn widths(&mut self) -> [f64; 3] {
+        if let Some(ws) = self.widths {
+            return ws;
+        } else {
+            let ws = self.get_cell_widths();
+            self.widths = Some(ws);
+
+            ws
         }
+    }
+
+    /// Return the volume of the unit cell
+    /// the cache will be updated if necessary
+    pub fn volume(&mut self) -> f64 {
+        // make a read-only reference
+        let mat = self.matrix;
+        let volume = self.volume.get_or_insert_with(|| get_cell_volume(mat));
+
+        *volume
     }
 
     /// Construct lattice from lattice parameters
@@ -122,30 +183,41 @@ impl Lattice {
     }
 
     /// Lattice length parameters: a, b, c
-    pub fn lengths(&self) -> (f64, f64, f64) {
+    pub fn lengths(&mut self) -> (f64, f64, f64) {
+        let mat = self.matrix;
+        let lengths = self.lengths.get_or_insert_with(|| get_cell_lengths(mat));
+
         (
-            self.matrix.column(0).norm(),
-            self.matrix.column(1).norm(),
-            self.matrix.column(2).norm()
+            lengths[0],
+            lengths[1],
+            lengths[2],
         )
     }
 
     /// Lattice angle parameters in degrees
-    pub fn angles(&self) -> (f64, f64, f64) {
-        let va = self.matrix.column(0);
-        let vb = self.matrix.column(1);
-        let vc = self.matrix.column(2);
+    pub fn angles(&mut self) -> (f64, f64, f64) {
+        let mat = self.matrix;
+        let angles = self.angles.get_or_insert_with(|| get_cell_angles(mat));
+
         (
-            vb.angle(&vc).to_degrees(),
-            va.angle(&vc).to_degrees(),
-            va.angle(&vb).to_degrees(),
+            angles[0],
+            angles[1],
+            angles[2],
         )
     }
 
+    // FIXME: cell widths
     /// Scale Lattice by a positive constant
     pub fn scale_by(&mut self, v: f64) {
         debug_assert!(v > 0.);
         self.matrix *= v;
+
+        // reset caches
+        self.inv_matrix = None;
+        self.volume = None;
+        self.widths = None;
+        self.lengths = None;
+        self.angles = None;
     }
 
     /// Get cell origin in Cartesian coordinates
@@ -157,7 +229,7 @@ impl Lattice {
     pub fn to_frac(&mut self, p: [f64; 3]) -> [f64; 3] {
         let im = self.inv_matrix();
         let v = Vec3D::from(p);
-        let fs = im*v;
+        let fs = im * (v - self.origin);
         fs.into()
     }
 
@@ -174,7 +246,7 @@ impl Lattice {
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::83cff231-cc63-4077-b07e-a26a2c2b906d][83cff231-cc63-4077-b07e-a26a2c2b906d]]
 impl Lattice {
     /// minimal images required for neighborhood search
-    pub fn relevant_images(&self, radius: f64) -> Vec<Vector3<f64>> {
+    pub fn relevant_images(&mut self, radius: f64) -> Vec<Vector3<f64>> {
         let ns = self.n_min_images(radius);
         let na = ns[0] as isize;
         let nb = ns[1] as isize;
@@ -194,10 +266,10 @@ impl Lattice {
     }
 
     /// Return the minimal number of images for neighborhood search on each cell direction
-    fn n_min_images(&self, radius: f64) -> [usize; 3]{
+    fn n_min_images(&mut self, radius: f64) -> [usize; 3]{
         let mut ns = [0; 3];
 
-        for (i, &w) in self.widths.iter().enumerate() {
+        for (i, &w) in self.widths().iter().enumerate() {
             let n = (radius / w).ceil();
             ns[i] = n as usize;
         }
@@ -215,9 +287,9 @@ fn test_lattice_init() {
     lat.set_origin(loc);
     assert_eq!(loc, lat.origin());
 
-    let lat = Lattice::new([[ 15.3643,   0.    ,   0.    ],
-                            [  4.5807,  15.5026,   0.    ],
-                            [  0.    ,   0.    ,  17.4858]]);
+    let mut lat = Lattice::new([[ 15.3643,   0.    ,   0.    ],
+                                [  4.5807,  15.5026,   0.    ],
+                                [  0.    ,   0.    ,  17.4858]]);
 
     let (a, b, c) = lat.lengths();
 
@@ -230,14 +302,14 @@ fn test_lattice_init() {
     assert_relative_eq!(beta, 90.0, epsilon=1e-4);
     assert_relative_eq!(gamma, 73.5386, epsilon=1e-4);
 
-    let lat = Lattice::from_params(a, b, c, alpha, beta, gamma);
+    let mut lat = Lattice::from_params(a, b, c, alpha, beta, gamma);
     assert_eq!((a, b, c), lat.lengths());
     assert_eq!((alpha, beta, gamma), lat.angles());
 }
 
 #[test]
 fn test_lattice_neighborhood() {
-    let lat = Lattice::new([[ 18.256,   0.   ,   0.   ],
+    let mut lat = Lattice::new([[ 18.256,   0.   ,   0.   ],
                              [  0.   ,  20.534,   0.   ],
                              [  0.   ,   0.   ,  15.084]]
     );
@@ -279,6 +351,19 @@ fn test_lattice_neighborhood() {
     let images = lat.relevant_images(3.0);
     assert_eq!(expected.len(), images.len());
     assert_eq!(expected[1][2], images[1][2]);
+}
+
+#[test]
+fn test_lattice_volume() {
+    let mut lat = Lattice::new([
+        [ 5.,  0.,  0.],
+        [ 5.,  5.,  0.],
+        [ 1.,  0.,  5.]
+    ]);
+
+    assert_relative_eq!(125.0, lat.volume(), epsilon=1e-4);
+    lat.scale_by(4.);
+    assert_relative_eq!(8000.0, lat.volume(), epsilon=1e-4);
 }
 
 #[test]

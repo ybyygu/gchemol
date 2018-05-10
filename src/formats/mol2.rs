@@ -414,7 +414,7 @@ impl ChemFileLike for Mol2File {
         }
 
         // format crystal
-        if let Some(lat) = &mol.lattice {
+        if let Some(mut lat) = &mol.lattice {
             lines.push_str("@<TRIPOS>CRYSIN\n");
             let (a, b, c) = lat.lengths();
             let (alpha, beta, gamma) = lat.angles();

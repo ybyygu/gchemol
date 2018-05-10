@@ -287,8 +287,93 @@ impl ChemFileLike for CifFile {
         vec![".cif"]
     }
 
+    /// Represent molecule in .cif format
     fn format_molecule(&self, mol: &Molecule) -> Result<String> {
-        unimplemented!()
+        let mut lines = String::new();
+
+        // 1. meta inforation
+        lines.push_str("data_test\n");
+        lines.push_str("_audit_creation_method            'gchemol'\n");
+        lines.push_str("_symmetry_space_group_name_H-M    'P1'\n");
+        lines.push_str("_symmetry_Int_Tables_number       1\n");
+        lines.push_str("_symmetry_cell_setting            triclinic\n");
+        lines.push_str("\n");
+
+        // 2. cell parameters
+        lines.push_str("loop_\n");
+        lines.push_str("_symmetry_equiv_pos_as_xyz\n");
+        lines.push_str(" x,y,z\n");
+
+        let mut lat = mol.lattice.ok_or("Not a periodic moelcule.")?;
+        let (a, b, c) = lat.lengths();
+        let (alpha, beta, gamma) = lat.angles();
+        lines.push_str(&format!("_cell_length_a     {:10.4}\n", a));
+        lines.push_str(&format!("_cell_length_b     {:10.4}\n", b));
+        lines.push_str(&format!("_cell_length_c     {:10.4}\n", c));
+        lines.push_str(&format!("_cell_angle_alpha  {:10.4}\n", alpha));
+        lines.push_str(&format!("_cell_angle_beta   {:10.4}\n", beta));
+        lines.push_str(&format!("_cell_angle_gamma  {:10.4}\n", gamma));
+        lines.push_str("\n");
+
+        // 3. atom fractional coordinates
+        lines.push_str("loop_\n");
+        lines.push_str("_atom_site_type_symbol\n");
+        lines.push_str("_atom_site_label\n");
+        lines.push_str("_atom_site_fract_x\n");
+        lines.push_str("_atom_site_fract_y\n");
+        lines.push_str("_atom_site_fract_z\n");
+
+        for a in mol.atoms() {
+            let position = a.position();
+            let symbol = a.symbol();
+            let name = a.label();
+            let [fx, fy, fz] = lat.to_frac(position);
+            let s = format!("{:4}{:6}{:12.5}{:12.5}{:12.5}\n",
+                            symbol,
+                            name,
+                            fx,
+                            fy,
+                            fz);
+            lines.push_str(&s);
+        }
+
+        // 4. bonds
+        // if mol.nbonds() > 0 {
+        //     lines.push_str("loop_\n");
+        //     lines.push_str("_geom_bond_atom_site_label_1\n");
+        //     lines.push_str("_geom_bond_atom_site_label_2\n");
+        //     lines.push_str("_geom_bond_distance\n");
+        //     lines.push_str("_geom_bond_site_symmetry_2\n");
+        //     lines.push_str("_ccdc_geom_bond_type\n");
+        //     for bond in mol.bonds() {
+        //         let symbol1 = frame.symbols.get(&current).unwrap();
+        //         let name1 = format!("{}{}", symbol1, current);
+        //         let p1 = frame.positions.get(&current).unwrap();
+        //         let p1 = Point3::new(p1[0], p1[1], p1[2]) - cell_origin;
+
+        //         let connected = frame.neighbors.get(&current).unwrap();
+        //         for other in connected {
+        //             if *other > current {
+        //                 let symbol2 = frame.symbols.get(&other).unwrap();
+        //                 let name2 = format!("{}{}", symbol2, other);
+        //                 let p2 = frame.positions.get(&other).unwrap();
+        //                 let p2 = Point3::new(p2[0], p2[1], p2[2]) - cell_origin;
+        //                 let (image, distance) = get_nearest_image(cell, p1, p2);
+        //                 if image.x == 0. && image.y == 0. && image.z == 0. {
+        //                     lines.push_str(&format!("{:6} {:6} {:6.3} {:6} S\n", name1, name2, distance, "."));
+        //                 } else {
+        //                     let symcode = get_image_symcode(image);
+        //                     lines.push_str(&format!("{:6} {:6} {:6.3} {:6} S\n", name1, name2, distance, symcode));
+        //                     let (image, distance) = get_nearest_image(cell, p2, p1);
+        //                     let symcode = get_image_symcode(image);
+        //                     lines.push_str(&format!("{:6} {:6} {:6.3} {:6} S\n", name2, name1, distance, symcode));
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+
+        Ok(lines)
     }
 
     fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
