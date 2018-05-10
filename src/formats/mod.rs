@@ -60,7 +60,7 @@ pub trait ChemFileLike {
 
     /// Formatted representation of a molecule
     fn format_molecule(&self, mol: &Molecule) -> Result<String> {
-        unimplemented!()
+        bail!("unimplemented yet");
     }
 
     /// format molecules in certain format
@@ -76,7 +76,7 @@ pub trait ChemFileLike {
     }
 
     /// Save multiple molecules in a file
-    fn to_file(&self, mols: &Vec<Molecule>, filename: &str) -> Result<()> {
+    fn write(&self, filename: &str, mols: &Vec<Molecule>) -> Result<()> {
         let lines = self.format(mols)?;
         io::write_file(lines, filename)?;
         Ok(())
@@ -92,7 +92,7 @@ pub trait ChemFileLike {
     /// Parse a single molecule from &str using facilities provied by nom crate
     /// file will be write-only if not implemented
     fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
-        unimplemented!();
+        unimplemented!()
     }
 
     /// Default implementation: parse multiple molecules from `filename`

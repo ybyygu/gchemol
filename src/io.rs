@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-05-08 Tue 17:37>
+//       UPDATED:  <2018-05-10 Thu 15:55>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -478,11 +478,16 @@ impl<'a> FileOptions<'a> {
     /// read molecules from file
     pub fn read(&self, path: &str) -> ReadResult {
         let msg = format!("not supported file\nfilename: {:}\n fmt: {:?}", path, self.fmt);
-        let chemfile = guess_chemfile(path, self.fmt)
-            .ok_or(msg)?;
+        let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
         let mols = chemfile.parse(path)?;
 
         Ok(mols)
+    }
+
+    pub fn write(&self, path: &str, mols: &Vec<Molecule>) -> Result<()> {
+        let msg = format!("not supported file\nfilename: {:}\n fmt: {:?}", path, self.fmt);
+        let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
+        chemfile.write(path, mols)
     }
 }
 
@@ -496,7 +501,7 @@ pub fn read(path: &str) -> Result<Vec<Molecule>> {
 /// Write molecules into file
 /// file format will be determined according to the path
 pub fn write(path: &str, mols: &Vec<Molecule>) -> Result<()>{
-    unimplemented!();
+    FileOptions::new().write(path, mols)
 }
 
 #[test]
