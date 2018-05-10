@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-08 Tue 18:48>
+//       UPDATED:  <2018-05-10 Thu 13:53>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -412,14 +412,16 @@ impl Atom {
         self.label = Some(lbl.into());
     }
 
+    /// Atom label
     pub fn label(&self) -> String {
         if let Some(ref l) = self.label {
             return l.to_owned();
         }
 
-        // FIXME: Looks ugly.
+        // default atom label: symbol + index
+        // example: Fe120
         // counting from 1 instead of 0
-        format!("{}", self.index.index() + 1)
+        format!("{}{}", self.symbol(), self.index.index() + 1)
     }
 
     pub fn name(&self) -> &str {

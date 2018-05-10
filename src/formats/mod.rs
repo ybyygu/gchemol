@@ -5,9 +5,27 @@ use std::str;
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use nom::IResult;
-use Atom;
-use Molecule;
+
+pub use nom::IResult;
+pub use Atom;
+pub use Molecule;
+pub use lattice::Lattice;
+
+pub use parser::{
+    space,
+    space_token,
+    take_until_end_of_line,
+    digit,
+    double_s,
+    alphanumeric,
+    xyz_array,
+    alpha,
+    signed_digit,
+    unsigned_digit,
+    end_of_line,
+    not_line_ending,
+    line_ending,
+};
 
 pub mod xyz;
 pub mod mol2;
@@ -15,9 +33,9 @@ pub mod pdb;
 pub mod vasp;
 pub mod sdf;
 pub mod cif;
+pub mod gaussian;
 
 const BUF_SIZE: usize = 8 * 1024;
-
 
 /// Unified behaviors for all chemical file formats
 pub trait ChemFileLike {
