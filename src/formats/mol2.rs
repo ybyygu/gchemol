@@ -74,15 +74,15 @@ fn test_mol2_atom() {
 
 fn format_atom(a: &Atom) -> String {
     let position = a.position();
-    format!("{name} {x} {y} {z} {symbol} {subst_id} {subst_name} {charge}\n",
-            name  = a.name(),
+    format!("{name:8} {x:-12.5} {y:-12.5} {z:-12.5} {symbol:8} {subst_id:5} {subst_name:8} {charge:-6.4}\n",
+            name  = a.label(),
             x = position[0],
             y = position[1],
             z = position[2],
             // FIXME:
+            symbol = get_atom_type(a),
             subst_id = 1,
             subst_name = "SUBUNIT",
-            symbol = get_atom_type(a),
             charge = 0.0,
     )
 }
@@ -397,7 +397,7 @@ impl ChemFileLike for Mol2File {
         // format atoms
         let mut i = 1;
         for a in mol.atoms() {
-            let line = format!("{} {}", i, format_atom(&a));
+            let line = format!("{:5} {}", i, format_atom(&a));
             lines.push_str(&line);
             i += 1;
         }

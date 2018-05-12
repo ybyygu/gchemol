@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-10 Thu 13:53>
+//       UPDATED:  <2018-05-12 Sat 18:28>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -737,6 +737,9 @@ pub struct AtomView<'a> {
     mapping: HashMap<usize, AtomIndex>,
     /// parent molecule struct
     parent: &'a Molecule,
+
+    // current position in iteration
+    cur: usize,
 }
 
 impl<'a> AtomView<'a> {
@@ -750,7 +753,8 @@ impl<'a> AtomView<'a> {
         }
         AtomView {
             mapping,
-            parent: mol
+            parent: mol,
+            cur: 0,
         }
     }
 }
@@ -767,13 +771,35 @@ impl<'a> Index<usize> for AtomView<'a>
     }
 }
 
+impl<'a> Iterator for AtomView<'a> {
+    type Item = (usize, &'a Atom);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.cur >= self.mapping.len() {
+            None
+        } else {
+            self.cur += 1;
+            let n = self.mapping[&self.cur];
+            let a = &self.parent.graph[n];
+
+            Some((self.cur, &a))
+        }
+    }
+}
+
 #[test]
 fn test_atom_view() {
     let mut mol = Molecule::default();
     mol.add_atom(Atom::new("Fe", [0.0; 3]));
+    mol.add_atom(Atom::new("C", [0.0; 3]));
 
     let av = AtomView::new(&mol);
     assert_eq!("Fe", av[1].symbol());
+
+    // iterate with a index (counting from 1) and an atom object
+    for (i, a) in av {
+        //
+    }
 }
 
 impl Molecule {
@@ -784,11 +810,16 @@ impl Molecule {
 // e1d0c51a-0dd7-4977-ae54-7928ee46d373 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::5916eec2-ec7e-4525-bc6c-fade1d250a16][5916eec2-ec7e-4525-bc6c-fade1d250a16]]
+use indexmap::IndexMap;
+
 #[derive(Debug, Clone)]
 /// Convenient read-only view of bonds in molecule
 pub struct BondView<'a> {
-    mapping: HashMap<(usize, usize), BondIndex>,
+    mapping: IndexMap<(usize, usize), BondIndex>,
     parent: &'a Molecule,
+
+    // current position in iteration
+    cur: usize,
 }
 
 impl<'a> BondView<'a> {
@@ -801,18 +832,21 @@ impl<'a> BondView<'a> {
             i += 1;
         }
         // use a hash map to cache graph edge indices
-        let mut mapping = HashMap::new();
+        let mut mapping = indexmap!{};
         for e in mol.graph.edge_indices() {
-            let (ni, nj) = mol.graph.edge_endpoints(e).unwrap();
+            let (ni, nj) = mol.graph.edge_endpoints(e).expect("bondview endpoints");
             let ai = d[&ni];
             let aj = d[&nj];
-            mapping.insert((ai, aj), e);
-            mapping.insert((aj, ai), e);
+            // make sure ai is always smaller than aj
+            if ai < aj {
+                mapping.insert((ai, aj), e);
+            }
         }
 
         BondView {
             mapping,
             parent: mol,
+            cur: 0,
         }
     }
 }
@@ -821,9 +855,31 @@ impl<'a> Index<(usize, usize)> for BondView<'a>
 {
     type Output = Bond;
 
-    fn index(&self, bond_index: (usize, usize)) -> &Bond {
-        let e = self.mapping[&bond_index];
+    fn index(&self, b: (usize, usize)) -> &Bond {
+        // make sure the first index number is always smaller
+        let e = if b.0 < b.1 {
+            self.mapping[&b]
+        } else {
+            self.mapping[&(b.1, b.0)]
+        };
+
         &self.parent.graph[e]
+    }
+}
+
+impl<'a> Iterator for BondView<'a> {
+    type Item = (usize, usize, &'a Bond);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.cur >= self.mapping.len() {
+            None
+        } else {
+            let (&(i, j), &e) = self.mapping.get_index(self.cur).expect("bondview: get bond by index");
+            let b = &self.parent.get_bond(e).expect("bondview: get bond by edge index");
+            self.cur += 1;
+
+            Some((i, j, &b))
+        }
     }
 }
 
@@ -834,8 +890,18 @@ fn test_bonds_view() {
     let a2 = mol.add_atom(Atom::new("H", [1.0; 3]));
     let a3 = mol.add_atom(Atom::new("H", [2.0; 3]));
     mol.add_bond(a1, a2, Bond::default());
+    mol.add_bond(a1, a3, Bond::default());
     let bv = BondView::new(&mol);
-    let b = &bv[(1, 2)];
+    {
+        let b12 = &bv[(1, 2)];
+        let b13 = &bv[(1, 3)];
+    }
+
+    // a list of tuple: (1, 2, Bond)
+    let ijbs: Vec<_> = bv.collect();
+    assert_eq!(2, ijbs.len());
+    let (i, j, _) = ijbs[0];
+    assert_eq!((1, 2), (i, j))
 }
 
 impl Molecule {
