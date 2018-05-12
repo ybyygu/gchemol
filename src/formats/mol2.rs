@@ -182,20 +182,6 @@ fn format_bond_order(bond: &Bond) -> &str {
         BondKind::Dummy     => "nc",
     }
 }
-
-fn format_bond(bond: &Bond, parent: &Molecule) -> String {
-    let (ai, aj) = bond.partners(parent).unwrap();
-    let li = ai.label();
-    let lj = ai.label();
-    let order = format_bond_order(bond);
-
-    format!(
-        "{} {} {}",
-        li,
-        lj,
-        order
-    )
-}
 // e6d75d58-cab8-47f3-85ea-e710192a4a82 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::aa5c8cd2-1665-445b-9737-b1c0ab567ffd][aa5c8cd2-1665-445b-9737-b1c0ab567ffd]]
@@ -395,21 +381,23 @@ impl ChemFileLike for Mol2File {
         lines.push_str("@<TRIPOS>ATOM\n");
 
         // format atoms
-        let mut i = 1;
-        for a in mol.atoms() {
+        for (i, a) in mol.view_atoms() {
             let line = format!("{:5} {}", i, format_atom(&a));
             lines.push_str(&line);
-            i += 1;
         }
 
         // TODO: format bonds
         if nbonds > 0 {
             lines.push_str("@<TRIPOS>BOND\n");
-            let mut i = 0;
-            for b in mol.bonds() {
-                let line = format!("{} {}", i, format_bond(&b, &mol));
+            let mut sn = 1;
+            for (i, j, b) in mol.view_bonds() {
+                let line = format!("{sn:4} {bond_i:4} {bond_j:4} {bond_type:3}\n",
+                                   sn        = sn,
+                                   bond_i    = i,
+                                   bond_j    = j,
+                                   bond_type = format_bond_order(&b));
                 lines.push_str(&line);
-                i += 1;
+                sn += 1;
             }
         }
 
