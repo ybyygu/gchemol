@@ -1,11 +1,5 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::8f0d2f92-9ab9-43ab-9024-e1c1ff1fe89b][8f0d2f92-9ab9-43ab-9024-e1c1ff1fe89b]]
-use Atom;
-use Bond;
-use Molecule;
-
-use parser::{
-    take_until_end_of_line,
-};
+use super::*;
 
 // MDL SD file format
 // Example input
@@ -130,9 +124,6 @@ fn format_molecule(mol: &Molecule) -> String {
 // 3c9c404d-6b1c-4a07-a34f-5ab3a2a969ca ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a81f736e-2244-4cc8-8deb-ce493cbd8325][a81f736e-2244-4cc8-8deb-ce493cbd8325]]
-use super::ChemFileLike;
-use errors::*;
-
 pub struct SdfFile();
 
 impl ChemFileLike for SdfFile {

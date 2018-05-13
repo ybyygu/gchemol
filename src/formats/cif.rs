@@ -1,3 +1,9 @@
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::94c6ffda-5384-4d9f-8888-ab8a70b28bef][94c6ffda-5384-4d9f-8888-ab8a70b28bef]]
+use super::*;
+
+use std::collections::HashMap;
+// 94c6ffda-5384-4d9f-8888-ab8a70b28bef ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ea19d54a-dbe6-4367-90ea-5a0465018219][ea19d54a-dbe6-4367-90ea-5a0465018219]]
 named!(cell_params<&str, (f64, f64, f64, f64, f64, f64)>, permutation!(
     preceded!(ws!(tag!("_cell_length_a")), ws!(double_s)),
@@ -24,22 +30,6 @@ _cell_angle_gamma                 90.0000
 // ea19d54a-dbe6-4367-90ea-5a0465018219 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::6dcc25a3-6738-497a-9317-df051c7afa74][6dcc25a3-6738-497a-9317-df051c7afa74]]
-use Atom;
-
-use std::collections::HashMap;
-
-use parser::{
-    alpha,
-    alphanumeric,
-    double_s,
-    take_until_end_of_line,
-    space_token,
-    end_of_line,
-    not_space,
-};
-
-use nom::IResult;
-
 named!(atom_site_header<&str, &str>, preceded!(
     tag!("_atom_site_"),
     not_space
@@ -133,7 +123,6 @@ Si11   Si    0.69930   0.92760   0.54120   0.00000  Uiso   1.00
 Si12   Si    0.69630   0.69120   0.54610   0.00000  Uiso   1.00
 ";
     let x = atom_site_loops(lines);
-    println!("{:?}", x);
 }
 // 6dcc25a3-6738-497a-9317-df051c7afa74 ends here
 

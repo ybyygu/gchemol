@@ -2,7 +2,6 @@
 use errors::*;
 use io;
 use std::str;
-use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
@@ -10,6 +9,8 @@ pub use nom::IResult;
 pub use Atom;
 pub use Molecule;
 pub use lattice::Lattice;
+pub use Bond;
+pub use BondKind;
 
 pub use parser::{
     space,
@@ -21,7 +22,9 @@ pub use parser::{
     xyz_array,
     alpha,
     signed_digit,
+    not_space,
     unsigned_digit,
+    digit_one_line,
     end_of_line,
     not_line_ending,
     line_ending,

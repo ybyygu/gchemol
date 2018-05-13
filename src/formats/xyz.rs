@@ -1,14 +1,5 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::8842a219-a252-4367-bb8a-7a28b6bb8c2f][8842a219-a252-4367-bb8a-7a28b6bb8c2f]]
-use Atom;
-use Molecule;
-
-use parser::{
-    space_token,
-    take_until_end_of_line,
-    alphanumeric,
-    digit_one_line,
-    xyz_array,
-};
+use super::*;
 
 named!(get_atom_from<&str, Atom>, do_parse!(
     // element symbol, "1" or "H"
@@ -73,13 +64,6 @@ H -13.7062  1.5395  0.0000";
 use std::str;
 use std::fs::File;
 use std::io::prelude::*;
-
-use nom::IResult;
-
-use errors::*;
-use formats::{
-    ChemFileLike,
-};
 
 pub struct XYZFile();
 

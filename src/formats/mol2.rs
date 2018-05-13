@@ -1,12 +1,5 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ff90f63c-4f42-4a44-8333-59dac76a029f][ff90f63c-4f42-4a44-8333-59dac76a029f]]
-use Atom;
-
-use parser::{
-    end_of_line,
-    unsigned_digit,
-    double_s,
-    not_space,
-};
+use super::*;
 
 // #[derive(Debug)]
 // struct AtomRecord<'a> {
@@ -107,15 +100,6 @@ fn get_atom_type(atom: &Atom) -> &str {
 // ff90f63c-4f42-4a44-8333-59dac76a029f ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::e6d75d58-cab8-47f3-85ea-e710192a4a82][e6d75d58-cab8-47f3-85ea-e710192a4a82]]
-use Bond;
-use BondKind;
-
-use parser::{
-    alphanumeric,
-    space_token,
-    take_until_end_of_line,
-};
-
 // Sample record
 // -----------
 // 12	6	12	1
@@ -185,8 +169,6 @@ fn format_bond_order(bond: &Bond) -> &str {
 // e6d75d58-cab8-47f3-85ea-e710192a4a82 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::aa5c8cd2-1665-445b-9737-b1c0ab567ffd][aa5c8cd2-1665-445b-9737-b1c0ab567ffd]]
-use lattice::Lattice;
-
 // Format
 // ------
 // @<TRIPOS>CRYSIN
@@ -214,8 +196,6 @@ fn test_mol2_crystal() {
 // aa5c8cd2-1665-445b-9737-b1c0ab567ffd ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::13916972-0d19-4b09-807f-e1d45ac3ab2b][13916972-0d19-4b09-807f-e1d45ac3ab2b]]
-use Molecule;
-
 // Format
 // ------
 // mol_name
@@ -329,13 +309,6 @@ USER_CHARGES
 use std::str;
 use std::fs::File;
 use std::io::prelude::*;
-
-use nom::IResult;
-
-use errors::*;
-use formats::{
-    ChemFileLike,
-};
 
 /// Tripos Mol2 File Format
 ///

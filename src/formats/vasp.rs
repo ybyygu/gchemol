@@ -1,17 +1,5 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::70e8dd41-45af-4712-b095-802079ac6eb4][70e8dd41-45af-4712-b095-802079ac6eb4]]
-use parser::{
-    end_of_line,
-    take_until_end_of_line,
-    space_token,
-    xyz_array,
-    alpha,
-    digit,
-    unsigned_digit,
-    double_s,
-};
-
-use Molecule;
-use Atom;
+use super::*;
 
 use nom::ErrorKind;
 
@@ -184,10 +172,6 @@ Direct
 // 70e8dd41-45af-4712-b095-802079ac6eb4 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::e71c5ee4-27e3-4c03-b626-e7ae375b4510][e71c5ee4-27e3-4c03-b626-e7ae375b4510]]
-use formats::ChemFileLike;
-use errors::*;
-use nom::IResult;
-use lattice::Lattice;
 use io;
 
 pub struct POSCARFile();

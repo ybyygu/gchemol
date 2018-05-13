@@ -67,7 +67,7 @@ pub fn translate(points: &mut Points, loc: Point3D) {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::9413e1bc-8f8f-4b07-b305-9d2911afabc6][9413e1bc-8f8f-4b07-b305-9d2911afabc6]]
 use rand::{self, Rng};
-use rand::distributions::{Distribution, Range, Normal};
+use rand::distributions::{Range, Normal};
 
 /// create a random point within a sphere
 /// References

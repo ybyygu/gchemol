@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-12 Sat 18:28>
+//       UPDATED:  <2018-05-13 Sun 10:19>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -354,7 +354,7 @@ fn test_element() {
 // b95edc21-e696-4625-ba99-94257394772d ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::150189fd-57d9-4e19-a888-d64497f5ba7e][150189fd-57d9-4e19-a888-d64497f5ba7e]]
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::cmp::Ordering;
 
 #[derive (Debug, Clone)]
@@ -901,7 +901,7 @@ fn test_bonds_view() {
     let ijbs: Vec<_> = bv.collect();
     assert_eq!(2, ijbs.len());
     let (i, j, _) = ijbs[0];
-    assert_eq!((1, 2), (i, j))
+    assert_eq!((1, 2), (i, j));
 }
 
 impl Molecule {
