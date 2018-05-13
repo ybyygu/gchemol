@@ -20,7 +20,7 @@ use super::*;
 // ------
 // atom_id atom_name x y z atom_type [subst_id [subst_name [charge [status_bit]]]]
 //
-named!(atom_record<&str, Atom>, do_parse!(
+named!(atom_record<&str, (usize, Atom)>, do_parse!(
     // atom index
     id        : sp!(unsigned_digit)                    >>
     // atom name
@@ -37,7 +37,9 @@ named!(atom_record<&str, Atom>, do_parse!(
     (
         {
             let e = mm_type.split(|x| x == '.').next().unwrap();
-            Atom::new(e, [x, y, z])
+            let mut a = Atom::new(e, [x, y, z]);
+            a.set_label(name.trim());
+            (id, a)
         }
     )
 ));
@@ -61,7 +63,7 @@ named!(atom_subst_and_charge<&str, (usize,
 
 #[test]
 fn test_mol2_atom() {
-    let (r, a) = atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE	0.000").unwrap();
+    let (r, (_, a)) = atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE	0.000").unwrap();
     assert_eq!("C", a.symbol());
 }
 
@@ -135,25 +137,45 @@ fn test_mol2_bond() {
 // @<TRIPOS>BOND
 // 1 1 2 1
 // 2 1 3 1
-named!(get_bonds_from<&str, Vec<(usize, usize, &str)>>, do_parse!(
+named!(get_bonds_from<&str, Vec<(usize, usize, Bond)>>, do_parse!(
     tag!("@<TRIPOS>BOND")  >>
         take_until_end_of_line >>
         bonds: many0!(bond_record)    >>
-        (bonds)
+        (
+            {
+                let mut bs = vec![];
+                for (i, j, o) in bonds {
+                    let bond = match o.to_lowercase().as_ref() {
+                        "1"  => Bond::single(),
+                        "2"  => Bond::double(),
+                        "3"  => Bond::triple(),
+                        "ar" => Bond::aromatic(),
+                        "am" => Bond::aromatic(),
+                        "nc" => Bond::dummy(),
+                        "wc" => Bond::partial(), // gaussian view use this
+                        _    => Bond::single()
+                    };
+                    bs.push((i, j, bond));
+                }
+
+                bs
+            }
+        )
 ));
 
 #[test]
 fn test_mol2_bonds() {
     let (_, x) = get_bonds_from("@<TRIPOS>BOND
-1 1 2 1
-2 1 3 1
-").unwrap();
-    assert_eq!(2, x.len());
+     1    13    11    1
+     2    11    12    1
+     3     8     4    1
+     4     7     3    1
+     5     4     3   ar ").unwrap();
+    assert_eq!(5, x.len());
 
     let (_, x) = get_bonds_from("@<TRIPOS>BOND\n").unwrap();
     assert_eq!(0, x.len());
 }
-
 
 fn format_bond_order(bond: &Bond) -> &str {
     match bond.kind {
@@ -196,6 +218,8 @@ fn test_mol2_crystal() {
 // aa5c8cd2-1665-445b-9737-b1c0ab567ffd ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::13916972-0d19-4b09-807f-e1d45ac3ab2b][13916972-0d19-4b09-807f-e1d45ac3ab2b]]
+use std::collections::HashMap;
+
 // Format
 // ------
 // mol_name
@@ -228,15 +252,25 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
             }
 
             let mut mol = Molecule::new(title);
+
             // assign atoms
-            for a in atoms {
-                mol.add_atom(a);
+            let mut table = HashMap::new();
+            for (i, a) in atoms {
+                let n = mol.add_atom(a);
+                table.insert(i, n);
             }
 
-            // assign optional bonds
-            // TODO
+            // assign bonds, optionally
+            if let Some(bonds) = bonds {
+                for (i, j, b) in bonds {
+                    let ni = table.get(&i).expect(".mol2 file: look up atom in bond record");
+                    let nj = table.get(&j).expect(".mol2 file: look up atom in bond record");
+                    mol.add_bond(*ni, *nj, b);
+                }
+            }
 
             mol.lattice = lattice;
+            // println!("nbonds: {:?}", mol.nbonds());
 
             mol
         }
@@ -359,7 +393,7 @@ impl ChemFileLike for Mol2File {
             lines.push_str(&line);
         }
 
-        // TODO: format bonds
+        // format bonds
         if nbonds > 0 {
             lines.push_str("@<TRIPOS>BOND\n");
             let mut sn = 1;

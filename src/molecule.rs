@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-13 Sun 10:19>
+//       UPDATED:  <2018-05-13 Sun 11:24>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -701,6 +701,38 @@ impl Bond {
         }
     }
 
+    /// Create an aromatic bond
+    pub fn aromatic() -> Self {
+        Bond {
+            kind: BondKind::Aromatic,
+            ..Default::default()
+        }
+    }
+
+    /// Create a weak bond
+    pub fn partial() -> Self {
+        Bond {
+            kind: BondKind::Partial,
+            ..Default::default()
+        }
+    }
+
+    /// Create a quadruple bond
+    pub fn quadruple() -> Self {
+        Bond {
+            kind: BondKind::Quadruple,
+            ..Default::default()
+        }
+    }
+
+    /// Create a dummy bond
+    pub fn dummy() -> Self {
+        Bond {
+            kind: BondKind::Dummy,
+            ..Default::default()
+        }
+    }
+
     /// read-only access of bond index
     pub fn index(&self) -> BondIndex {
         self.index
@@ -840,6 +872,8 @@ impl<'a> BondView<'a> {
             // make sure ai is always smaller than aj
             if ai < aj {
                 mapping.insert((ai, aj), e);
+            } else {
+                mapping.insert((aj, ai), e);
             }
         }
 
