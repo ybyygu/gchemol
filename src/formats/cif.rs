@@ -153,8 +153,6 @@ _ccdc_geom_bond_type").unwrap();
 // 383cfb7d-0863-4efa-b969-4a6cbf7f3ad9 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::c7482893-b288-449a-82ba-387c85f3e55c][c7482893-b288-449a-82ba-387c85f3e55c]]
-use lattice::Lattice;
-
 named!(get_molecule_from<&str, Molecule>, do_parse!(
     name   : take_until_end_of_line >>
              take_until1!("_cell_") >>
@@ -260,9 +258,6 @@ _atom_site_fract_z
 // c7482893-b288-449a-82ba-387c85f3e55c ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::246e575d-8f3b-419d-b007-febcd6e45991][246e575d-8f3b-419d-b007-febcd6e45991]]
-use Molecule;
-use super::ChemFileLike;
-use errors::*;
 use io;
 
 pub struct CifFile();

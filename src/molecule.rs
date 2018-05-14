@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-13 Sun 11:24>
+//       UPDATED:  <2018-05-14 Mon 11:00>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -47,6 +47,10 @@ pub struct MolecularEntity {
     pub graph: MolGraph,
     /// Crystalline lattice for structure using periodic boundary conditions
     pub lattice: Option<Lattice>,
+    /// Arbitrary molecular property stored in key-value pair. Key is a string
+    /// type, but it is the responsibility of the setter/getter to interpret the
+    /// value.
+    pub properties: PropertyStore,
 
     /// Mapping user defined atom index to internal graph node index
     atom_indices: HashMap<String, NodeIndex>,
@@ -65,6 +69,7 @@ impl Default for Molecule {
             name: "default".to_string(),
             graph: graph,
             lattice: None,
+            properties: PropertyStore::new(),
             atom_indices: HashMap::new(),
             bond_indices: HashMap::new(),
             atom_labels: HashMap::new(),
@@ -146,6 +151,55 @@ impl Molecule {
     }
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08][a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08]]
+use serde::{
+    de::DeserializeOwned,
+    ser::Serialize,
+};
+
+use serde_json;
+use std::result;
+
+/// A container storing extra information managed as key/value pairs
+#[derive(Debug, Clone)]
+pub struct PropertyStore {
+    data: HashMap<String, String>,
+}
+
+impl PropertyStore {
+    fn new() -> Self {
+        PropertyStore {
+            data: HashMap::new(),
+        }
+    }
+
+    /// retrieve property associated with the `key`
+    pub fn load<D: DeserializeOwned>(&self, key: &str) -> result::Result<D, serde_json::Error> {
+        let serialized = self.data.get(key).unwrap();
+        serde_json::from_str(&serialized)
+    }
+
+    /// store property associatd with a `key`
+    pub fn store<D: Serialize>(&mut self, key: &str, value: D) {
+        let serialized = serde_json::to_string(&value).unwrap();
+        self.data.insert(key.into(), serialized);
+    }
+
+    pub fn discard(&mut self, key: &str) {
+        self.data.remove(key.into());
+    }
+}
+
+#[test]
+fn test_atom_store() {
+    let mut x = PropertyStore::new();
+    let d = [1, 2, 3];
+    x.store("k", d);
+    let x: [usize; 3] = x.load("k").unwrap();
+    assert_eq!(d, x);
+}
+// a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a806642c-37da-4ce1-aa7b-0fb8d00233e3][a806642c-37da-4ce1-aa7b-0fb8d00233e3]]
 use std::fmt::{self, Debug, Display};
@@ -360,7 +414,13 @@ use std::cmp::Ordering;
 #[derive (Debug, Clone)]
 /// simple atom data structure
 pub struct Atom {
-    /// Would be managed by its parent molecule
+    /// Arbitrary key-value properties similar to python dict.
+    ///
+    /// Arbitrary property stored in key-value pair. Key is a string type, but
+    /// it is the responsibility of the setter/getter to interpret the value.
+    pub properties: PropertyStore,
+
+    /// Internal index which will be managed by parent molecule
     index: AtomIndex,
 
     label: Option<String>,
@@ -375,6 +435,8 @@ impl Default for Atom {
             index: AtomIndex::new(0),
             data: AtomData::default(),
             label: None,
+
+            properties: PropertyStore::new(),
         }
     }
 }
@@ -925,6 +987,8 @@ fn test_bonds_view() {
     let a3 = mol.add_atom(Atom::new("H", [2.0; 3]));
     mol.add_bond(a1, a2, Bond::default());
     mol.add_bond(a1, a3, Bond::default());
+    // update bond type
+    mol.add_bond(a3, a1, Bond::double());
     let bv = BondView::new(&mol);
     {
         let b12 = &bv[(1, 2)];

@@ -39,6 +39,7 @@ named!(atom_record<&str, (usize, Atom)>, do_parse!(
             let e = mm_type.split(|x| x == '.').next().unwrap();
             let mut a = Atom::new(e, [x, y, z]);
             a.set_label(name.trim());
+            // a.properties.set("mm_type", mm_type);
             (id, a)
         }
     )
