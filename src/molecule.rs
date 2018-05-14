@@ -4,11 +4,11 @@
 //
 //       OPTIONS:  ---
 //  REQUIREMENTS:  ---
-//         NOTES:  ---
+//         NOTES:  based on petgraph
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-14 Mon 11:00>
+//       UPDATED:  <2018-05-14 Mon 11:02>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 

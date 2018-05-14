@@ -210,6 +210,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
         Box::new(xyz::XYZFile()),
         Box::new(PlainXYZFile()),
         Box::new(mol2::Mol2File()),
+        Box::new(sdf::SdfFile()),
         Box::new(vasp::POSCARFile()),
         Box::new(cif::CifFile()),
     ];
@@ -241,6 +242,7 @@ pub fn describe_backends() {
         Box::new(xyz::XYZFile()),
         Box::new(mol2::Mol2File()),
         Box::new(PlainXYZFile()),
+        Box::new(sdf::SdfFile()),
         Box::new(vasp::POSCARFile()),
         Box::new(cif::CifFile()),
     ];

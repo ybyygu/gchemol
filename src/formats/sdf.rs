@@ -1,5 +1,31 @@
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::6eb13eea-3d99-41a4-9589-1e922c46e3d0][6eb13eea-3d99-41a4-9589-1e922c46e3d0]]
+named!(counts_line<&str, (Option<usize>, Option<usize>)>, do_parse!(
+    // number of atoms
+    natoms: take!(3)               >>
+    // number of bonds
+    nbonds: take!(3)               >>
+    // ignore the remaining
+            take_until_end_of_line >>
+    (
+        {
+            let na = natoms.trim().parse().ok();
+            let nb = nbonds.trim().parse().ok();
+            (na, nb)
+        }
+    )
+));
+
+#[test]
+fn test_sdf_counts_line() {
+    let (_, (na, nb)) = counts_line(" 16 14  0  0  0  0  0  0  0  0999 V2000").unwrap();
+    assert_eq!(Some(16), na);
+    assert_eq!(Some(14), nb);
+}
+// 6eb13eea-3d99-41a4-9589-1e922c46e3d0 ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::8f0d2f92-9ab9-43ab-9024-e1c1ff1fe89b][8f0d2f92-9ab9-43ab-9024-e1c1ff1fe89b]]
 use super::*;
+use std::fmt::Display;
 
 // MDL SD file format
 // Example input
@@ -7,20 +33,13 @@ use super::*;
 //    -1.2940   -0.5496   -0.0457 C   0  0  0  0  0  0  0  0  0  0  0  0
 //               x, y, z, symbol = float(line[:10]), float(line[10:20]), float(line[20:30]), line[31:34]
 named!(get_atom_from<&str, Atom>, do_parse!(
-    x: take!(10) >>
-    y: take!(10) >>
-    z: take!(10) >>
+    x: flat_map!(take!(10), sp!(double_s)) >>
+    y: flat_map!(take!(10), sp!(double_s)) >>
+    z: flat_map!(take!(10), sp!(double_s)) >>
     s: take!(3) >>
     take_until_end_of_line >>
     (
-        {
-            let x: f64 = x.trim().parse().unwrap();
-            let y: f64 = y.trim().parse().unwrap();
-            let z: f64 = z.trim().parse().unwrap();
-            let sym = s.trim();
-
-            Atom::new(sym, [x, y, z])
-        }
+        Atom::new(s.trim(), [x, y, z])
     )
 ));
 
@@ -32,28 +51,18 @@ fn test_sdf_atom() {
 }
 
 //   1  4  1  0  0  0  0
-named!(get_bond_from<&str, (&str, &str, Bond)>, do_parse!(
-    i: take!(3) >>
-    j: take!(3) >>
-    b: take!(3) >>
+named!(get_bond_from<&str, (usize, usize, Bond)>, do_parse!(
+    i: flat_map!(take!(3), sp!(unsigned_digit)) >>
+    j: flat_map!(take!(3), sp!(unsigned_digit)) >>
+    b: flat_map!(take!(3), sp!(unsigned_digit)) >>
     take_until_end_of_line >>
     (
-        {
-            let i = i.trim();
-            let j = j.trim();
-            let b: f64 = b.trim().parse().unwrap();
-
-            (
-                i,
-                j,
-                Bond::new(b),
-            )
-        }
+        (i, j, Bond::new(b as f64))
     )
 ));
 
 // output atom line in .sdf format
-fn format_atom(a: &Atom) -> String {
+fn format_atom(i: usize, a: &Atom) -> String {
     let pos = a.position();
     format!(
         "{x:-10.4} {y:-9.4} {z:-9.4} {sym:3} 0  0  0  0  0  0  0  0  0 {index:2}\n",
@@ -61,7 +70,7 @@ fn format_atom(a: &Atom) -> String {
         y   = pos[1],
         z   = pos[2],
         sym = a.symbol(),
-        index = a.label(),
+        index = i,
     )
 }
 
@@ -69,11 +78,11 @@ fn format_atom(a: &Atom) -> String {
 fn test_format_sdf_atom() {
     let line = "  -13.5661  206.9157  111.5569 C   0  0  0  0  0  0  0  0  0 12";
     let (_, a) = get_atom_from(line).unwrap();
-    let line2 = format_atom(&a);
+    let line2 = format_atom(12, &a);
     assert_eq!(line[..60], line2[..60]);
 }
 
-fn format_bond(index1: &str, index2: &str, bond: &Bond) -> String {
+fn format_bond<T: Display>(index1: T, index2: T, bond: &Bond) -> String {
     format!(
         "{index1:>3}{index2:>3}{order:3}  0  0  0 \n",
         index1 = index1,
@@ -92,6 +101,109 @@ fn test_sdf_bond() {
 // 8f0d2f92-9ab9-43ab-9024-e1c1ff1fe89b ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::3c9c404d-6b1c-4a07-a34f-5ab3a2a969ca][3c9c404d-6b1c-4a07-a34f-5ab3a2a969ca]]
+use std::collections::HashMap;
+
+named!(block_end<&str, &str>, alt!(
+    eof!() | ws!(tag!("$$$$"))
+));
+
+named!(take_lines_until<&str, (Vec<&str>, &str)>, many_till!(
+    take_until_end_of_line,
+    block_end
+));
+
+#[test]
+fn test_sdf_block_end() {
+    let x = take_lines_until("M END
+> <Name>
+MAC-0002655
+...
+$$$$");
+}
+
+named!(get_molecule_from<&str, Molecule>, do_parse!(
+    title       : take_until_end_of_line >>
+    software    : take_until_end_of_line >>
+    comment     : take_until_end_of_line >>
+    counts      : counts_line            >>
+    atoms       : many1!(get_atom_from)  >>
+    bonds       : many0!(get_bond_from)  >>
+                  take_lines_until       >>
+    (
+        {
+            let naa = atoms.len();
+            let nbb = bonds.len();
+            if let (Some(na), Some(nb)) = counts {
+                if na != naa {
+                    eprintln!("expect {} atoms, but found {}", na, naa);
+                }
+                if nb != nbb {
+                    eprintln!("expect {} bonds, but found {}", nb, nbb);
+                }
+            }
+
+            let mut mol = Molecule::new(title.trim());
+            let mut i = 1;
+            let mut mapping = HashMap::new();
+            for a in atoms {
+                let n = mol.add_atom(a);
+                mapping.insert(i, n);
+                i += 1;
+            }
+
+            for (i, j, b) in bonds {
+                let ni = mapping[&i];
+                let nj = mapping[&j];
+                mol.add_bond(ni, nj, b);
+            }
+
+            mol
+        }
+    )
+));
+
+#[test]
+fn test_sdf_get_molecule() {
+    let lines = "Configuration number :        7
+ OpenBabel05141811253D
+
+ 16 14  0  0  0  0  0  0  0  0999 V2000
+    1.3863   -0.2920    0.0135 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3863    0.2923    0.0068 N   0  0  0  0  0  0  0  0  0  0  0  0
+    0.9188    0.9708   -0.0188 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.4489    1.2590   -0.0221 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9188   -0.9709    0.0073 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.4489   -1.2591    0.0106 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.6611    1.7660   -0.0258 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8071    2.2860   -0.0318 H   0  0  0  0  0  0  0  0  0  0  0  0
+    0.8071   -2.2861    0.0273 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6611   -1.7660    0.0214 H   0  0  0  0  0  0  0  0  0  0  0  0
+    4.1745   -0.5794   -0.3789 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.2019   -0.8118   -0.3826 H   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5669   -0.8017    0.5137 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7704    0.9637   -1.4942 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3519    1.7400   -1.9656 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.0872    0.5168   -0.9167 H   0  0  0  0  0  0  0  0  0  0  0  0
+  2  5  2  0  0  0  0
+  3  1  1  0  0  0  0
+  4  3  2  0  0  0  0
+  4  2  1  0  0  0  0
+  5  6  1  0  0  0  0
+  5 10  1  0  0  0  0
+  6  1  2  0  0  0  0
+  6  9  1  0  0  0  0
+  7  3  1  0  0  0  0
+  8  4  1  0  0  0  0
+ 11 13  1  0  0  0  0
+ 12 11  1  0  0  0  0
+ 14 16  1  0  0  0  0
+ 15 14  1  0  0  0  0
+M  END";
+    let (_, mol) = get_molecule_from(lines).unwrap();
+    assert_eq!(16, mol.natoms());
+    assert_eq!(14, mol.nbonds());
+}
+
 fn format_molecule(mol: &Molecule) -> String {
     let mut lines = String::new();
 
@@ -108,16 +220,16 @@ fn format_molecule(mol: &Molecule) -> String {
 
     lines.push_str(&line);
 
-    for a in mol.atoms() {
-        lines.push_str(&format_atom(a));
+    for (i, a) in mol.view_atoms() {
+        lines.push_str(&format_atom(i, a));
     }
 
-    for b in mol.bonds() {
-        let (a1, a2)= b.partners(&mol).unwrap();
-        let i = a1.label();
-        let j = a2.label();
-        lines.push_str(&format_bond(&i, &j, &b));
+    let bonds = mol.view_bonds();
+    for (i, j, b) in bonds {
+        lines.push_str(&format_bond(i, j, &b));
     }
+
+    lines.push_str("M  END\n$$$$\n");
 
     lines
 }
@@ -137,6 +249,10 @@ impl ChemFileLike for SdfFile {
 
     fn format_molecule(&self, mol: &Molecule) -> Result<String> {
         Ok(format_molecule(mol))
+    }
+
+    fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
+        get_molecule_from(chunk)
     }
 }
 // a81f736e-2244-4cc8-8deb-ce493cbd8325 ends here
