@@ -1,10 +1,5 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8][ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8]]
-use parser::{
-    end_of_line,
-    take_until_end_of_line,
-    unsigned_digit,
-    space,
-};
+use super::*;
 
 // guess element from columns 55-80
 // 55 - 60        Real(6.2)     occupancy    Occupancy.
@@ -95,12 +90,23 @@ named!(atom_record<&str, ([f64; 3], Option<&str>)>,
     )
 );
 
+fn format_atom(i: usize, a: &Atom) -> String {
+    let [x, y, z] = a.position();
+
+    format!(
+        "ATOM {index}{x}{y}{z}",
+        index=i,
+        x = x,
+        y = y,
+        z = z,
+    )
+}
+
 #[test]
 fn test_pdb_atom() {
     // let line = "ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474  1.00  0.00      UC1 SI\n";
     let line = "ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474\n";
     let x = atom_record(line);
-    println!("{:?}", x);
 }
 
 named!(pdb_atoms<&str, &str>, do_parse!(
@@ -152,6 +158,10 @@ named!(bond_record<&str, Vec<Pair>>, do_parse!(
     )
 ));
 
+fn format_bond(i: usize, j: usize, b: &Bond) -> String {
+    unimplemented!()
+}
+
 #[test]
 fn test_pdb_bond_record() {
     let line = "CONECT 1179 1211 1222         ";
@@ -183,3 +193,51 @@ CONECT 2043 2042 2044            ";
     assert_eq!(6, x.len());
 }
 // 0394bb2f-e054-4466-a090-04a0fbe69e03 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::10e26e11-ab6c-4e7d-884a-6a0e98c8d08f][10e26e11-ab6c-4e7d-884a-6a0e98c8d08f]]
+named!(get_molecule_from<&str, Molecule>, do_parse!(
+    take_until_end_of_line >>
+    (
+        unimplemented!()
+    )
+));
+
+fn format_molecule(mol: &Molecule) -> String {
+    let mut lines = String::from("REMARK Created by gchemol\n");
+    for (i, a) in mol.view_atoms() {
+        let line = format_atom(i, a);
+        lines.push_str(&line);
+    }
+
+    for (i, j, b) in mol.view_bonds() {
+        let line = format_bond(i, j, b);
+        lines.push_str(&line);
+    }
+
+    lines.push_str("END\n");
+
+    lines
+}
+// 10e26e11-ab6c-4e7d-884a-6a0e98c8d08f ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::f026618f-fdc0-4590-a2b0-211078c30e14][f026618f-fdc0-4590-a2b0-211078c30e14]]
+pub struct PdbFile();
+
+impl ChemFileLike for PdbFile {
+    fn ftype(&self) -> &str {
+        "text/pdb"
+    }
+
+    fn extensions(&self) -> Vec<&str> {
+        vec![".pdb", ".ent"]
+    }
+
+    fn format_molecule(&self, mol: &Molecule) -> Result<String> {
+        Ok(format_molecule(mol))
+    }
+
+    fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
+        get_molecule_from(chunk)
+    }
+}
+// f026618f-fdc0-4590-a2b0-211078c30e14 ends here
