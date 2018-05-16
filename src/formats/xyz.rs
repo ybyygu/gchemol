@@ -1,42 +1,43 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::8842a219-a252-4367-bb8a-7a28b6bb8c2f][8842a219-a252-4367-bb8a-7a28b6bb8c2f]]
 use super::*;
+use errors::*;
+// use nom::types::CompleteStr;
 
 named!(get_atom_from<&str, Atom>, do_parse!(
     // element symbol, "1" or "H"
-    sym      : sp!(alphanumeric) >>
-    position : sp!(xyz_array)    >>
+    sym      : sp!(alt!(alpha|digit))      >>
+    position : sp!(xyz_array)         >>
     // ignore the remaining characters
-    take_until_end_of_line       >>
+               read_until_eol >>
     (
         Atom::new(sym, position)
     )
 ));
 
 #[test]
-fn test_format_xyz_atom() {
-    let (_, x) = get_atom_from("C -11.4286 -1.3155  0.0000 ").unwrap();
+fn test_formats_xyz_atom() {
+    let (_, x) = get_atom_from("C -11.4286 -1.3155  0.0000\n").unwrap();
+    assert_eq!("C", x.symbol());
+    let (_, x) = get_atom_from("6 -11.4286 -1.3155  0.0000 \n").unwrap();
     assert_eq!("C", x.symbol());
 }
 
-/// parse molecule from &str
-named!(get_molecule_from<&str, Molecule>, do_parse!(
-    natoms: sp!(digit_one_line)    >>
-    title : take_until_end_of_line >>
-    atoms : many0!(get_atom_from)  >>
-    (
-        {
-            let mut mol = Molecule::new(title);
-            if atoms.len() != natoms {
-                eprintln!("the expected number of atoms is different: {}, {}", natoms, atoms.len());
-            }
+fn get_molecule(input: &str) -> IResult<&str, Molecule> {
+    // 1. read number of atoms
+    let (rest, n) = terminated!(input, sp!(unsigned_digit), line_ending)?;
+    // 2. get molecule title
+    let (rest, t) = read_until_eol(rest)?;
+    let title = t.trim();
+    // 3. collect atom records
+    let (rest, atoms) = many_m_n!(rest, n, n, get_atom_from)?;
+    // 4. construct molecule
+    let mut mol = Molecule::new(title);
+    for a in atoms {
+        mol.add_atom(a);
+    }
 
-            for a in atoms {
-                mol.add_atom(a);
-            }
-            mol
-        }
-    )
-));
+    Ok((rest, mol))
+}
 
 #[test]
 fn test_formats_xyz_molecule() {
@@ -53,9 +54,8 @@ H -9.1509  1.5395  0.0000
 H -9.1509 -1.0905  0.0000
 H -11.4286 -2.4055  0.0000
 H -13.7062 -1.0905  0.0000
-H -13.7062  1.5395  0.0000";
-
-    let (_, mol) = get_molecule_from(txt).unwrap();
+H -13.7062  1.5395  0.0000\n";
+    let (_, mol) = get_molecule(txt).unwrap();
     assert_eq!(12, mol.natoms());
 }
 // 8842a219-a252-4367-bb8a-7a28b6bb8c2f ends here
@@ -77,7 +77,7 @@ impl ChemFileLike for XYZFile {
     }
 
     fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
-        get_molecule_from(chunk)
+        get_molecule(chunk)
     }
 
     fn format_molecule(&self, mol: &Molecule) -> Result<String> {

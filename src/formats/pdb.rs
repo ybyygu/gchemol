@@ -47,55 +47,59 @@ fn test_guess_element() {
 }
 
 // ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474  1.00  0.00      UC1 SI
-named!(atom_record<&str, ([f64; 3], Option<&str>)>,
-    do_parse!(
-        // 1-6
-              alt!(tag!("ATOM   ") |
-                   tag!("HETATM")) >>
-        // 7-11
-        sn       : take!(5)        >>
-        // 12
-                   take!(1)        >>
-        // 13-16
-        name     : take!(4)        >>
-        // 17
-        alt_loc  : take!(1)        >>
-        // 18-20
-        res_name : take!(3)        >>
-        // 22
-        chain_id : take!(1)        >>
-        // 23-26
-        res_seq  : take!(4)        >>
-        // 27
-        icode    : take!(1)        >>
-        // 28-30
-                   take!(3)        >>
-        // 31-38
-        x        : take!(8)        >>
-        // 39-46
-        y        : take!(8)        >>
-        // 47-54
-        z        : take!(8)        >>
-        remained : opt!(take_until_end_of_line) >>
-        (
-            (
-                [
-                    x.trim().parse().unwrap(),
-                    y.trim().parse().unwrap(),
-                    z.trim().parse().unwrap(),
-                ],
-                guess_element(name, remained)
-            )
-        )
+named!(atom_record<&str, (usize, Atom)>, do_parse!(
+    // 1-6
+               alt!(tag!("ATOM  ") | tag!("HETATM")) >>
+    // 7-11
+    sn       : flat_map!(take!(5), sp!(parse_to!(usize))) >>
+    // 12
+               take!(1)                               >>
+    // 13-16
+    name     : take!(4)                               >>
+    // 17
+    alt_loc  : take!(1)                               >>
+    // 18-20
+    res_name : take!(3)                               >>
+    // 21
+               take!(1)                               >>
+    // 22
+    chain_id : take!(1)                               >>
+    // 23-26
+    res_seq  : take!(4)                               >>
+    // 27
+    icode    : take!(1)                               >>
+    // 28-30
+               take!(3)                               >>
+    // 31-38
+    x        : flat_map!(take!(8), sp!(parse_to!(f64)))     >>
+    // 39-46
+    y        : flat_map!(take!(8), sp!(parse_to!(f64)))     >>
+    // 47-54
+    z        : flat_map!(take!(8), sp!(parse_to!(f64)))     >>
+    remained : opt!(read_until_eol)           >>
+    (
+        {
+            let sym = guess_element(name, remained).unwrap();
+
+            let mut a = Atom::new(sym, [x, y, z]);
+
+            (sn, a)
+        }
     )
-);
+));
 
 fn format_atom(i: usize, a: &Atom) -> String {
     let [x, y, z] = a.position();
 
     format!(
-        "ATOM {index}{x}{y}{z}",
+        "ATOM  {index:>5} {name:>4}{alt_loc:1}{res_name:3}{chain_id:1}{res_seq:4}{icode:1}   {x:-8.4}{y:-8.4}{z:-8.4}\n",
         index=i,
+        alt_loc=1,
+        name=a.label(),
+        chain_id=1,
+        res_seq=1,
+        res_name="xx",
+        icode=1,
         x = x,
         y = y,
         z = z,
@@ -104,9 +108,15 @@ fn format_atom(i: usize, a: &Atom) -> String {
 
 #[test]
 fn test_pdb_atom() {
-    // let line = "ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474  1.00  0.00      UC1 SI\n";
     let line = "ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474\n";
+    let line = "HETATM 1632  O1S MID E   5      -6.883   5.767  26.435  1.00 26.56           O \n";
     let x = atom_record(line);
+    println!("{:?}", x);
+    let (_, (i, a)) = x.unwrap();
+
+    let line2 = format_atom(3, &a);
+    println!("{:?}", line);
+    println!("{:?}", line2);
 }
 
 named!(pdb_atoms<&str, &str>, do_parse!(
@@ -144,7 +154,7 @@ use parser::space_token;
 named!(bond_record<&str, Vec<Pair>>, do_parse!(
          tag!("CONECT")                       >>
     sns: many_m_n!(2, 5, sp!(unsigned_digit)) >>
-         take_until_end_of_line               >>
+         read_until_eol               >>
     (
         {
             let mut pairs = vec![];
@@ -164,11 +174,11 @@ fn format_bond(i: usize, j: usize, b: &Bond) -> String {
 
 #[test]
 fn test_pdb_bond_record() {
-    let line = "CONECT 1179 1211 1222         ";
+    let line = "CONECT 1179 1211 1222         \n";
     let (_, x) = bond_record(line).unwrap();
     assert_eq!(2, x.len());
 
-    let line = "CONECT 2041 2040 2042";
+    let line = "CONECT 2041 2040 2042\n";
     let (_, x) = bond_record(line).unwrap();
     assert_eq!(2, x.len());
 
@@ -188,15 +198,16 @@ named!(bonds<&str, Vec<Pair>>, do_parse!(
 fn test_pdb_bonds() {
     let lines = "CONECT 2028 2027 2029
 CONECT 2041 2040 2042
-CONECT 2043 2042 2044            ";
-    let (_, x) = bonds(lines).unwrap();
+CONECT 2043 2042 2044 \n\n";
+    let (_, x) = bonds(lines)
+        .expect("pdb bonds");
     assert_eq!(6, x.len());
 }
 // 0394bb2f-e054-4466-a090-04a0fbe69e03 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::10e26e11-ab6c-4e7d-884a-6a0e98c8d08f][10e26e11-ab6c-4e7d-884a-6a0e98c8d08f]]
 named!(get_molecule_from<&str, Molecule>, do_parse!(
-    take_until_end_of_line >>
+    read_until_eol >>
     (
         unimplemented!()
     )

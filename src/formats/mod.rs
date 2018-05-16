@@ -1,34 +1,16 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::7faf1529-aae1-4bc5-be68-02d8ccdb9267][7faf1529-aae1-4bc5-be68-02d8ccdb9267]]
+pub use parser::*;
 use errors::*;
 use io;
 use std::str;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-pub use nom::IResult;
 pub use Atom;
 pub use Molecule;
 pub use lattice::Lattice;
 pub use Bond;
 pub use BondKind;
-
-pub use parser::{
-    space,
-    space_token,
-    take_until_end_of_line,
-    digit,
-    double_s,
-    alphanumeric,
-    xyz_array,
-    alpha,
-    signed_digit,
-    not_space,
-    unsigned_digit,
-    digit_one_line,
-    end_of_line,
-    not_line_ending,
-    line_ending,
-};
 
 pub mod xyz;
 pub mod mol2;
@@ -38,7 +20,9 @@ pub mod sdf;
 pub mod cif;
 pub mod gaussian;
 
-const BUF_SIZE: usize = 8 * 1024;
+const BUF_SIZE: usize = 1 * 1024;
+
+use nom;
 
 /// Unified behaviors for all chemical file formats
 pub trait ChemFileLike {
@@ -106,32 +90,50 @@ pub trait ChemFileLike {
         let mut mols: Vec<Molecule> = vec![];
         let mut remained = String::new();
         let mut chunk = String::new();
+        // let mut i = 0;
         'out: loop {
+            // i += 1;
             let length = {
                 let buffer = reader.fill_buf().chain_err(|| "file buffer reading error")?;
-                let new = str::from_utf8(&buffer).unwrap().to_string();
+                // FIXME: need a better fix
+                // temporary fix for nom 4.0: append a newline to make stream `complete`
+                let new = if buffer.len() == 0 {
+                    String::from("\n")
+                } else {
+                    str::from_utf8(&buffer).unwrap().to_string()
+                };
+
                 // chunk = buffer + remained
                 chunk.clear();
                 chunk.push_str(&remained);
                 chunk.push_str(&new);
+                // let mut j = 0;
                 loop {
-                    // println!("inner {:?}", j);
+                    // j += 1;
+                    // println!("{:?}", (i, j));
+                    // println!("{:?}", chunk);
                     // fill chunk with remained data
                     match self.parse_molecule(&chunk) {
-                        IResult::Error(err) => {
-                            eprintln!("{:?}", err);
-                            eprintln!("{:}", chunk);
-                            break 'out;
-                        },
-                        IResult::Done(r, mol) => {
+                        Ok((r, mol)) => {
                             // println!("got mol with {:?} atoms", mol.natoms());
                             mols.push(mol);
                             remained = String::from(r);
                         },
-                        IResult::Incomplete(i) => {
-                            // eprintln!("need data: {:?}", i);
+                        Err(nom::Err::Incomplete(i)) => {
                             remained = chunk.clone();
                             break
+                        },
+                        Err(nom::Err::Error(err)) => {
+                            eprintln!("found error in {}: {:?}",
+                                      filename,
+                                      err);
+                            break 'out;
+                        },
+                        Err(nom::Err::Failure(err)) => {
+                            eprintln!("hard failure in {}: {:?}",
+                                      filename,
+                                      err);
+                            break 'out;
                         },
                     }
                     // clear chunk

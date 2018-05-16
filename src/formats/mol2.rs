@@ -1,16 +1,31 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ff90f63c-4f42-4a44-8333-59dac76a029f][ff90f63c-4f42-4a44-8333-59dac76a029f]]
 use super::*;
 
-// #[derive(Debug)]
-// struct AtomRecord<'a> {
-//     id: usize,
-//     name: &'a str,
-//     position: [f64; 3],
-//     mm_type: &'a str,
-//     subst_id: Option<usize>,
-//     subst_name: Option<&'a str>,
-//     charge: Option<f64>,
-// }
+named!(mm_type<&str, (&str, Option<&str>)>, do_parse!(
+    symbol: alpha >>
+    mtype:   opt!(preceded!(tag!("."), alphanumeric)) >>
+    (
+        (symbol, mtype)
+    )
+));
+
+#[test]
+fn test_formats_mol2_mmtype() {
+    let (_, (sym, mtype)) = mm_type("C.ar\n")
+        .expect("mol2 atom type");
+    assert_eq!("C", sym);
+    assert_eq!(Some("ar"), mtype);
+
+    let (_, (sym, mtype)) = mm_type("C.4\n")
+        .expect("mol2 atom type 2");
+    assert_eq!("C", sym);
+    assert_eq!(Some("4"), mtype);
+
+    let (_, (sym, mtype)) = mm_type("C ")
+        .expect("mol atom type: missing mm type");
+    assert_eq!("C", sym);
+    assert_eq!(None, mtype);
+}
 
 // Sample record
 // -------------
@@ -22,50 +37,83 @@ use super::*;
 //
 named!(atom_record<&str, (usize, Atom)>, do_parse!(
     // atom index
-    id        : sp!(unsigned_digit)                    >>
+    id        : sp!(unsigned_digit)         >>
     // atom name
-    name      : sp!(not_space)                         >>
+    name      : sp!(not_space)              >>
     // cartesian coordinates
-    x         : sp!(double_s)                          >>
-    y         : sp!(double_s)                          >>
-    z         : sp!(double_s)                          >>
-    mm_type   : sp!(not_space)                         >>
+    x         : sp!(double_s)               >>
+    y         : sp!(double_s)               >>
+    z         : sp!(double_s)               >>
+    emtype    : sp!(mm_type)                >>
     // substructure and partial charge, which could be omitted
-    optional  : opt!(complete!(atom_subst_and_charge)) >>
-    // ignore the others
-                take_until_end_of_line                 >>
+    optional  : opt!(atom_subst_and_charge) >>
+                sp!(line_ending)            >>
     (
         {
-            let e = mm_type.split(|x| x == '.').next().unwrap();
+            let (e, mtype) = emtype;
             let mut a = Atom::new(e, [x, y, z]);
             a.set_label(name.trim());
-            // a.properties.set("mm_type", mm_type);
             (id, a)
         }
     )
 ));
 
-named!(atom_subst_and_charge<&str, (usize,
-                                    &str,
-                                    Option<f64>)>, do_parse!(
+// substructure id and subtructure name
+named!(atom_subst_and_charge<&str, (usize, &str, Option<f64>)>, do_parse!(
     subst_id   : sp!(unsigned_digit)            >>
-        subst_name : sp!(not_space)                 >>
-        charge     : opt!(complete!(sp!(double_s))) >>
-        (
-            {
-                (
-                    subst_id,
-                    subst_name,
-                    charge
-                )
-            }
-        )
+    subst_name : sp!(not_space)                 >>
+    charge     : opt!(sp!(double_s))            >>
+    status_bit : opt!(sp!(alpha))               >>
+    (
+        (subst_id, subst_name, charge)
+    )
 ));
 
 #[test]
-fn test_mol2_atom() {
-    let (r, (_, a)) = atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE	0.000").unwrap();
+fn test_formats_mol2_atom() {
+    let (r, (_, a)) = atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE	0.000	DICT\n")
+        .expect("mol2 full");
     assert_eq!("C", a.symbol());
+    let (r, (_, a)) = atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE	0.000\n")
+        .expect("mol2 atom: missing status bit");
+    assert_eq!("C", a.symbol());
+    let (r, (_, a)) = atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE \n")
+        .expect("mol2 atom: missing partial charge");
+    assert_eq!("C", a.symbol());
+    let (r, (_, a)) = atom_record(" 3	C3	2.414	0.000	0.000	C.ar\n")
+        .expect("mol2 atom: missing substructure");
+    assert_eq!("C", a.symbol());
+}
+
+named!(get_atoms_from<&str, Vec<(usize, Atom)>>, do_parse!(
+           ws!(tag!("@<TRIPOS>ATOM")) >>
+    atoms: many0!(atom_record)           >>
+    (
+        atoms
+    )
+));
+
+#[test]
+fn test_formats_mol2_get_atoms() {
+    let lines = "
+@<TRIPOS>ATOM
+      1 N           1.3863   -0.2920    0.0135 N.ar    1  UNL1       -0.2603
+      2 N          -1.3863    0.2923    0.0068 N.ar    1  UNL1       -0.2603
+      3 C           0.9188    0.9708   -0.0188 C.ar    1  UNL1        0.0456
+      4 C          -0.4489    1.2590   -0.0221 C.ar    1  UNL1        0.0456
+      5 C          -0.9188   -0.9709    0.0073 C.ar    1  UNL1        0.0456
+      6 C           0.4489   -1.2591    0.0106 C.ar    1  UNL1        0.0456
+      7 H           1.6611    1.7660   -0.0258 H       1  UNL1        0.0845
+      8 H          -0.8071    2.2860   -0.0318 H       1  UNL1        0.0845
+      9 H           0.8071   -2.2861    0.0273 H       1  UNL1        0.0845
+     10 H          -1.6611   -1.7660    0.0214 H       1  UNL1        0.0845
+@<TRIPOS>BOND \n";
+    let (_, atoms) = get_atoms_from(lines)
+        .expect("mol2 atoms");
+    assert_eq!(10, atoms.len());
+    let (_, atoms) = get_atoms_from("@<TRIPOS>ATOM\n@<TRIPOS>BOND\n")
+        .expect("mol2 atoms: missing atom");
+    assert_eq!(0, atoms.len());
 }
 
 fn format_atom(a: &Atom) -> String {
@@ -113,24 +161,45 @@ fn get_atom_type(atom: &Atom) -> &str {
 // ------
 // bond_id origin_atom_id target_atom_id bond_type [status_bits]
 //
-named!(bond_record<&str, (usize, usize, &str)>, do_parse!(
+named!(get_bond<&str, (usize, usize, Bond)>, do_parse!(
         sp!(unsigned_digit)    >>
     n1: sp!(unsigned_digit)    >>
     n2: sp!(unsigned_digit)    >>
     bo: sp!(alphanumeric)             >>
-        take_until_end_of_line >>
+        read_until_eol >>
     (
         {
-            (n1, n2, bo)
+            let bond = match bo
+                .to_lowercase()
+                .as_ref() {
+                "1"  => Bond::single(),
+                "2"  => Bond::double(),
+                "3"  => Bond::triple(),
+                "ar" => Bond::aromatic(),
+                "am" => Bond::aromatic(),
+                "nc" => Bond::dummy(),
+                "wc" => Bond::partial(), // gaussian view use this
+                _    => Bond::single()
+            };
+            (n1, n2, bond)
         }
     )
 ));
 
 
 #[test]
-fn test_mol2_bond() {
-    let x = bond_record("1	1	2	ar ");
-    let x = bond_record("1	1	2	1 BACKBONE\n");
+fn test_formats_mol2_bond_record() {
+    let (_, (i, j, b)) = get_bond("1	1	2	1 BACKBONE\n")
+        .expect("mol2 bond: full");
+    assert_eq!(BondKind::Single, b.kind);
+
+    let (_, (i, j, b)) = get_bond("1	1	2	1\n")
+        .expect("mol2 bond: missing status bits");
+    assert_eq!(BondKind::Single, b.kind);
+
+    let (_, (i, j, b)) = get_bond("1	1	2	ar\n")
+        .expect("mol2 bond: aromatic bond type");
+    assert_eq!(BondKind::Aromatic, b.kind);
 }
 
 // Sample
@@ -139,42 +208,28 @@ fn test_mol2_bond() {
 // 1 1 2 1
 // 2 1 3 1
 named!(get_bonds_from<&str, Vec<(usize, usize, Bond)>>, do_parse!(
-    tag!("@<TRIPOS>BOND")  >>
-        take_until_end_of_line >>
-        bonds: many0!(bond_record)    >>
-        (
-            {
-                let mut bs = vec![];
-                for (i, j, o) in bonds {
-                    let bond = match o.to_lowercase().as_ref() {
-                        "1"  => Bond::single(),
-                        "2"  => Bond::double(),
-                        "3"  => Bond::triple(),
-                        "ar" => Bond::aromatic(),
-                        "am" => Bond::aromatic(),
-                        "nc" => Bond::dummy(),
-                        "wc" => Bond::partial(), // gaussian view use this
-                        _    => Bond::single()
-                    };
-                    bs.push((i, j, bond));
-                }
-
-                bs
-            }
-        )
+    ws!(tag!("@<TRIPOS>BOND"))  >>
+    bonds: many0!(get_bond)    >>
+    (
+        bonds
+    )
 ));
 
 #[test]
-fn test_mol2_bonds() {
-    let (_, x) = get_bonds_from("@<TRIPOS>BOND
+fn test_formats_mol2_bonds() {
+    let lines = "@<TRIPOS>BOND
      1    13    11    1
      2    11    12    1
      3     8     4    1
      4     7     3    1
-     5     4     3   ar ").unwrap();
+     5     4     3   ar \n\n";
+
+    let (_, x) = get_bonds_from(lines)
+        .expect("mol2 bonds");
     assert_eq!(5, x.len());
 
-    let (_, x) = get_bonds_from("@<TRIPOS>BOND\n").unwrap();
+    let (_, x) = get_bonds_from("@<TRIPOS>BOND\n@<TRIPOS>MOLECULE\n")
+        .expect("mol2 bonds: missing bonds");
     assert_eq!(0, x.len());
 }
 
@@ -198,7 +253,7 @@ fn format_bond_order(bond: &Bond) -> &str {
 // cell cell cell cell cell cell space_grp setting
 named!(get_lattice_from<&str, Lattice>, do_parse!(
                 tag!("@<TRIPOS>CRYSIN") >>
-                take_until_end_of_line  >>
+                read_until_eol  >>
     a         : sp!(double_s)           >>
     b         : sp!(double_s)           >>
     c         : sp!(double_s)           >>
@@ -207,14 +262,18 @@ named!(get_lattice_from<&str, Lattice>, do_parse!(
     gamma     : sp!(double_s)           >>
     space_grp : sp!(unsigned_digit)     >>
     setting   : sp!(unsigned_digit)     >>
-                take_until_end_of_line  >>
+                read_until_eol  >>
     (Lattice::from_params(a, b, c, alpha, beta, gamma))
 ));
 
 #[test]
-fn test_mol2_crystal() {
-    let (_, x) = get_lattice_from("@<TRIPOS>CRYSIN
-12.312000 4.959000 15.876000 90.000000 99.070000 90.000000 4 1").unwrap();
+fn test_formats_mol2_crystal() {
+    let txt = "@<TRIPOS>CRYSIN
+12.312000 4.959000 15.876000 90.000000 99.070000 90.000000 4 1\n";
+    let (_, mut x) = get_lattice_from(txt)
+        .expect("mol2 crystal");
+
+    assert_eq!((12.312, 4.959, 15.876), x.lengths());
 }
 // aa5c8cd2-1665-445b-9737-b1c0ab567ffd ends here
 
@@ -224,30 +283,25 @@ use std::collections::HashMap;
 // Format
 // ------
 // mol_name
-// num_atoms [num_bonds [num_subst [num_feat
-//                                  [num_sets]]]]
+// num_atoms [num_bonds [num_subst [num_feat [num_sets]]]]
 // mol_type
 // charge_type
-// [status_bits
-// [mol_comment]]
+// [status_bits [mol_comment]]
 //
 named!(get_molecule_from<&str, Molecule>, do_parse!(
-                  take_until1!("@<TRIPOS>MOLECUL")     >>
-                  take_until_end_of_line               >>
-    title       : take_until_end_of_line               >>
-    natoms      : sp!(unsigned_digit)                  >>
-    nbonds      : opt!(sp!(complete!(unsigned_digit))) >>
-                  take_until_end_of_line               >>
-    mol_type    : take_until_end_of_line               >>
-    charge_type : take_until_end_of_line               >>
-                  take_until1!("@<TRIPOS>ATOM")        >>
-                  take_until_end_of_line               >>
-    atoms       : many1!(atom_record)                  >>
+                  take_until!("@<TRIPOS>MOLECUL")     >>
+                  read_until_eol               >>
+    title       : sp!(read_until_eol)          >>
+    counts      : sp!(counts_line)                     >>
+    mol_type    : read_until_eol               >>
+    charge_type : read_until_eol               >>
+    atoms       : get_atoms_from >>
                   take_until!("@<TRIPOS>")             >>
-    bonds       : opt!(complete!(get_bonds_from))      >>
-    lattice     : opt!(complete!(get_lattice_from))    >>
+    bonds       : opt!(get_bonds_from)      >>
+    lattice     : opt!(get_lattice_from)    >>
     (
         {
+            let natoms = counts[0];
             if natoms != atoms.len() {
                 eprintln!("Inconsistency: expected {} atoms, but found {}", natoms, atoms.len());
             }
@@ -271,16 +325,28 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
             }
 
             mol.lattice = lattice;
-            // println!("nbonds: {:?}", mol.nbonds());
 
             mol
         }
     )
 ));
 
+/// 1 or more unsigned numbers in a line
+named!(pub counts_line<&str, Vec<usize>>, terminated!(
+    many1!(sp!(unsigned_digit)),
+    sp!(line_ending)
+));
+
 #[test]
-fn test_mol2_molecule() {
-    let x = get_molecule_from("# created with PyMOL 2.1.0
+fn test_formats_counts_line() {
+    let (_, ns) = counts_line(" 16 14 0 0 0 \n")
+        .expect("parser: counts_line");
+    assert_eq!(5, ns.len());
+}
+
+#[test]
+fn test_formats_mol2_molecule() {
+    let lines = "# created with PyMOL 2.1.0
 @<TRIPOS>MOLECULE
 Molecule Name
 12
@@ -312,10 +378,14 @@ USER_CHARGES
 10 6 10 2
 11 6 12 1
 @<TRIPOS>SUBSTRUCTURE
-1	UNK0	1	GROUP	1 ****	UNK");
+1	UNK0	1	GROUP	1 ****	UNK\n";
 
-    let x = get_molecule_from("# created with PyMOL 2.1.0
-@<TRIPOS>MOLECULE
+    let (_, mol) = get_molecule_from(lines)
+        .expect("mol2 format test1");
+    assert_eq!(12, mol.natoms());
+    assert_eq!(11, mol.nbonds());
+
+    let lines = "@<TRIPOS>MOLECULE
 Molecule Name
 12
 SMALL
@@ -333,10 +403,16 @@ USER_CHARGES
 10	 O10	-0.219	-0.346	0.000	O.2	1	UNK0	0.000
 11	 H11	-2.284	-3.396	0.000	 H	1	UNK0	0.000
 12	 H12	-1.811	0.895	0.000	 H	1	UNK0	0.000
-
+@<TRIPOS>CRYSIN
+18.126000 18.126000 7.567000 90.000000 90.000000 120.000000 191 1
 @<TRIPOS>SUBSTRUCTURE
-1	UNK0	1	GROUP	1 ****	UNK");
+1	UNK0	1	GROUP	1 ****	UNK";
 
+    let (_, mol) = get_molecule_from(lines)
+        .expect("mol2 format test2");
+    assert_eq!(12, mol.natoms());
+    assert_eq!(0, mol.nbonds());
+    assert!(mol.lattice.is_some());
 }
 // 13916972-0d19-4b09-807f-e1d45ac3ab2b ends here
 
@@ -434,10 +510,13 @@ impl ChemFileLike for Mol2File {
 #[test]
 fn test_formats_mol2() {
     let file = Mol2File();
-    let mols = file.parse("tests/files/mol2/multi-obabel.mol2").unwrap();
-    assert_eq!(6, mols.len());
+    // single molecule with a lattice
     let mols = file.parse("tests/files/mol2/LTL-crysin-ds.mol2").unwrap();
     assert_eq!(1, mols.len());
     assert!(mols[0].lattice.is_some());
+
+    // molecule trajectory
+    let mols = file.parse("tests/files/mol2/multi-obabel.mol2").unwrap();
+    assert_eq!(6, mols.len());
 }
 // 91746805-686b-489a-b077-2b7182f18e3b ends here

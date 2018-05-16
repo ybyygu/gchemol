@@ -5,7 +5,7 @@ named!(counts_line<&str, (Option<usize>, Option<usize>)>, do_parse!(
     // number of bonds
     nbonds: take!(3)               >>
     // ignore the remaining
-            take_until_end_of_line >>
+            read_until_eol >>
     (
         {
             let na = natoms.trim().parse().ok();
@@ -17,7 +17,7 @@ named!(counts_line<&str, (Option<usize>, Option<usize>)>, do_parse!(
 
 #[test]
 fn test_sdf_counts_line() {
-    let (_, (na, nb)) = counts_line(" 16 14  0  0  0  0  0  0  0  0999 V2000").unwrap();
+    let (_, (na, nb)) = counts_line(" 16 14  0  0  0  0  0  0  0  0999 V2000\n").unwrap();
     assert_eq!(Some(16), na);
     assert_eq!(Some(14), nb);
 }
@@ -33,11 +33,11 @@ use std::fmt::Display;
 //    -1.2940   -0.5496   -0.0457 C   0  0  0  0  0  0  0  0  0  0  0  0
 //               x, y, z, symbol = float(line[:10]), float(line[10:20]), float(line[20:30]), line[31:34]
 named!(get_atom_from<&str, Atom>, do_parse!(
-    x: flat_map!(take!(10), sp!(double_s)) >>
-    y: flat_map!(take!(10), sp!(double_s)) >>
-    z: flat_map!(take!(10), sp!(double_s)) >>
-    s: take!(3) >>
-    take_until_end_of_line >>
+    x: flat_map!(take!(10), sp!(parse_to!(f64))) >>
+    y: flat_map!(take!(10), sp!(parse_to!(f64))) >>
+    z: flat_map!(take!(10), sp!(parse_to!(f64))) >>
+    s: take!(3)                            >>
+       read_until_eol                      >>
     (
         Atom::new(s.trim(), [x, y, z])
     )
@@ -45,17 +45,21 @@ named!(get_atom_from<&str, Atom>, do_parse!(
 
 #[test]
 fn test_sdf_atom() {
-    let (_, x) = get_atom_from("   -1.2940   -0.5496   -0.0457 C   0  0  0  0  0  0  0  0  0  0  0  0\n")
-        .unwrap();
-    assert_eq!("C", x.symbol());
+    let line = "  -13.5661  206.9157  111.5569 C   0  0  0  0  0  0  0  0  0 12
+
+\n";
+    let (_, a) = get_atom_from(line)
+        .expect("sdf atom");
+    let line2 = format_atom(12, &a);
+    assert_eq!(line[..60], line2[..60]);
 }
 
 //   1  4  1  0  0  0  0
 named!(get_bond_from<&str, (usize, usize, Bond)>, do_parse!(
-    i: flat_map!(take!(3), sp!(unsigned_digit)) >>
-    j: flat_map!(take!(3), sp!(unsigned_digit)) >>
-    b: flat_map!(take!(3), sp!(unsigned_digit)) >>
-    take_until_end_of_line >>
+    i: flat_map!(take!(3), sp!(parse_to!(usize))) >>
+    j: flat_map!(take!(3), sp!(parse_to!(usize))) >>
+    b: flat_map!(take!(3), sp!(parse_to!(usize))) >>
+    read_until_eol >>
     (
         (i, j, Bond::new(b as f64))
     )
@@ -74,14 +78,6 @@ fn format_atom(i: usize, a: &Atom) -> String {
     )
 }
 
-#[test]
-fn test_format_sdf_atom() {
-    let line = "  -13.5661  206.9157  111.5569 C   0  0  0  0  0  0  0  0  0 12";
-    let (_, a) = get_atom_from(line).unwrap();
-    let line2 = format_atom(12, &a);
-    assert_eq!(line[..60], line2[..60]);
-}
-
 fn format_bond<T: Display>(index1: T, index2: T, bond: &Bond) -> String {
     format!(
         "{index1:>3}{index2:>3}{order:3}  0  0  0 \n",
@@ -93,8 +89,9 @@ fn format_bond<T: Display>(index1: T, index2: T, bond: &Bond) -> String {
 
 #[test]
 fn test_sdf_bond() {
-    let line = "  6  7  1  0  0  0 ";
-    let (_, (index1, index2, bond)) = get_bond_from(line).unwrap();
+    let line = "  6  7  1  0  0  0 \n";
+    let (_, (index1, index2, bond)) = get_bond_from(line)
+        .expect("sdf bond");
     let line2 = format_bond(index1, index2, &bond);
     assert_eq!(line[..9], line2[..9]);
 }
@@ -103,32 +100,30 @@ fn test_sdf_bond() {
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::3c9c404d-6b1c-4a07-a34f-5ab3a2a969ca][3c9c404d-6b1c-4a07-a34f-5ab3a2a969ca]]
 use std::collections::HashMap;
 
-named!(block_end<&str, &str>, alt!(
-    eof!() | ws!(tag!("$$$$"))
-));
-
-named!(take_lines_until<&str, (Vec<&str>, &str)>, many_till!(
-    take_until_end_of_line,
-    block_end
+// will consume the whole file if $$$$ is missing
+named!(block_end<&str, &str>, take_until_and_consume!(
+    "$$$$"
 ));
 
 #[test]
 fn test_sdf_block_end() {
-    let x = take_lines_until("M END
+    let lines = "M END
 > <Name>
 MAC-0002655
 ...
-$$$$");
+$$$$\n";
+    let x = block_end(lines)
+        .expect("sdf block end");
 }
 
 named!(get_molecule_from<&str, Molecule>, do_parse!(
-    title       : take_until_end_of_line >>
-    software    : take_until_end_of_line >>
-    comment     : take_until_end_of_line >>
-    counts      : counts_line            >>
-    atoms       : many1!(get_atom_from)  >>
-    bonds       : many0!(get_bond_from)  >>
-                  take_lines_until       >>
+    title   : read_until_eol        >>
+    software: read_until_eol        >>
+    comment : read_until_eol        >>
+    counts  : counts_line           >>
+    atoms   : many1!(get_atom_from) >>
+    bonds   : many0!(get_bond_from) >>
+              block_end             >>
     (
         {
             let naa = atoms.len();
@@ -198,7 +193,8 @@ fn test_sdf_get_molecule() {
  12 11  1  0  0  0  0
  14 16  1  0  0  0  0
  15 14  1  0  0  0  0
-M  END";
+M  END
+$$$$";
     let (_, mol) = get_molecule_from(lines).unwrap();
     assert_eq!(16, mol.natoms());
     assert_eq!(14, mol.nbonds());
