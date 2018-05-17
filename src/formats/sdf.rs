@@ -244,6 +244,9 @@ impl ChemFileLike for SdfFile {
     }
 
     fn format_molecule(&self, mol: &Molecule) -> Result<String> {
+        if mol.lattice.is_some() {
+            eprintln!("WARNING: lattice data will be lost!")
+        }
         Ok(format_molecule(mol))
     }
 

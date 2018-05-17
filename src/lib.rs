@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-05-15 Tue 19:31>
+//       UPDATED:  <2018-05-17 Thu 14:55>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -26,6 +26,14 @@ extern crate nom;
 pub mod errors {
     // Create the Error, ErrorKind, ResultExt, and Result types
     error_chain! { }
+
+    // for nom errors
+    // use nom;
+    // impl From<String> for ErrorKind {
+    //     fn from(err: String) -> ErrorKind {
+    //         ErrorKind::from(err)
+    //     }
+    // }
 }
 
 extern crate petgraph;

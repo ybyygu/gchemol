@@ -5,19 +5,30 @@ use std::collections::HashMap;
 // 94c6ffda-5384-4d9f-8888-ab8a70b28bef ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ea19d54a-dbe6-4367-90ea-5a0465018219][ea19d54a-dbe6-4367-90ea-5a0465018219]]
+named!(double_cif<&str, f64>, do_parse!(
+    v: double_s >>
+    opt!(delimited!(char!('('), digit, char!(')'))) >>
+    (v)
+));
+
+#[test]
+fn test_cif_float_number() {
+    let (r, v) = double_cif("0.3916\n").expect("cif float number");
+}
+
 named!(cell_params<&str, (f64, f64, f64, f64, f64, f64)>, permutation!(
-    preceded!(ws!(tag!("_cell_length_a")), ws!(double_s)),
-    preceded!(ws!(tag!("_cell_length_b")), ws!(double_s)),
-    preceded!(ws!(tag!("_cell_length_c")), ws!(double_s)),
-    preceded!(ws!(tag!("_cell_angle_alpha")), ws!(double_s)),
-    preceded!(ws!(tag!("_cell_angle_beta")), ws!(double_s)),
-    preceded!(ws!(tag!("_cell_angle_gamma")), ws!(double_s))
+    preceded!(ws!(tag!("_cell_length_a")), ws!(double_cif)),
+    preceded!(ws!(tag!("_cell_length_b")), ws!(double_cif)),
+    preceded!(ws!(tag!("_cell_length_c")), ws!(double_cif)),
+    preceded!(ws!(tag!("_cell_angle_alpha")), ws!(double_cif)),
+    preceded!(ws!(tag!("_cell_angle_beta")), ws!(double_cif)),
+    preceded!(ws!(tag!("_cell_angle_gamma")), ws!(double_cif))
 ));
 
 #[test]
 #[ignore]
 fn test_cif_cell_loop() {
-    let lines = "_cell_length_a                    18.0940
+    let lines = "_cell_length_a                    18.094(0)
 _cell_length_c                    7.5240
 _cell_length_b                    20.5160
 _cell_angle_alpha                 90.0000
@@ -36,29 +47,40 @@ named!(atom_site_header<&str, &str>, preceded!(
     not_space
 ));
 
-#[test]
-#[ignore]
-fn test_cif_atom_site_header() {
-    let (_, x) = atom_site_header("_atom_site_type_symbol").unwrap();
-    assert_eq!("type_symbol", x);
-}
-
 // ["label", "type_symbol", "fract_x", "fract_y", "fract_z", "U_iso_or_equiv", "adp_type", "occupancy"]
 named!(atom_site_headers<&str, Vec<&str>>, do_parse!(
     ws!(tag!("loop_")) >>
-    headers: many1!(ws!(atom_site_header)) >>
+    headers: many0!(ws!(atom_site_header)) >>
     (
         headers
     )
 ));
 
+#[test]
+fn test_cif_site_headers() {
+    let lines = "loop_
+_atom_site_label
+_atom_site_type_symbol
+_atom_site_fract_x
+_atom_site_fract_y
+_atom_site_fract_z
+_atom_site_U_iso_or_equiv
+_atom_site_adp_type
+_atom_site_occupancy
+Si1    Si    0.30070   0.07240   0.04120   0.00000  Uiso   1.00 \n";
+
+    let x = atom_site_headers(lines).expect("cif atom site headers");
+}
+
 // How to deal with IResult function
 // since I need handle the variable headers
-fn atom_site_loops<'a>(input: &'a str) -> IResult<&'a str, Vec<Atom>> {
-    // FIXME: handle possible errors
-    let (rest, headers) = atom_site_headers(input).unwrap();
-
-    assert!(headers.len() >= 4, "not enough columns in atom site loop");
+fn get_atoms<'a>(input: &'a str) -> IResult<&'a str, Vec<Atom>> {
+    let (rest, headers) = atom_site_headers(input)?;
+    // TODO: early return using return_error! macro
+    if headers.len() <= 4 {
+        println!("{:?}", rest);
+        eprintln!("cif formats: not enough columns in atom site loop");
+    }
 
     // column header loopup table
     // Example
@@ -74,9 +96,13 @@ fn atom_site_loops<'a>(input: &'a str) -> IResult<&'a str, Vec<Atom>> {
     // TODO: column index to element symbol, which is optional
     let isym = *table.get(&"type_symbol").expect("atom symbol col");
 
-    do_parse!(
-        rest,
-        rows: many1!(ws!(count!(sp!(not_space), headers.len()))) >>
+    do_parse!(rest,
+        rows: many0!(
+            terminated!(
+                count!(sp!(not_space), headers.len()),
+                sp!(line_ending)
+            )
+        ) >>
         (
             {
                 let mut atoms = vec![];
@@ -101,7 +127,7 @@ fn atom_site_loops<'a>(input: &'a str) -> IResult<&'a str, Vec<Atom>> {
 }
 
 #[test]
-fn test_cif_atoms_loop() {
+fn test_cif_atoms() {
     let lines = "loop_
 _atom_site_label
 _atom_site_type_symbol
@@ -123,8 +149,10 @@ O9     O     0.62260   0.69540   0.42540   0.00000  Uiso   1.00
 O10    O     0.73620   0.62240   0.98650   0.00000  Uiso   1.00
 Si11   Si    0.69930   0.92760   0.54120   0.00000  Uiso   1.00
 Si12   Si    0.69630   0.69120   0.54610   0.00000  Uiso   1.00
-";
-    let x = atom_site_loops(lines);
+\n";
+    let (r, v) = get_atoms(lines)
+        .expect("cif atom site loop");
+    assert_eq!(12, v.len());
 }
 // 6dcc25a3-6738-497a-9317-df051c7afa74 ends here
 
@@ -157,11 +185,16 @@ _ccdc_geom_bond_type").unwrap();
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::c7482893-b288-449a-82ba-387c85f3e55c][c7482893-b288-449a-82ba-387c85f3e55c]]
 named!(get_molecule_from<&str, Molecule>, do_parse!(
-    name   : read_until_eol >>
-             take_until!("_cell_") >>
-    params : cell_params            >>
-             take_until!("loop_\n_atom_") >>
-    atoms  : atom_site_loops >>
+    name   : read_until_eol              >>
+             take_until!("_cell_length") >>
+    params : cell_params                 >>
+             many_till!(read_until_eol, peek!(
+                 tuple!(
+                     sp!(tag!("loop_")),
+                     sp!(line_ending),
+                     sp!(tag!("_atom"))
+                 )))                     >>
+    atoms  : get_atoms                   >>
     (
         {
             let mut mol = Molecule::new(name.trim());
@@ -188,7 +221,6 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
 ));
 
 #[test]
-#[ignore]
 fn test_cif_molecule() {
     let lines = " data_LTL
 #**************************************************************************
@@ -254,9 +286,11 @@ _atom_site_fract_z
     O6    O     0.1628    0.3256    0.5000
     T1    Si    0.1648    0.4982    0.2030
     T2    Si    0.0959    0.3594    0.5000
-";
+\n";
 
-    let (_, x) = get_molecule_from(lines).unwrap();
+    let (r, x) = get_molecule_from(lines)
+        .expect("test cif molecule");
+    // println!("{:?}", (r, x));
     assert_eq!(8, x.natoms());
 }
 // c7482893-b288-449a-82ba-387c85f3e55c ends here
@@ -274,6 +308,17 @@ impl ChemFileLike for CifFile {
     fn extensions(&self) -> Vec<&str> {
         vec![".cif"]
     }
+
+    fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
+        get_molecule_from(chunk)
+    }
+
+    // fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
+    //     let txt = io::read_file(filename).chain_err(|| "failed to open file")?;
+    //     // let (_, mol) = get_molecule_from(&txt)?;
+    //     let (_, mol) = get_molecule_from(&txt).unwrap();
+    //     Ok(vec![mol])
+    // }
 
     /// Represent molecule in .cif format
     fn format_molecule(&self, mol: &Molecule) -> Result<String> {
@@ -364,12 +409,6 @@ impl ChemFileLike for CifFile {
         Ok(lines)
     }
 
-    fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
-        let txt = io::read_file(filename).chain_err(|| "failed to open file")?;
-        let (_, mol) = get_molecule_from(&txt).unwrap();
-
-        Ok(vec![mol])
-    }
 }
 
 #[test]
