@@ -1,3 +1,7 @@
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::fb7c688e-38d6-455b-a8f0-ae54c563f3cf][fb7c688e-38d6-455b-a8f0-ae54c563f3cf]]
+
+// fb7c688e-38d6-455b-a8f0-ae54c563f3cf ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8][ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8]]
 use super::*;
 
@@ -205,15 +209,141 @@ CONECT 2043 2042 2044 \n\n";
 }
 // 0394bb2f-e054-4466-a090-04a0fbe69e03 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::10e26e11-ab6c-4e7d-884a-6a0e98c8d08f][10e26e11-ab6c-4e7d-884a-6a0e98c8d08f]]
-named!(get_molecule_from<&str, Molecule>, do_parse!(
-    read_until_eol >>
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::b5bad50c-2b36-4d09-9623-d487f9e2333b][b5bad50c-2b36-4d09-9623-d487f9e2333b]]
+// Example
+// -------
+// CRYST1   18.126   18.126    7.567  90.00  90.00 120.00 P6/MMM
+// ORIGX1      1.000000  0.000000  0.000000        0.00000
+// ORIGX2      0.000000  1.000000  0.000000        0.00000
+// ORIGX3      0.000000  0.000000  1.000000        0.00000
+// SCALE1      0.055169  0.031852  0.000000        0.00000
+// SCALE2      0.000000  0.063704  0.000000        0.00000
+// SCALE3      0.000000  0.000000  0.132153        0.00000
+
+// Record Format
+// -------------
+//  COLUMNS      DATA  TYPE    FIELD          DEFINITION
+//  -------------------------------------------------------------
+//  1 -  6       Record name   "CRYST1"
+//  7 - 15       Real(9.3)     a              a (Angstroms).
+//  16 - 24      Real(9.3)     b              b (Angstroms).
+//  25 - 33      Real(9.3)     c              c (Angstroms).
+//  34 - 40      Real(7.2)     alpha          alpha (degrees).
+//  41 - 47      Real(7.2)     beta           beta (degrees).
+//  48 - 54      Real(7.2)     gamma          gamma (degrees).
+//  56 - 66      LString       sGroup         Space  group.
+//  67 - 70      Integer       z              Z value.
+
+
+named!(get_lattice<&str, Lattice>, do_parse!(
+            many_till!(read_until_eol, tag!("CRYST1")) >>
+    a     : flat_map!(take!(9), sp!(parse_to!(f64)))   >>
+    b     : flat_map!(take!(9), sp!(parse_to!(f64)))   >>
+    c     : flat_map!(take!(9), sp!(parse_to!(f64)))   >>
+    alpha : flat_map!(take!(7), sp!(parse_to!(f64)))   >>
+    beta  : flat_map!(take!(7), sp!(parse_to!(f64)))   >>
+    gamma : flat_map!(take!(7), sp!(parse_to!(f64)))   >>
+            take!(1)                                   >>
+    sgroup: take!(11)                                  >>
+            read_until_eol                             >>
     (
-        unimplemented!()
+        {
+            let sgroup = sgroup.trim();
+            let mut lat = Lattice::from_params(a, b, c, alpha, beta, gamma);
+
+            lat
+        }
     )
 ));
 
+#[test]
+fn test_pdb_lattice() {
+    let lines = "REMARK   Materials Studio PDB file
+CRYST1   18.126   18.126    7.567  90.00  90.00 120.00 P6/MMM
+ORIGX1      1.000000  0.000000  0.000000        0.00000
+ORIGX2      0.000000  1.000000  0.000000        0.00000
+ORIGX3      0.000000  0.000000  1.000000        0.00000
+SCALE1      0.055169  0.031852  0.000000        0.00000
+SCALE2      0.000000  0.063704  0.000000        0.00000
+SCALE3      0.000000  0.000000  0.132153        0.00000
+ATOM      1  O2  MOL     2      -4.808   4.768   2.469  1.00  0.00           O
+ATOM      2  O3  MOL     2      -6.684   6.549   1.983  1.00  0.00           O
+ATOM      3 T1   MOL     2      -5.234   6.009   1.536  1.00  0.00          Si1+
+";
+    let (r, v) = get_lattice(lines).expect("pdb lattice");
+}
+// b5bad50c-2b36-4d09-9623-d487f9e2333b ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::10e26e11-ab6c-4e7d-884a-6a0e98c8d08f][10e26e11-ab6c-4e7d-884a-6a0e98c8d08f]]
+use std::collections::HashMap;
+
+named!(get_molecule_from<&str, Molecule>, do_parse!(
+    pair : many_till!(read_until_eol, atom_record) >>
+    atoms: many0!(atom_record)                     >>
+    bpair: many_till!(read_until_eol, bond_record) >>
+    bonds: many0!(bond_record)                     >>
+    (
+        {
+            // insert the first atom record
+            let mut atoms = atoms;
+            let (_, ar) = pair;
+            atoms.insert(0, ar);
+
+            let mut mol = Molecule::new("pdb");
+            // table for mapping atom id and atom index
+            let mut table = HashMap::new();
+            for (i, a) in atoms {
+                let n = mol.add_atom(a);
+                table.insert(i, n);
+            }
+
+            // add bonds
+            let mut bonds = bonds;
+            let (_, br) = bpair;
+            bonds.insert(0, br);
+            for bs in bonds {
+                for b in bs {
+                    let n1 = table[&b.0];
+                    let n2 = table[&b.1];
+                    mol.add_bond(n1, n2, Bond::single());
+                }
+            }
+
+            mol
+        }
+    )
+));
+
+#[test]
+fn test_pdb_molecule() {
+    let lines = "SCALE2      0.000000  0.063704  0.000000        0.00000
+SCALE3      0.000000  0.000000  0.132153        0.00000
+ATOM      1  O2  MOL     2      -4.808   4.768   2.469  1.00  0.00           O
+ATOM      2  O3  MOL     2      -6.684   6.549   1.983  1.00  0.00           O
+ATOM      3 T1   MOL     2      -5.234   6.009   1.536  1.00  0.00          Si1+
+ATOM      4  O1  MOL     2      -4.152  10.936   1.688  1.00  0.00           O
+ATOM      5  O1  MOL     2      -4.150  10.935   1.688  1.00  0.00           O
+ATOM      6  O2  MOL     2      -1.725  11.578   2.469  1.00  0.00           O
+ATOM      7  O2  MOL     2      -9.164  10.843   2.469  1.00  0.00           O
+ATOM      8 T1   MOL     2      -2.587  10.589   1.536  1.00  0.00          Si1+
+ATOM      9 T1   MOL     2      -7.877  10.591   1.536  1.00  0.00          Si1+
+ATOM     10  O2  MOL     2      -1.725  -6.548   2.469  1.00  0.00           O
+ATOM     11  O3  MOL     2      -2.330  -9.063   1.983  1.00  0.00           O
+ATOM     12 T1   MOL     2      -2.587  -7.537   1.536  1.00  0.00          Si1+
+ATOM     13  O1  MOL     2      -7.395  -9.064   1.688  1.00  0.00           O
+TER     367
+CONECT    2    4
+CONECT    3    4
+END\n";
+    let (r, v) = get_molecule_from(lines).expect("pdb molecule");
+    println!("{:?}", (r, v));
+}
+
 fn format_molecule(mol: &Molecule) -> String {
+    if mol.natoms() > 9999 {
+        eprintln!("WARNING: PDB format is incapable for large molecule (natoms < 9999)");
+    }
+
     let mut lines = String::from("REMARK Created by gchemol\n");
     for (i, a) in mol.view_atoms() {
         let line = format_atom(i, a);
