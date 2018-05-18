@@ -20,7 +20,7 @@ pub mod sdf;
 pub mod cif;
 pub mod gaussian;
 
-const BUF_SIZE: usize = 1 * 1024;
+const BUF_SIZE: usize = 8 * 1024;
 
 use nom;
 
@@ -90,6 +90,7 @@ pub trait ChemFileLike {
         let mut mols: Vec<Molecule> = vec![];
         let mut remained = String::new();
         let mut chunk = String::new();
+        let mut final_stream = false;
         // let mut i = 0;
         'out: loop {
             // i += 1;
@@ -98,6 +99,7 @@ pub trait ChemFileLike {
                 // FIXME: need a better fix
                 // temporary fix for nom 4.0: append a newline to make stream `complete`
                 let new = if buffer.len() == 0 {
+                    final_stream = true;
                     String::from("\n")
                 } else {
                     str::from_utf8(&buffer).unwrap().to_string()
@@ -121,6 +123,9 @@ pub trait ChemFileLike {
                         },
                         Err(nom::Err::Incomplete(i)) => {
                             remained = chunk.clone();
+                            if final_stream {
+                                println!("{:?}", "cccc");
+                            }
                             break
                         },
                         Err(nom::Err::Error(err)) => {
@@ -215,6 +220,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
         Box::new(sdf::SdfFile()),
         Box::new(vasp::POSCARFile()),
         Box::new(cif::CifFile()),
+        Box::new(pdb::PdbFile()),
     ];
 
     // 1. by file type
@@ -247,6 +253,7 @@ pub fn describe_backends() {
         Box::new(sdf::SdfFile()),
         Box::new(vasp::POSCARFile()),
         Box::new(cif::CifFile()),
+        Box::new(pdb::PdbFile()),
     ];
 
     for cf in backends {

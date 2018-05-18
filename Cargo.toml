@@ -6,7 +6,7 @@ authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
 approx = "*"
-nalgebra = "=0.14.2"
+nalgebra = ">=0.14.4"
 cgmath = "*"
 nom = ">=4.0.0"
 petgraph = "*"
@@ -16,5 +16,6 @@ serde = "*"
 serde_json = "*"
 itertools = "*"
 error-chain = "*"
+derive-error-chain = "*"
 rand = ">=0.5.0-pre.0"
 # c45d1413-12b8-471e-b060-da682339ad4b ends here

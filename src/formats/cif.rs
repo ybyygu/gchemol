@@ -11,6 +11,35 @@ named!(double_cif<&str, f64>, do_parse!(
     (v)
 ));
 
+#[macro_export]
+macro_rules! complete_named (
+    ($name:ident, $submac:ident!( $($args:tt)* )) => (
+        fn $name( i: CompleteStr ) -> nom::IResult<CompleteStr, CompleteStr, u32> {
+            $submac!(i, $($args)*)
+        }
+    );
+    ($name:ident<$o:ty>, $submac:ident!( $($args:tt)* )) => (
+        fn $name( i: CompleteStr ) -> nom::IResult<CompleteStr, $o, u32> {
+            $submac!(i, $($args)*)
+        }
+    );
+);
+
+fn unsigned_double(input: CompleteStr) -> IResult<CompleteStr, f64, u32> {
+    flat_map!(input,
+        recognize!(alt!(
+            delimited!(digit, tag!("."), opt!(digit)) | delimited!(opt!(digit), tag!("."), digit)
+        )),
+        parse_to!(f64)
+    )
+}
+
+named!(double_cif_complete<CompleteStr, f64>, do_parse!(
+    v: unsigned_double >>
+    opt!(delimited!(char!('('), digit, char!(')'))) >>
+    (v)
+));
+
 #[test]
 fn test_cif_float_number() {
     let (r, v) = double_cif("0.3916\n").expect("cif float number");
@@ -107,9 +136,24 @@ fn get_atoms<'a>(input: &'a str) -> IResult<&'a str, Vec<Atom>> {
             {
                 let mut atoms = vec![];
                 for row in rows {
-                    let  fx: f64 = row[ifx].parse().expect("cif fract x");
-                    let  fy: f64 = row[ify].parse().expect("cif fract y");
-                    let  fz: f64 = row[ifz].parse().expect("cif fract z");
+                    let fx: f64 = row[ify].parse().map_err(|err| {
+                        nom::Err::Failure(
+                            nom::Context::Code(row[ifx], nom::ErrorKind::Custom(28))
+                        )}
+                    )?;
+
+                    let fy: f64 = row[ify].parse().map_err(|err| {
+                        nom::Err::Failure(
+                            nom::Context::Code(row[ify], nom::ErrorKind::Custom(28))
+                        )}
+                    )?;
+
+                    let fz: f64 = row[ifz].parse().map_err(|err| {
+                        nom::Err::Failure(
+                            nom::Context::Code(row[ifz], nom::ErrorKind::Custom(28))
+                        )}
+                    )?;
+
                     let lbl = row[ilbl];
                     let sym = row[isym];
                     // TODO: assign atom label

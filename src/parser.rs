@@ -19,6 +19,10 @@ pub use nom::{
     eol,
 };
 
+pub use nom::types::{
+    CompleteStr,
+};
+
 pub use nom::IResult;
 
 /// whitespace including one or more spaces or tabs

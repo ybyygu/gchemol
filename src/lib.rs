@@ -8,13 +8,15 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-05-17 Thu 14:55>
+//       UPDATED:  <2018-05-18 Fri 19:28>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::53cbd3c0-e164-4bad-b535-6fd6df916650][53cbd3c0-e164-4bad-b535-6fd6df916650]]
 #![allow(dead_code)]
 
+// #[macro_use]
+// extern crate derive_error_chain;
 #[macro_use]
 extern crate error_chain;
 #[macro_use]
@@ -23,15 +25,42 @@ extern crate nom;
 // We'll put our errors in an `errors` module, and other modules in
 // this crate will `use errors::*;` to get access to everything
 // `error_chain!` creates.
+#[macro_use]
 pub mod errors {
+    use std::fmt;
+    use nom;
+
+    // #[derive(Debug, ErrorChain)]
+    // pub enum ErrorKind {
+    //     #[error_chain(foreign)]
+    //     Nom(NomError)
+    // }
+
     // Create the Error, ErrorKind, ResultExt, and Result types
-    error_chain! { }
+    error_chain! {
+    }
 
     // for nom errors
-    // use nom;
-    // impl From<String> for ErrorKind {
-    //     fn from(err: String) -> ErrorKind {
-    //         ErrorKind::from(err)
+    // #[derive(Debug)]
+    // pub struct NomError {
+    //     desc: String,
+    // }
+
+    // impl<E: fmt::Debug + Clone> From<nom::Err<E>> for NomError {
+    //     fn from(error: nom::Err<E>) -> Self {
+    //         let desc = match error {
+    //             nom::Err::Incomplete(needed) => format!("ran out of bytes: {:?}", needed),
+    //             nom::Err::Error(context) => format!("{:?}", nom::error_to_list(&context)),
+    //             nom::Err::Failure(context) => format!("{:?}", nom::error_to_list(&context)),
+    //         };
+
+    //         NomError { desc }
+    //     }
+    // }
+
+    // macro_rules! nom {
+    //     ($expr:expr) => {
+    //         $expr.map_err(NomError::from)
     //     }
     // }
 }
