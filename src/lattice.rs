@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-05-10 Thu 11:17>
+//       UPDATED:  <2018-05-19 Sat 17:25>
 //===============================================================================#
 
 use nalgebra::{
@@ -239,6 +239,21 @@ impl Lattice {
         let fs = self.matrix*v + self.origin;
 
         fs.into()
+    }
+
+    /// Lattice vector a
+    pub fn vector_a(&self) -> [f64; 3] {
+        self.matrix.column(0).transpose().into()
+    }
+
+    /// Lattice vector b
+    pub fn vector_b(&self) -> [f64; 3] {
+        self.matrix.column(1).transpose().into()
+    }
+
+    /// Lattice vector c
+    pub fn vector_c(&self) -> [f64; 3] {
+        self.matrix.column(2).transpose().into()
     }
 }
 // b17e625d-352f-419e-9d10-a84fcdb9ff07 ends here

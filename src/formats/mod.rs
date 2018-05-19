@@ -124,7 +124,7 @@ pub trait ChemFileLike {
                         Err(nom::Err::Incomplete(i)) => {
                             remained = chunk.clone();
                             if final_stream {
-                                println!("{:?}", "cccc");
+                                println!("{:?}", "fixmefixme");
                             }
                             break
                         },
@@ -218,7 +218,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
         Box::new(PlainXYZFile()),
         Box::new(mol2::Mol2File()),
         Box::new(sdf::SdfFile()),
-        Box::new(vasp::POSCARFile()),
+        Box::new(vasp::PoscarFile()),
         Box::new(cif::CifFile()),
         Box::new(pdb::PdbFile()),
     ];
@@ -251,7 +251,7 @@ pub fn describe_backends() {
         Box::new(mol2::Mol2File()),
         Box::new(PlainXYZFile()),
         Box::new(sdf::SdfFile()),
-        Box::new(vasp::POSCARFile()),
+        Box::new(vasp::PoscarFile()),
         Box::new(cif::CifFile()),
         Box::new(pdb::PdbFile()),
     ];

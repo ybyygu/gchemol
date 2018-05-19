@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-14 Mon 11:02>
+//       UPDATED:  <2018-05-19 Sat 18:05>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -1611,7 +1611,7 @@ where
         .collect();
 
     // 1. count symbols: CCCC ==> C 4
-        let mut counts = HashMap::new();
+    let mut counts = HashMap::new();
     for x in &symbols {
         let c = counts.entry(x).or_insert(0);
         *c += 1;
