@@ -302,7 +302,7 @@ impl ChemFileLike for PoscarFile {
     }
 
     fn extensions(&self) -> Vec<&str> {
-        ["POSCAR", "CONTCAR", ".poscar"].to_vec()
+        vec!["POSCAR", "CONTCAR", ".poscar", ".vasp"]
     }
 
     fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {

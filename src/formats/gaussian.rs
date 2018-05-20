@@ -2,57 +2,84 @@
 use super::*;
 // 4138ba02-140e-4bdb-8083-74424610b600 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::c8f2f29e-b23a-4de3-a888-e6cbfee64760][c8f2f29e-b23a-4de3-a888-e6cbfee64760]]
+// Gaussian input file
+//
+// Reference
+// ---------
+// http://gaussian.com/input/?tabid=0
+// c8f2f29e-b23a-4de3-a888-e6cbfee64760 ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc][c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc]]
-named!(gjf_link0_one_line<&str, (&str)>,
-   do_parse!
-       (opt!(space)          >>
-        char!('%')           >>
-        cmd: not_line_ending >>
-        line_ending          >>
-        (cmd)
-       )
-);
+// sections are separated by a blank line
+named!(blank_line<&str, &str>, sp!(line_ending));
+
+named!(gjf_link0<&str, (&str)>, do_parse!(
+    opt!(space)              >>
+    char!('%')               >>
+    cmd: sp!(read_until_eol) >>
+    (cmd)
+));
 
 #[test]
-fn test_nom_gjf_link0_one_line() {
-    let (_, cmd) = gjf_link0_one_line("%Mem=64MB\n").unwrap();
+fn test_link0() {
+    let (_, cmd) = gjf_link0("%Mem=64MB\n").unwrap();
     assert_eq!("Mem=64MB", cmd);
 
-    let (_, cmd) = gjf_link0_one_line(" %save\n").unwrap();
+    let (_, cmd) = gjf_link0(" %save\n").unwrap();
     assert_eq!("save", cmd);
 }
 
-named!(gjf_link0_section<&str, Vec<&str>>,
-       many0!(gjf_link0_one_line)
+named!(link0_section<&str, Vec<&str>>,
+       many0!(gjf_link0)
 );
 
 #[test]
-fn test_nom_gjf_link0_section() {
-    let x = gjf_link0_section("%chk=C5H12.chk
+fn test_link0_section() {
+    let lines = "%chk=C5H12.chk
 %nproc=8
 %mem=5GB
 #p opt freq=noraman nosymm B3LYP/6-31+G** test geom=connect
-");
+";
+
+    let (_, link0s) = link0_section(lines).expect("gjf link0 section");
+    assert_eq!(3, link0s.len());
 }
 
-named!(gjf_route_section<&str, &str>,
-   do_parse!
-       (opt!(space)          >>
-        char!('#')           >>
-        cmd: ws!(take_until!("\n\n")) >>
-        (cmd)
-       )
-);
+named!(route_section<&str, String>, do_parse!(
+    sp!(char!('#'))                               >>
+    parts: many_till!(read_until_eol, blank_line) >>
+    (
+        {
+            let lines = parts.0;
+            lines.join(" ")
+        }
+    )
+));
 
 #[test]
-fn test_nom_gjf_route_section() {
-    let x = gjf_route_section("#opt freq=noraman nosymm B3LYP/6-31+G** test geom=connect\n\n");
-    let x = gjf_route_section("#p opt freq=noraman nosymm\n B3LYP/6-31+G** test geom=connect\n\n");
+fn test_route_section() {
+    let lines = "#opt freq=noraman nosymm B3LYP/6-31+G** test geom=connect
+
+";
+    let x = route_section(lines).expect("gjf route section");
+
+    let lines = "#p opt freq=noraman nosymm
+B3LYP/6-31+G** test geom=connect
+
+";
+    let x = route_section(lines).expect("gjf route section multi-lines");
 }
 
-named!(gjf_title_section<&str, &str>,
-   ws!(take_until!("\n\n"))
-);
+named!(title_section<&str, String>, do_parse!(
+    parts: many_till!(read_until_eol, blank_line) >>
+    (
+        {
+            let lines = parts.0;
+            lines.join(" ")
+        }
+    )
+));
 // c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::dac5abf9-43a6-40a7-bf33-8338e106f738][dac5abf9-43a6-40a7-bf33-8338e106f738]]
@@ -84,39 +111,44 @@ impl<'a> Default for GaussianAtom<'a> {
     }
 }
 
+// single property entry
 // fragment=1
-named!(gjf_atom_property<&str, (&str, &str)>,
-   do_parse!
-       (
-           param: alphanumeric >>
-           char!('=') >>
-           value: alphanumeric >>
-           (
-               (param, value)
-           )
-       )
-);
+named!(gjf_atom_property<&str, (&str, &str)>, do_parse!(
+    param: alphanumeric >>
+    char!('=') >>
+    value: alphanumeric >>
+    (
+        {
+            (param, value)
+        }
+    )
+));
 
 #[test]
-#[ignore]
-fn test_nom_gjf_atom_property() {
-    let (_, (param, value)) = gjf_atom_property("fragment=1").unwrap();
+fn test_gjf_atom_property() {
+    let (_, (param, value)) = gjf_atom_property("fragment=1 ").unwrap();
     assert_eq!("fragment", param);
     assert_eq!("1", value);
 }
 
+// multiple property entries
 // (fragment=1,iso=13,spin=3)
-named!(gjf_atom_properties<&str, HashMap<&str, &str>>,
-   do_parse!
-       (
-           tag!("(") >>
-           properties: separated_list!(tag!(","), gjf_atom_property) >>
-           tag!(")") >>
-           (
-               HashMap::from_iter(properties.into_iter())
-           )
-       )
-);
+named!(gjf_atom_properties<&str, HashMap<&str, &str>>, do_parse!(
+    tag!("(")                                           >>
+    properties: separated_list!(tag!(","),
+                                sp!(gjf_atom_property)) >>
+    tag!(")")                                           >>
+    (
+        HashMap::from_iter(properties.into_iter())
+    )
+));
+
+#[test]
+fn test_gjf_atom_properties() {
+    let (_, d) = gjf_atom_properties("(fragment=1,iso=13,spin=3) ")
+        .expect("gjf atom properties");
+    assert_eq!(3, d.len())
+}
 
 // MM parameters, such as atom type and partial charge
 // -CA--0.25
@@ -158,7 +190,6 @@ named!(gjf_atom_oniom_params<&str, (&str, Option<&str>)>,
        )
 );
 
-
 #[test]
 fn test_nom_gjf_atom_oniom_params() {
     let x = gjf_atom_oniom_params("L\n").unwrap();
@@ -167,36 +198,33 @@ fn test_nom_gjf_atom_oniom_params() {
 }
 
 // How about this: C-CA--0.25(fragment=1,iso=13,spin=3) 0 0.0 1.2 3.4 H H-H_
-named!(gjf_atom_line<&str, GaussianAtom>,
-   do_parse!
-       (
-                           opt!(space)                 >>
-           element_label : alphanumeric                >>
-           mm_params     : opt!(gjf_atom_mm_params)    >>
-           properties    : opt!(gjf_atom_properties)   >>
-                           space                       >>
-           frozen        : opt!(terminated!(
-                                signed_digit,
-                                space
-                                ))                     >>
-           position      : xyz_array                   >>
-           oniom         : opt!(gjf_atom_oniom_params) >>
-                           opt!(space)                 >>
-                           line_ending                 >>
-           (
-               GaussianAtom {
-                   element_label: element_label,
-                   mm_type: mm_params.and_then(|x| Some(x.0)),
-                   mm_charge: mm_params.and_then(|x| x.1),
-                   frozen_code: frozen,
-                   position: position,
-                   properties: if properties.is_some() {properties.unwrap()} else {HashMap::new()},
-                   oniom_layer: oniom.and_then(|x| Some(x.0)),
-                   ..Default::default()
-               }
-           )
-       )
-);
+named!(gjf_atom_line<&str, GaussianAtom>, do_parse!(
+                   opt!(space)                 >>
+    element_label: alphanumeric                >>
+    mm_params    : opt!(gjf_atom_mm_params)    >>
+    properties   : opt!(gjf_atom_properties)   >>
+                   space                       >>
+    frozen       : opt!(terminated!(
+                        signed_digit,
+                        space
+                        ))                     >>
+    position     : xyz_array                   >>
+    oniom        : opt!(gjf_atom_oniom_params) >>
+                   opt!(space)                 >>
+                   line_ending                 >>
+    (
+        GaussianAtom {
+            element_label: element_label,
+            mm_type: mm_params.and_then(|x| Some(x.0)),
+            mm_charge: mm_params.and_then(|x| x.1),
+            frozen_code: frozen,
+            position: position,
+            properties: if properties.is_some() {properties.unwrap()} else {HashMap::new()},
+            oniom_layer: oniom.and_then(|x| Some(x.0)),
+            ..Default::default()
+        }
+    )
+));
 
 #[test]
 fn test_gjf_atom_line() {
@@ -276,16 +304,31 @@ fn test_nom_gjf_connectivity() {
 // d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::2357368c-ab7e-4eb3-96a8-a8e4aba19bac][2357368c-ab7e-4eb3-96a8-a8e4aba19bac]]
-named!(gjf_molecule<&str, &str>,
-    do_parse!
+named!(get_molecule_from<&str, Molecule>, do_parse!(
+    link0: opt!(complete!(link0_section)) >>
+    route: route_section >>
+    title: title_section >>
+    mulch: read_until_eol >>
+    atoms: many1!(gjf_atom_line) >>
     (
-        link0: gjf_link0_section >>
-        route: gjf_route_section >>
-        title: gjf_title_section >>
-        read_until_eol >>
-        ("a")
+        {
+            // println!("{:?}", link0);
+            // println!("{:?}", route);
+            // println!("{:?}", title);
+            // println!("{:?}", mulch);
+            // println!("{:?}", atoms);
+
+            let mut mol = Molecule::new(title.trim());
+
+            for a in atoms {
+                let a = Atom::new(a.element_label, a.position);
+                mol.add_atom(a);
+            }
+
+            mol
+        }
     )
-);
+));
 
 #[test]
 fn test_gaussian_input() {
@@ -294,7 +337,8 @@ fn test_gaussian_input() {
 %mem=5GB
 #p opt freq=noraman nosymm B3LYP/6-31+G** test geom=connect
 
-Title Card Required
+Title Card
+Required
 
 0 1
  C(Fragment=1)    0         -1.29639700         -0.54790000         -0.04565800 L
@@ -338,7 +382,7 @@ Title Card Required
 #p geom=chk
 ";
 
-    let (_, mol) = gjf_molecule(txt).unwrap();
+    let (_, mol) = get_molecule_from(txt).expect("gjf molecule");
     println!("{:?}", mol);
 }
 // 2357368c-ab7e-4eb3-96a8-a8e4aba19bac ends here
@@ -356,6 +400,10 @@ impl ChemFileLike for GaussInputFile {
 
     fn extensions(&self) -> Vec<&str> {
         vec![".gjf", ".com", ".gau"]
+    }
+
+    fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
+        get_molecule_from(chunk)
     }
 }
 // ac025fea-3d20-45f4-97eb-2969138a4716 ends here
