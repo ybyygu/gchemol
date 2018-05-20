@@ -385,6 +385,45 @@ Required
     let (_, mol) = get_molecule_from(txt).expect("gjf molecule");
     println!("{:?}", mol);
 }
+
+// TODO: atom properties
+fn format_atom(a: &Atom) -> String {
+    let [x, y, z] = a.position();
+
+    format!("{symbol:15} {x:14.8} {y:14.8} {z:14.8}\n",
+            symbol=a.symbol(),
+            x = x,
+            y = y,
+            z = z,
+    )
+}
+
+// string representation in gaussian input file format
+fn format_molecule(mol: &Molecule) -> String {
+    let mut lines = String::new();
+
+    let link0 = "%nproc=1\n%mem=20MW";
+    // let route = "#p sp scf=tight HF/3-21G* geom=connect test";
+    let route = "#p sp scf=tight HF/3-21G* test";
+    lines.push_str(&format!("{}\n{}\n", link0, route));
+    lines.push_str("\n");
+
+    // title section
+    lines.push_str("Title Card Required\n");
+    lines.push_str("\n");
+
+    // TODO: take from molecule
+    lines.push_str("0 1\n");
+    for a in mol.atoms() {
+        let line = format_atom(&a);
+        lines.push_str(&line);
+    }
+
+    // TODO: connectivity
+
+    lines.push_str("\n");
+    lines
+}
 // 2357368c-ab7e-4eb3-96a8-a8e4aba19bac ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ac025fea-3d20-45f4-97eb-2969138a4716][ac025fea-3d20-45f4-97eb-2969138a4716]]
@@ -404,6 +443,10 @@ impl ChemFileLike for GaussInputFile {
 
     fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
         get_molecule_from(chunk)
+    }
+
+    fn format_molecule(&self, mol: &Molecule) -> Result<String> {
+        Ok(format_molecule(mol))
     }
 }
 // ac025fea-3d20-45f4-97eb-2969138a4716 ends here

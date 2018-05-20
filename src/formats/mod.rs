@@ -221,6 +221,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
         Box::new(vasp::PoscarFile()),
         Box::new(cif::CifFile()),
         Box::new(pdb::PdbFile()),
+        Box::new(gaussian::GaussInputFile()),
     ];
 
     // 1. by file type
@@ -254,6 +255,7 @@ pub fn describe_backends() {
         Box::new(vasp::PoscarFile()),
         Box::new(cif::CifFile()),
         Box::new(pdb::PdbFile()),
+        Box::new(gaussian::GaussInputFile()),
     ];
 
     for cf in backends {
