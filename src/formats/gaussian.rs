@@ -172,19 +172,21 @@ fn test_gjf_atom_properties() {
     assert_eq!(3, d.len())
 }
 
+fn is_mm_type(chr: char) -> bool {
+    is_alphanumeric(chr as u8) || chr == '_'
+    // chr != '-' && chr != ' ' && chr != ',' && chr!= '\t' && chr != '\n' && chr != '('
+}
+
 // MM parameters, such as atom type and partial charge
 // -CA--0.25
-named!(gjf_atom_mm_params<&str, (&str, Option<f64>)>,
-   do_parse!
-       (
-           tag!("-") >>
-           mm_type: alphanumeric >>
-           mm_charge: opt!(preceded!(tag!("-"), double_s)) >>
-           (
-               (mm_type, mm_charge)
-           )
-       )
-);
+named!(gjf_atom_mm_params<&str, (&str, Option<f64>)>, do_parse!(
+    tag!("-")                                       >>
+    mm_type: take_while!(is_mm_type)                >>
+    mm_charge: opt!(preceded!(tag!("-"), double_s)) >>
+    (
+        (mm_type, mm_charge)
+    )
+));
 
 #[test]
 #[ignore]
@@ -273,8 +275,8 @@ fn test_gjf_atom_line() {
     assert_eq!(ga.mm_charge, Some(-0.25));
     assert_eq!(ga.mm_type, Some("CA"));
 
-    let (_, ga) = gjf_atom_line("C-CA,0.00,0.00,0.00\n").unwrap();
-    assert_eq!(ga.mm_type, Some("CA"));
+    let (_, ga) = gjf_atom_line("C-C_3,0.00,0.00,0.00\n").unwrap();
+    assert_eq!(ga.mm_type, Some("C_3"));
     assert_eq!(ga.mm_charge, None);
 
     let (_, ga) = gjf_atom_line(" C12(fragment=1)  0.00   0.00   0.00\n").unwrap();
@@ -288,40 +290,38 @@ fn test_gjf_atom_line() {
 // 1 2 1.0 3 1.0 4 1.0 5 1.0
 //     2
 //     3
-named!(gjf_bond_pair<&str, (&str, f64)>, do_parse!(
+named!(gjf_bond_pair<&str, (usize, f64)>, do_parse!(
         comma_or_space >>
-    n:  digit          >>
+    n:  unsigned_digit >>
         comma_or_space >>
     o:  double_s       >>
     (n, o)
 ));
 
-fn build_bonds<'a>(index1: &'a str, others: Vec<(&'a str, f64)>) -> Vec<(&'a str, &'a str, f64)> {
+// TODO: recover bond order
+fn build_bonds(index1: usize, others: Vec<(usize, f64)>) -> Vec<(usize, usize, Bond)> {
     let mut bonds = vec![];
     for (index2, order) in others {
-        bonds.push((index1, index2, order));
+        bonds.push((index1, index2, Bond::single()));
     }
 
     bonds
 }
 
-named!(gjf_connect_line<&str, Vec<(&str, &str, f64)>>,
-    do_parse!
+named!(gjf_connect_line<&str, Vec<(usize, usize, Bond)>>, do_parse!(
+             opt!(space)           >>
+    n:       unsigned_digit        >>
+    others:  many0!(gjf_bond_pair) >>
+             opt!(space)           >>
+             line_ending           >>
     (
-                 opt!(space)           >>
-        n:       digit                 >>
-        others:  many0!(gjf_bond_pair) >>
-                 opt!(space)           >>
-                 line_ending           >>
-        (
-            build_bonds(n, others)
-        )
+        build_bonds(n, others)
     )
-);
+));
 
 #[test]
-fn test_nom_gjf_connectivity() {
-    let (_, x) = gjf_connect_line(" 1,2 1.0 3 1.0 4 1.0 5 1.0\n").unwrap();
+fn test_gjf_connectivity() {
+    let (_, x) = gjf_connect_line(" 1,2 1.0 3 1.0 4 1.0 5 1.0\n").expect("gjf connectivity");
     assert_eq!(4, x.len());
 }
 // d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2 ends here
@@ -337,21 +337,33 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
     chsps: charge_and_spin_line           >>
     // atom specification section
     atoms: many1!(gjf_atom_line)          >>
+           blank_line                     >>
+    // FIXME: how about gaussian extra input
     // connectivity section
-    // atoms: many1!(gjf_atom_line)          >>
+    bonds: opt!(complete!(many0!(gjf_connect_line))) >>
     (
         {
-            // println!("{:?}", link0);
-            // println!("{:?}", route);
-            // println!("{:?}", title);
-            // println!("{:?}", mulch);
-            // println!("{:?}", atoms);
-
             let mut mol = Molecule::new(title.trim());
 
+            let mut map = HashMap::new();
+            let mut i = 1;
             for a in atoms {
                 let a = Atom::new(a.element_label, a.position);
-                mol.add_atom(a);
+                let n = mol.add_atom(a);
+                map.insert(i, n);
+                i += 1;
+            }
+
+            if let Some(bonds) = bonds {
+                // FIXME: ugly
+                for bonds in bonds {
+                    for (i, j, b) in bonds {
+                        // TODO: handle possible panic
+                        let ai = map[&i];
+                        let aj = map[&j];
+                        mol.add_bond(ai, aj, b);
+                    }
+                }
             }
 
             mol
@@ -412,7 +424,8 @@ Required
 ";
 
     let (_, mol) = get_molecule_from(txt).expect("gjf molecule");
-    println!("{:?}", mol);
+    assert_eq!(17, mol.natoms());
+    assert_eq!(16, mol.nbonds());
 }
 
 // TODO: atom properties

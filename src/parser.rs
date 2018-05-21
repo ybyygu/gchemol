@@ -10,6 +10,7 @@ pub use nom::{
     // Recognizes one or more lowercase and uppercase alphabetic characters: a-zA-Z
     alpha,
     alphanumeric,
+    is_alphanumeric,
     // Recognizes floating point number in a string and returs a f64
     double_s,
     // Recognizes an end of line (both '\n' and '\r\n')
