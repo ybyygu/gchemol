@@ -432,7 +432,7 @@ Required
 fn format_atom(a: &Atom) -> String {
     let [x, y, z] = a.position();
 
-    format!("{symbol:15} {x:14.8} {y:14.8} {z:14.8}\n",
+    format!(" {symbol:15} {x:14.8} {y:14.8} {z:14.8}\n",
             symbol=a.symbol(),
             x = x,
             y = y,
@@ -445,8 +445,7 @@ fn format_molecule(mol: &Molecule) -> String {
     let mut lines = String::new();
 
     let link0 = "%nproc=1\n%mem=20MW";
-    // let route = "#p sp scf=tight HF/3-21G* geom=connect test";
-    let route = "#p sp scf=tight HF/3-21G* test";
+    let route = "#p sp scf=tight HF/3-21G* geom=connect test";
     lines.push_str(&format!("{}\n{}\n", link0, route));
     lines.push_str("\n");
 
@@ -461,7 +460,32 @@ fn format_molecule(mol: &Molecule) -> String {
         lines.push_str(&line);
     }
 
-    // TODO: connectivity
+    // crystal vectors
+    if let Some(lattice) = mol.lattice {
+        let va = lattice.vector_a();
+        let vb = lattice.vector_b();
+        let vc = lattice.vector_c();
+        for [x, y, z] in [va, vb, vc].iter() {
+            lines.push_str(&format!(" TV              {:14.8}{:14.8}{:14.8}\n", x, y, z));
+        }
+    }
+
+    // connectivity
+    lines.push_str("\n");
+    let mut map = HashMap::new();
+    for (i, j, b) in mol.view_bonds() {
+        let mut neighbors = map.entry(i).or_insert(vec![]);
+        neighbors.push((j, b.order()));
+    }
+    for (i, a) in mol.view_atoms() {
+        let mut line = format!("{:<5}", i);
+        if let Some(neighbors) = map.get(&i) {
+            for (j, o) in neighbors {
+                line.push_str(&format!(" {:<5} {:<.1}", j, o));
+            }
+        }
+        lines.push_str(&format!("{}\n", line));
+    }
 
     lines.push_str("\n");
     lines

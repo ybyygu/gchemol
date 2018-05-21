@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-19 Sat 18:05>
+//       UPDATED:  <2018-05-21 Mon 18:53>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -845,6 +845,7 @@ impl<'a> AtomView<'a> {
             mapping.insert(i, index);
             i += 1;
         }
+
         AtomView {
             mapping,
             parent: mol,
@@ -966,6 +967,8 @@ impl<'a> Index<(usize, usize)> for BondView<'a>
 impl<'a> Iterator for BondView<'a> {
     type Item = (usize, usize, &'a Bond);
 
+    /// return a tuple in (index_i, index_j, bond)
+    /// index_i is always smaller than index_j
     fn next(&mut self) -> Option<Self::Item> {
         if self.cur >= self.mapping.len() {
             None
@@ -974,7 +977,11 @@ impl<'a> Iterator for BondView<'a> {
             let b = &self.parent.get_bond(e).expect("bondview: get bond by edge index");
             self.cur += 1;
 
-            Some((i, j, &b))
+            if i < j {
+                Some((i, j, &b))
+            } else {
+                Some((j, i, &b))
+            }
         }
     }
 }
