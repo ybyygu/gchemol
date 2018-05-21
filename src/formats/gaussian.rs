@@ -86,6 +86,28 @@ named!(title_section<&str, String>, do_parse!(
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
+// Specifies the net electric charge (a signed integer) and the spin
+// multiplicity (usually a positive integer)
+named!(charge_and_spin<&str, Vec<isize>>, separated_list!(
+    comma_or_space,
+    sp!(signed_digit)
+));
+
+named!(charge_and_spin_line<&str, Vec<isize>>, terminated!(
+    charge_and_spin,
+    sp!(line_ending)
+));
+
+#[test]
+fn test_charge_and_spin() {
+    let (_, x) = charge_and_spin_line("0	1\n").expect("gjf charge & spin");
+    assert_eq!(2, x.len());
+
+    let line = " 0 1 , 0 , 1 -3,2 \n";
+    let (r, x) = charge_and_spin_line(line).expect("gjf charge & spin");
+    assert_eq!(6, x.len());
+}
+
 #[derive(Debug)]
 struct GaussianAtom<'a> {
     element_label : &'a str,
@@ -203,14 +225,18 @@ named!(gjf_atom_line<&str, GaussianAtom>, do_parse!(
     element_label: alphanumeric                >>
     mm_params    : opt!(gjf_atom_mm_params)    >>
     properties   : opt!(gjf_atom_properties)   >>
-                   space                       >>
+                   comma_or_space              >>
     frozen       : opt!(terminated!(
                         signed_digit,
-                        space
+                        comma_or_space
                         ))                     >>
-    position     : xyz_array                   >>
+    x            : sp!(double_s)               >>
+                   opt!(complete!(tag!(",")))  >>
+    y            : sp!(double_s)               >>
+                   opt!(complete!(tag!(",")))  >>
+    z            : sp!(double_s)               >>
     oniom        : opt!(gjf_atom_oniom_params) >>
-                   opt!(space)                 >>
+                   opt!(comma_or_space)        >>
                    line_ending                 >>
     (
         GaussianAtom {
@@ -218,7 +244,7 @@ named!(gjf_atom_line<&str, GaussianAtom>, do_parse!(
             mm_type: mm_params.and_then(|x| Some(x.0)),
             mm_charge: mm_params.and_then(|x| x.1),
             frozen_code: frozen,
-            position: position,
+            position: [x, y, z],
             properties: if properties.is_some() {properties.unwrap()} else {HashMap::new()},
             oniom_layer: oniom.and_then(|x| Some(x.0)),
             ..Default::default()
@@ -228,17 +254,17 @@ named!(gjf_atom_line<&str, GaussianAtom>, do_parse!(
 
 #[test]
 fn test_gjf_atom_line() {
-    let (_, ga) = gjf_atom_line("C-CA--0.25(fragment=1,iso=13,spin=3)  0.00   0.00   0.00 L H-HA-0.1  3\n\n").unwrap();
+    let (_, ga) = gjf_atom_line("C-CA--0.25(fragment=1,iso=13,spin=3)  0.00   0.00   0.00 L H-HA-0.1  3\n").unwrap();
     assert_eq!(ga.oniom_layer, Some("L"));
 
-    let (_, ga) = gjf_atom_line("C-CA--0.25(fragment=1,iso=13,spin=3) -1 0.00   0.00   0.00 L \n\n").unwrap();
+    let (_, ga) = gjf_atom_line("C-CA--0.25(fragment=1,iso=13,spin=3) -1 0.00   0.00   0.00 L \n").unwrap();
     assert_eq!(ga.oniom_layer, Some("L"));
     assert_eq!(ga.frozen_code, Some(-1));
 
     let (_, ga) = gjf_atom_line("C-CA--0.25(fragment=1,iso=13,spin=3) -1 0.00   0.00   0.00\n").unwrap();
     assert_eq!(ga.frozen_code, Some(-1));
 
-    let (_, ga) = gjf_atom_line("C-CA--0.25(fragment=1,iso=13,spin=3)  0.00   0.00   0.00\n").unwrap();
+    let (_, ga) = gjf_atom_line("C-CA--0.25(fragment=1,iso=13,spin=3) ,0.00   0.00   0.00\n").unwrap();
     assert_eq!(ga.mm_charge, Some(-0.25));
     assert_eq!(ga.mm_type, Some("CA"));
     assert_eq!(ga.properties["fragment"], "1");
@@ -247,7 +273,7 @@ fn test_gjf_atom_line() {
     assert_eq!(ga.mm_charge, Some(-0.25));
     assert_eq!(ga.mm_type, Some("CA"));
 
-    let (_, ga) = gjf_atom_line("C-CA  0.00   0.00   0.00\n").unwrap();
+    let (_, ga) = gjf_atom_line("C-CA,0.00,0.00,0.00\n").unwrap();
     assert_eq!(ga.mm_type, Some("CA"));
     assert_eq!(ga.mm_charge, None);
 
@@ -262,16 +288,13 @@ fn test_gjf_atom_line() {
 // 1 2 1.0 3 1.0 4 1.0 5 1.0
 //     2
 //     3
-
-named!(gjf_bond_pair<&str, (&str, f64)>,
-    do_parse!(
-            space    >>
-        n:  digit    >>
-            space    >>
-        o:  double_s >>
-        (n, o)
-    )
-);
+named!(gjf_bond_pair<&str, (&str, f64)>, do_parse!(
+        comma_or_space >>
+    n:  digit          >>
+        comma_or_space >>
+    o:  double_s       >>
+    (n, o)
+));
 
 fn build_bonds<'a>(index1: &'a str, others: Vec<(&'a str, f64)>) -> Vec<(&'a str, &'a str, f64)> {
     let mut bonds = vec![];
@@ -298,7 +321,7 @@ named!(gjf_connect_line<&str, Vec<(&str, &str, f64)>>,
 
 #[test]
 fn test_nom_gjf_connectivity() {
-    let (_, x) = gjf_connect_line(" 1 2 1.0 3 1.0 4 1.0 5 1.0\n").unwrap();
+    let (_, x) = gjf_connect_line(" 1,2 1.0 3 1.0 4 1.0 5 1.0\n").unwrap();
     assert_eq!(4, x.len());
 }
 // d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2 ends here
@@ -306,10 +329,16 @@ fn test_nom_gjf_connectivity() {
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::2357368c-ab7e-4eb3-96a8-a8e4aba19bac][2357368c-ab7e-4eb3-96a8-a8e4aba19bac]]
 named!(get_molecule_from<&str, Molecule>, do_parse!(
     link0: opt!(complete!(link0_section)) >>
-    route: route_section >>
-    title: title_section >>
-    mulch: read_until_eol >>
-    atoms: many1!(gjf_atom_line) >>
+    // route card
+    route: route_section                  >>
+    // molecule title
+    title: title_section                  >>
+    // charges and spin multipies
+    chsps: charge_and_spin_line           >>
+    // atom specification section
+    atoms: many1!(gjf_atom_line)          >>
+    // connectivity section
+    // atoms: many1!(gjf_atom_line)          >>
     (
         {
             // println!("{:?}", link0);

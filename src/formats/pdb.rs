@@ -1,5 +1,11 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::fb7c688e-38d6-455b-a8f0-ae54c563f3cf][fb7c688e-38d6-455b-a8f0-ae54c563f3cf]]
-
+// gchemol parses the following record types in a PDB file:
+//
+// CRYST
+// ATOM & HETATM
+// TER
+// END
+// CONECT
 // fb7c688e-38d6-455b-a8f0-ae54c563f3cf ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::b5bad50c-2b36-4d09-9623-d487f9e2333b][b5bad50c-2b36-4d09-9623-d487f9e2333b]]

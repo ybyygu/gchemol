@@ -39,6 +39,11 @@ macro_rules! sp (
 /// will not consume "\n" character
 named!(pub not_space<&str, &str>, is_not!(" \t\r\n"));
 
+/// separator using comma or whitespace
+named!(pub comma_or_space<&str, &str>, alt!(
+    sp!(tag!(",")) | space
+));
+
 /// match one unsigned integer
 named!(pub unsigned_digit<&str, usize>, map_res!(
     digit,
