@@ -514,5 +514,15 @@ impl ChemFileLike for GaussInputFile {
     fn format_molecule(&self, mol: &Molecule) -> Result<String> {
         Ok(format_molecule(mol))
     }
+
+    fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
+        let mut ms = vec![];
+        for mol in mols {
+            let m = format_molecule(mol);
+            ms.push(m);
+        }
+
+        Ok(ms.join("--Link1--\n"))
+    }
 }
 // ac025fea-3d20-45f4-97eb-2969138a4716 ends here
