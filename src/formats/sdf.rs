@@ -1,25 +1,29 @@
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::6eb13416-6f3c-4e7a-8fe5-b1a678db1314][6eb13416-6f3c-4e7a-8fe5-b1a678db1314]]
+// SD file format reference
+// ------------------------
+// Ctab block format for V2000
+// http://download.accelrys.com/freeware/ctfile-formats/ctfile-formats.zip
+// 6eb13416-6f3c-4e7a-8fe5-b1a678db1314 ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::6eb13eea-3d99-41a4-9589-1e922c46e3d0][6eb13eea-3d99-41a4-9589-1e922c46e3d0]]
-named!(counts_line<&str, (Option<usize>, Option<usize>)>, do_parse!(
+// aaabbblllfffcccsssxxxrrrpppiiimmmvvvvvv
+named!(counts_line<&str, (usize, usize)>, do_parse!(
     // number of atoms
-    natoms: take!(3)               >>
+    natoms: flat_map!(take!(3), sp!(parse_to!(usize))) >>
     // number of bonds
-    nbonds: take!(3)               >>
+    nbonds: flat_map!(take!(3), sp!(parse_to!(usize))) >>
     // ignore the remaining
-            read_until_eol >>
+    read_until_eol >>
     (
-        {
-            let na = natoms.trim().parse().ok();
-            let nb = nbonds.trim().parse().ok();
-            (na, nb)
-        }
+        (natoms, nbonds)
     )
 ));
 
 #[test]
 fn test_sdf_counts_line() {
     let (_, (na, nb)) = counts_line(" 16 14  0  0  0  0  0  0  0  0999 V2000\n").unwrap();
-    assert_eq!(Some(16), na);
-    assert_eq!(Some(14), nb);
+    assert_eq!(16, na);
+    assert_eq!(14, nb);
 }
 // 6eb13eea-3d99-41a4-9589-1e922c46e3d0 ends here
 
@@ -128,13 +132,12 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
         {
             let naa = atoms.len();
             let nbb = bonds.len();
-            if let (Some(na), Some(nb)) = counts {
-                if na != naa {
-                    eprintln!("expect {} atoms, but found {}", na, naa);
-                }
-                if nb != nbb {
-                    eprintln!("expect {} bonds, but found {}", nb, nbb);
-                }
+            let (na, nb) = counts;
+            if na != naa {
+                eprintln!("expect {} atoms, but found {}", na, naa);
+            }
+            if nb != nbb {
+                eprintln!("expect {} bonds, but found {}", nb, nbb);
             }
 
             let mut mol = Molecule::new(title.trim());
