@@ -481,7 +481,7 @@ fn format_molecule(mol: &Molecule) -> String {
         let mut line = format!("{:<5}", i);
         if let Some(neighbors) = map.get(&i) {
             for (j, o) in neighbors {
-                line.push_str(&format!(" {:<5} {:<.1}", j, o));
+                line.push_str(&format!(" {:<} {:<.1}", j, o));
             }
         }
         lines.push_str(&format!("{}\n", line));
@@ -515,6 +515,7 @@ impl ChemFileLike for GaussInputFile {
         Ok(format_molecule(mol))
     }
 
+    // Present multiple molecules by separating sections with the Link1 comand.
     fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
         let mut ms = vec![];
         for mol in mols {

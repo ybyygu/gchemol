@@ -121,6 +121,10 @@ fn test_guess_element() {
 }
 
 // ATOM      3  SI2 SIO2X   1       3.484   3.484   3.474  1.00  0.00      UC1 SI
+// 55 - 60        Real(6.2)     occupancy    Occupancy.
+// 61 - 66        Real(6.2)     tempFactor   Temperature  factor.
+// 77 - 78        LString(2)    element      Element symbol, right-justified.
+// 79 - 80        LString(2)    charge       Charge  on the atom.
 named!(atom_record<&str, (usize, Atom)>, do_parse!(
     // 1-6
                alt!(tag!("ATOM  ") | tag!("HETATM")) >>
@@ -196,17 +200,18 @@ fn format_atom(i: usize, a: &Atom) -> String {
     let [x, y, z] = a.position();
 
     format!(
-        "ATOM  {index:>5} {name:>4}{alt_loc:1}{res_name:3}{chain_id:1}{res_seq:4}{icode:1}   {x:-8.4}{y:-8.4}{z:-8.4}\n",
+        "ATOM  {index:>5} {name:<4}{alt_loc:1}{res_name:<3} {chain_id:1}{res_seq:>4}{icode:>1}   {x:-8.3}{y:-8.3}{z:-8.3}  1.00  0.00          {symbol:>2}\n",
         index=i,
-        alt_loc=1,
+        alt_loc=" ",
+        res_name="xx",
         name=a.label(),
         chain_id=1,
         res_seq=1,
-        res_name="xx",
-        icode=1,
+        icode=" ",
         x = x,
         y = y,
         z = z,
+        symbol=a.symbol(),
     )
 }
 // ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8 ends here
@@ -255,8 +260,27 @@ named!(bond_record<&str, Vec<(usize, usize)>>, do_parse!(
     )
 ));
 
-fn format_bond(i: usize, j: usize, b: &Bond) -> String {
-    unimplemented!()
+fn format_bonds(mol: &Molecule) -> String {
+    let mut lines = String::new();
+
+    // connectivity
+    // FIXME: add new method in molecule
+    let mut map = HashMap::new();
+    for (i, j, b) in mol.view_bonds() {
+        let mut neighbors = map.entry(i).or_insert(vec![]);
+        neighbors.push((j, b.order()));
+    }
+    for (i, a) in mol.view_atoms() {
+        if let Some(neighbors) = map.get(&i) {
+            let mut line = format!("CONECT{:>5}", i);
+            for (j, _) in neighbors {
+                line.push_str(&format!("{:>5}", j));
+            }
+            lines.push_str(&format!("{}\n", line));
+        }
+    }
+
+    lines
 }
 
 #[test]
@@ -405,15 +429,16 @@ fn format_molecule(mol: &Molecule) -> String {
         eprintln!("WARNING: PDB format is incapable for large molecule (natoms < 9999)");
     }
 
+    // atoms
     let mut lines = String::from("REMARK Created by gchemol\n");
     for (i, a) in mol.view_atoms() {
         let line = format_atom(i, a);
         lines.push_str(&line);
     }
 
-    for (i, j, b) in mol.view_bonds() {
-        let line = format_bond(i, j, b);
-        lines.push_str(&line);
+    // bonds
+    if mol.nbonds() > 0 {
+        lines.push_str(&format_bonds(&mol));
     }
 
     lines.push_str("END\n");
