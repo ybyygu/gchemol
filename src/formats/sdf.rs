@@ -7,6 +7,8 @@
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::6eb13eea-3d99-41a4-9589-1e922c46e3d0][6eb13eea-3d99-41a4-9589-1e922c46e3d0]]
 // aaabbblllfffcccsssxxxrrrpppiiimmmvvvvvv
+// aaa = number of atoms
+// bbb = number of bonds
 named!(counts_line<&str, (usize, usize)>, do_parse!(
     // number of atoms
     natoms: flat_map!(take!(3), sp!(parse_to!(usize))) >>

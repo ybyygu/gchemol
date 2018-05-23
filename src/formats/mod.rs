@@ -19,6 +19,7 @@ pub mod vasp;
 pub mod sdf;
 pub mod cif;
 pub mod gaussian;
+pub mod ms;
 
 const BUF_SIZE: usize = 8 * 1024;
 
@@ -222,6 +223,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
         Box::new(cif::CifFile()),
         Box::new(pdb::PdbFile()),
         Box::new(gaussian::GaussInputFile()),
+        Box::new(ms::CarFile()),
     ];
 
     // 1. by file type
@@ -256,6 +258,7 @@ pub fn describe_backends() {
         Box::new(cif::CifFile()),
         Box::new(pdb::PdbFile()),
         Box::new(gaussian::GaussInputFile()),
+        Box::new(ms::CarFile()),
     ];
 
     for cf in backends {
