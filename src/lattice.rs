@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-05-19 Sat 17:25>
+//       UPDATED:  <2018-05-24 Thu 15:26>
 //===============================================================================#
 
 use nalgebra::{
@@ -255,6 +255,11 @@ impl Lattice {
     pub fn vector_c(&self) -> [f64; 3] {
         self.matrix.column(2).transpose().into()
     }
+
+    /// Lattice vectors
+    pub fn vectors(&self) -> [[f64; 3]; 3] {
+        self.matrix.into()
+    }
 }
 // b17e625d-352f-419e-9d10-a84fcdb9ff07 ends here
 
@@ -370,11 +375,17 @@ fn test_lattice_neighborhood() {
 
 #[test]
 fn test_lattice_volume() {
-    let mut lat = Lattice::new([
+    let vts = [
         [ 5.,  0.,  0.],
         [ 5.,  5.,  0.],
         [ 1.,  0.,  5.]
-    ]);
+    ];
+
+    let mut lat = Lattice::new(vts);
+    assert_eq!(vts, lat.vectors());
+    assert_eq!(vts[0], lat.vector_a());
+    assert_eq!(vts[1], lat.vector_b());
+    assert_eq!(vts[2], lat.vector_c());
 
     assert_relative_eq!(125.0, lat.volume(), epsilon=1e-4);
     lat.scale_by(4.);
