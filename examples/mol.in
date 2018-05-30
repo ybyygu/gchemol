@@ -1,6 +1,4 @@
 {{natoms}}
 {{title | trim }}
-{# remove empty lines #}
-{%- for a in atoms -%}
-  {{a.symbol}} {{a.x}} {{a.y}} {{a.z}}
+{% for a in atoms %} {{a.symbol}} {{a.x}} {{a.y}} {{a.z}}
 {% endfor %}
