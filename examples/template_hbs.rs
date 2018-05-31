@@ -7,16 +7,44 @@ extern crate serde_derive;
 extern crate gchemol;
 extern crate handlebars;
 
+
 use gchemol::errors::*;
-use handlebars::Handlebars;
+use handlebars::{
+    to_json,
+    Handlebars,
+    Helper,
+    JsonRender,
+    RenderContext,
+    RenderError
+};
 
 static TEMPLATE: &'static str =
 "{{natoms}}
 {{title}}
 {{#each atoms as |a| ~}}
-{{a.symbol}} {{a.x}} {{a.y}} {{a.z}}
+{{fmt_str a.symbol}} {{fmt_num a.x}} {{fmt_num a.y}} {{fmt_num a.z}}
 {{/each~}}
 ";
+
+// define a custom helper for formatting float number
+fn format_number(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> std::result::Result<(), RenderError> {
+    // get parameter from helper or throw an error
+    let param = h.param(0).ok_or(RenderError::new("Param 0 is required for format helper."))?;
+    let num: f64 = param.value().as_f64().ok_or(RenderError::new("Param 0 sould be a float number"))?;
+    let rendered = format!("{:-8.4}", num);
+    rc.writer.write(rendered.into_bytes().as_ref())?;
+    Ok(())
+}
+
+// define a custom helper for formatting string
+fn format_string(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> std::result::Result<(), RenderError> {
+    // get parameter from helper or throw an error
+    let param = h.param(0).ok_or(RenderError::new("Param 0 is required for format helper."))?;
+
+    let rendered = format!("{:3}", param.value().render());
+    rc.writer.write(rendered.into_bytes().as_ref())?;
+    Ok(())
+}
 
 #[derive(Debug, Serialize)]
 struct AtomData {
@@ -62,7 +90,6 @@ struct UnitCell {
 
 
 fn main() -> Result<()> {
-    let mut h = Handlebars::new();
     let mols = gchemol::io::read("tests/files/mol2/arginyl-ds.mol2")?;
     let mol = &mols[0];
 
@@ -85,6 +112,9 @@ fn main() -> Result<()> {
         "atoms": atoms,
     });
 
+    let mut h = Handlebars::new();
+    h.register_helper("fmt_num", Box::new(format_number));
+    h.register_helper("fmt_str", Box::new(format_string));
     let x = h.render_template(TEMPLATE, &data).chain_err(|| "failed")?;
     println!("{:}", x);
 
