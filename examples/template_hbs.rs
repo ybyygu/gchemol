@@ -13,7 +13,7 @@ use handlebars::{
     to_json,
     Handlebars,
     Helper,
-    JsonRender,
+    HelperResult,
     RenderContext,
     RenderError
 };
@@ -22,29 +22,75 @@ static TEMPLATE: &'static str =
 "{{natoms}}
 {{title}}
 {{#each atoms as |a| ~}}
-{{fmt_str a.symbol}} {{fmt_num a.x}} {{fmt_num a.y}} {{fmt_num a.z}}
+{{format a.symbol width=3 align=\"center\"}} {{format a.x width=6 prec=2}} {{format a.y}} {{format a.z}}
 {{/each~}}
 ";
-
-// define a custom helper for formatting float number
-fn format_number(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> std::result::Result<(), RenderError> {
-    // get parameter from helper or throw an error
+// define a helper for formatting string or number
+fn format(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
+    // get positional parameter from helper or throw an error
     let param = h.param(0).ok_or(RenderError::new("Param 0 is required for format helper."))?;
-    let num: f64 = param.value().as_f64().ok_or(RenderError::new("Param 0 sould be a float number"))?;
-    let rendered = format!("{:-8.4}", num);
-    rc.writer.write(rendered.into_bytes().as_ref())?;
+
+    // get keyword parameters
+    let width =  h.hash_get("width")
+        .and_then(|v| v.value().as_u64());
+    let prec =  h.hash_get("prec")
+        .and_then(|v| v.value().as_u64());
+    let align =  h.hash_get("align")
+        .and_then(|v| v.value().as_str());
+
+    // format string
+    if param.value().is_string() {
+        let v = param.value()
+            .as_str()
+            .ok_or(RenderError::new("Wrong type of param 0"))?;
+        let width = width.unwrap_or(0) as usize;
+        let rendered = if let Some(align) = align {
+            match align {
+                "center" => format!("{:^width$}", v, width=width),
+                "right"  => format!("{:<width$}", v, width=width),
+                "left"   => format!("{:>width$}", v, width=width),
+                _        => format!("{:width$}", v, width=width),
+            }
+        } else {
+            format!("{:width$}", v, width=width)
+        };
+        rc.writer.write(rendered.into_bytes().as_ref())?;
+
+    // format number
+    } else if param.value().is_number() || param.value().is_f64() {
+        let num: f64 = param.value()
+            .as_f64()
+            .ok_or(RenderError::new("Wrong type of param 0"))?;
+
+        let width = width.unwrap_or(8) as usize;
+        let prec = prec.unwrap_or(4) as usize;
+        let rendered = if let Some(align) = align {
+            match align {
+                "center" => format!("{:^width$.prec$}", num, width=width, prec=prec),
+                "right"  => format!("{:<width$.prec$}", num, width=width, prec=prec),
+                "left"   => format!("{:>width$.prec$}", num, width=width, prec=prec),
+                _        => format!("{:width$.prec$}",  num, width=width, prec=prec),
+            }
+        } else {
+            format!("{:-width$.prec$}", num, width=width, prec=prec)
+        };
+        rc.writer.write(rendered.into_bytes().as_ref())?;
+    } else {
+        // TODO
+    }
+
     Ok(())
 }
 
-// define a custom helper for formatting string
-fn format_string(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> std::result::Result<(), RenderError> {
-    // get parameter from helper or throw an error
-    let param = h.param(0).ok_or(RenderError::new("Param 0 is required for format helper."))?;
-
-    let rendered = format!("{:3}", param.value().render());
-    rc.writer.write(rendered.into_bytes().as_ref())?;
-    Ok(())
-}
+// // define a custom helper for formatting float number
+// fn format_number(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> std::result::Result<(), RenderError> {
+//     // get parameter from helper or throw an error
+//     let param = h.param(0).ok_or(RenderError::new("Param 0 is required for format helper."))?;
+//     let num: f64 = param.value().as_f64().ok_or(RenderError::new("Param 0 sould be a float number"))?;
+//     let rendered = format!("{:-8.4}", num);
+//     rc.writer.write(rendered.into_bytes().as_ref())?;
+//     Ok(())
+// }
 
 #[derive(Debug, Serialize)]
 struct AtomData {
@@ -90,7 +136,7 @@ struct UnitCell {
 
 
 fn main() -> Result<()> {
-    let mols = gchemol::io::read("tests/files/mol2/arginyl-ds.mol2")?;
+    let mols = gchemol::io::read("tests/files/mol2/LTL-crysin-ds.mol2")?;
     let mol = &mols[0];
 
     let mut atoms = vec![];
@@ -113,8 +159,7 @@ fn main() -> Result<()> {
     });
 
     let mut h = Handlebars::new();
-    h.register_helper("fmt_num", Box::new(format_number));
-    h.register_helper("fmt_str", Box::new(format_string));
+    h.register_helper("format", Box::new(format));
     let x = h.render_template(TEMPLATE, &data).chain_err(|| "failed")?;
     println!("{:}", x);
 
