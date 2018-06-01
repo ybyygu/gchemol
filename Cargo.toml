@@ -10,7 +10,7 @@ nalgebra = ">=0.14.4"
 cgmath = "*"
 nom = ">=4.0.0"
 petgraph = "*"
-indexmap = "*"
+indexmap = {version=">=1.0.0", features=["serde-1"]}
 timeit = "*"
 serde = "*"
 serde_json = "*"

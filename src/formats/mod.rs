@@ -12,6 +12,7 @@ pub use lattice::Lattice;
 pub use Bond;
 pub use BondKind;
 
+pub mod template;
 pub mod xyz;
 pub mod mol2;
 pub mod pdb;
