@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-05-24 Thu 15:26>
+//       UPDATED:  <2018-06-01 Fri 10:39>
 //===============================================================================#
 
 use nalgebra::{
@@ -114,7 +114,7 @@ impl Lattice {
 
     fn get_cell_widths(&mut self)  -> [f64; 3] {
         let volume = self.volume();
-        let (van, vbn, vcn) = self.lengths();
+        let [van, vbn, vcn] = self.lengths();
 
         let wa = volume / (vbn*vcn);
         let wb = volume / (vcn*van);
@@ -183,27 +183,27 @@ impl Lattice {
     }
 
     /// Lattice length parameters: a, b, c
-    pub fn lengths(&mut self) -> (f64, f64, f64) {
+    pub fn lengths(&mut self) -> [f64; 3] {
         let mat = self.matrix;
         let lengths = self.lengths.get_or_insert_with(|| get_cell_lengths(mat));
 
-        (
+        [
             lengths[0],
             lengths[1],
             lengths[2],
-        )
+        ]
     }
 
     /// Lattice angle parameters in degrees
-    pub fn angles(&mut self) -> (f64, f64, f64) {
+    pub fn angles(&mut self) -> [f64; 3] {
         let mat = self.matrix;
         let angles = self.angles.get_or_insert_with(|| get_cell_angles(mat));
 
-        (
+        [
             angles[0],
             angles[1],
             angles[2],
-        )
+        ]
     }
 
     // FIXME: cell widths
@@ -311,20 +311,20 @@ fn test_lattice_init() {
                                 [  4.5807,  15.5026,   0.    ],
                                 [  0.    ,   0.    ,  17.4858]]);
 
-    let (a, b, c) = lat.lengths();
+    let [a, b, c] = lat.lengths();
 
     assert_relative_eq!(a, 15.3643, epsilon=1e-4);
     assert_relative_eq!(b, 16.1652, epsilon=1e-4);
     assert_relative_eq!(c, 17.4858, epsilon=1e-4);
 
-    let (alpha, beta, gamma) = lat.angles();
+    let [alpha, beta, gamma] = lat.angles();
     assert_relative_eq!(alpha, 90.0, epsilon=1e-4);
     assert_relative_eq!(beta, 90.0, epsilon=1e-4);
     assert_relative_eq!(gamma, 73.5386, epsilon=1e-4);
 
     let mut lat = Lattice::from_params(a, b, c, alpha, beta, gamma);
-    assert_eq!((a, b, c), lat.lengths());
-    assert_eq!((alpha, beta, gamma), lat.angles());
+    assert_eq!([a, b, c], lat.lengths());
+    assert_eq!([alpha, beta, gamma], lat.angles());
 }
 
 #[test]

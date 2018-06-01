@@ -273,7 +273,7 @@ fn test_formats_mol2_crystal() {
     let (_, mut x) = get_lattice_from(txt)
         .expect("mol2 crystal");
 
-    assert_eq!((12.312, 4.959, 15.876), x.lengths());
+    assert_eq!([12.312, 4.959, 15.876], x.lengths());
 }
 // aa5c8cd2-1665-445b-9737-b1c0ab567ffd ends here
 
@@ -488,8 +488,8 @@ impl ChemFileLike for Mol2File {
         // format crystal
         if let Some(mut lat) = &mol.lattice {
             lines.push_str("@<TRIPOS>CRYSIN\n");
-            let (a, b, c) = lat.lengths();
-            let (alpha, beta, gamma) = lat.angles();
+            let [a, b, c] = lat.lengths();
+            let [alpha, beta, gamma] = lat.angles();
             let line = format!("{a:10.4} {b:10.4} {c:10.4} {alpha:5.2} {beta:5.2} {gamma:5.2} {sgrp} 1\n",
                                a     = a,
                                b     = b,
