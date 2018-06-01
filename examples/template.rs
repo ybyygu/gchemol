@@ -4,9 +4,10 @@ extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
+use std::fs::File;
+
 extern crate gchemol;
 extern crate handlebars;
-
 
 use gchemol::errors::*;
 use handlebars::{
@@ -18,13 +19,6 @@ use handlebars::{
     RenderError
 };
 
-static TEMPLATE: &'static str =
-"{{natoms}}
-{{title}}
-{{#each atoms as |a| ~}}
-{{format a.symbol width=3 align=\"center\"}} {{format a.x width=6 prec=2}} {{format a.y}} {{format a.z}}
-{{/each~}}
-";
 // define a helper for formatting string or number
 fn format(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
     // get positional parameter from helper or throw an error
@@ -42,7 +36,7 @@ fn format(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
     if param.value().is_string() {
         let v = param.value()
             .as_str()
-            .ok_or(RenderError::new("Wrong type of param 0"))?;
+            .ok_or(RenderError::new("param 0: not str"))?;
         let width = width.unwrap_or(0) as usize;
         let rendered = if let Some(align) = align {
             match align {
@@ -60,7 +54,7 @@ fn format(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
     } else if param.value().is_number() || param.value().is_f64() {
         let num: f64 = param.value()
             .as_f64()
-            .ok_or(RenderError::new("Wrong type of param 0"))?;
+            .ok_or(RenderError::new("param 0: not f64 number"))?;
 
         let width = width.unwrap_or(8) as usize;
         let prec = prec.unwrap_or(4) as usize;
@@ -76,21 +70,11 @@ fn format(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
         };
         rc.writer.write(rendered.into_bytes().as_ref())?;
     } else {
-        // TODO
+        return Err(RenderError::new("Possible type for param 0: string or number"));
     }
 
     Ok(())
 }
-
-// // define a custom helper for formatting float number
-// fn format_number(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> std::result::Result<(), RenderError> {
-//     // get parameter from helper or throw an error
-//     let param = h.param(0).ok_or(RenderError::new("Param 0 is required for format helper."))?;
-//     let num: f64 = param.value().as_f64().ok_or(RenderError::new("Param 0 sould be a float number"))?;
-//     let rendered = format!("{:-8.4}", num);
-//     rc.writer.write(rendered.into_bytes().as_ref())?;
-//     Ok(())
-// }
 
 #[derive(Debug, Serialize)]
 struct AtomData {
@@ -134,7 +118,6 @@ struct UnitCell {
     vc: [f64; 3],
 }
 
-
 fn main() -> Result<()> {
     let mols = gchemol::io::read("tests/files/mol2/LTL-crysin-ds.mol2")?;
     let mol = &mols[0];
@@ -160,9 +143,8 @@ fn main() -> Result<()> {
 
     let mut h = Handlebars::new();
     h.register_helper("format", Box::new(format));
-    let x = h.render_template(TEMPLATE, &data).chain_err(|| "failed")?;
-    println!("{:}", x);
-
-    Ok(())
+    let mut finp = File::open(&"./examples/xyz.hbs").chain_err(|| "failed to open file")?;
+    let mut fout = File::create("/tmp/mol.xyz").chain_err(|| "failed to write file")?;
+    h.render_template_source_to_write(&mut finp, &data, &mut fout).chain_err(||"failed to render")
 }
 // 6b59958f-7e56-4b16-b02a-cc01e5de3da8 ends here

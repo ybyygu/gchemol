@@ -1,4 +1,0 @@
-{{natoms}}
-{{title | trim }}
-{% for a in atoms %} {{a.symbol}} {{a.x}} {{a.y}} {{a.z}}
-{% endfor %}
