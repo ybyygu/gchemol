@@ -1,0 +1,14 @@
+# put keywords here
+opti conp lbfgs
+title
+{{molecule.title}}
+end
+# put coordinates here
+fractional
+{{#each molecule.atoms as |a| ~}}
+{{format a.symbol width=3}} core {{format a.fx}} {{format a.fy}} {{format a.fz}}
+{{/each~}}
+# assign force filed in library
+library reaxff
+# output options
+output cif final.cif
