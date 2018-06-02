@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-05-21 Mon 18:53>
+//       UPDATED:  <2018-06-02 Sat 19:27>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -29,10 +29,8 @@ pub type MolGraph = StableUnGraph<Atom, Bond>;
 pub type AtomIndex = NodeIndex;
 pub type BondIndex = EdgeIndex;
 
-/// Repsents any singular entity, irrespective of its nature, in order
-/// to concisely express any type of chemical particle: atom,
-/// molecule, ion, ion pair, radical, radical ion, complex, conformer,
-/// etc.
+/// Molecule is the most important data structure in gchemol, which repsents one or
+/// more atoms held together by chemical bonds.
 ///
 /// Reference
 /// ---------
@@ -40,7 +38,7 @@ pub type BondIndex = EdgeIndex;
 /// 2. https://en.wikipedia.org/wiki/Molecular_entity
 ///
 #[derive(Debug, Clone)]
-pub struct MolecularEntity {
+pub struct Molecule {
     /// Molecule name
     pub name: String,
     /// core data in graph
@@ -59,8 +57,6 @@ pub struct MolecularEntity {
     /// User defined atom labels
     pub atom_labels: HashMap<AtomIndex, String>,
 }
-
-pub type Molecule = MolecularEntity;
 
 impl Default for Molecule {
     fn default() -> Self {
@@ -412,20 +408,25 @@ use std::hash::Hash;
 use std::cmp::Ordering;
 
 #[derive (Debug, Clone)]
-/// simple atom data structure
+/// Atom is the smallest particle still characterizing a chemical element.
+///
+/// # Reference
+///
+/// https://goldbook.iupac.org/html/A/A00493.html
+///
 pub struct Atom {
-    /// Arbitrary key-value properties similar to python dict.
-    ///
-    /// Arbitrary property stored in key-value pair. Key is a string type, but
-    /// it is the responsibility of the setter/getter to interpret the value.
+    /// Arbitrary property stored in key-value pair.
+    /// Key is a string type, but it is the responsibility
+    /// of the user to correctly interpret the value.
     pub properties: PropertyStore,
 
     /// Internal index which will be managed by parent molecule
     index: AtomIndex,
 
+    // TODO: remove?
     label: Option<String>,
 
-    /// private atom data
+    /// private atom data independent of the molecule
     data: AtomData,
 }
 
@@ -442,9 +443,14 @@ impl Default for Atom {
 }
 
 impl Atom {
-    /// shortcut for accessing atom symbol
+    /// Return element symbol
     pub fn symbol(&self) -> &str {
         self.data.kind.symbol()
+    }
+
+    /// Return atomic number
+    pub fn number(&self) -> usize {
+        self.data.kind.number()
     }
 
     /// Provide read-only access to atom index
@@ -452,29 +458,32 @@ impl Atom {
         self.index
     }
 
-    /// shortcut for accessing atom number
-    pub fn number(&self) -> usize {
-        self.data.kind.number()
-    }
-
-    /// shortcut for accessing atom position
+    /// Return atom position in 3D Cartesian coordinates
     pub fn position(&self) -> Point3D {
         self.data.position
     }
 
+    /// Set atom position in 3D Cartesian coordinates
     pub fn set_position(&mut self, p: Point3D) {
         self.data.position = p;
     }
 
+    /// Vector quantity equal to the product of mass and velocity.
+    pub fn momentum(&mut self) -> Point3D {
+        self.data.momentum
+    }
+
+    /// TODO: momentum, momenta
     pub fn set_momentum(&mut self, m: Point3D) {
         self.data.momentum = m;
     }
 
+    /// Set atom label
     pub fn set_label(&mut self, lbl: &str) {
         self.label = Some(lbl.into());
     }
 
-    /// Atom label
+    /// Return the user defined atom label, if not return the default (symbol + index, e.g Fe120)
     pub fn label(&self) -> String {
         if let Some(ref l) = self.label {
             return l.to_owned();
@@ -486,14 +495,22 @@ impl Atom {
         format!("{}{}", self.symbol(), self.index.index() + 1)
     }
 
+    /// Return atom name
     pub fn name(&self) -> &str {
         &self.data.name
     }
 
+    /// Set atom name
     pub fn set_name<T: Into<String>>(&mut self, s: T) {
         self.data.name = s.into();
     }
 
+    /// Return a list of atoms bonded to current atom
+    ///
+    /// # Parameters
+    ///
+    /// parent: the molecule hosting the atom
+    ///
     pub fn neighbors<'a>(&self, parent: &'a Molecule) -> Vec<&'a Atom>{
         let atoms: Vec<_> = parent.graph
             .neighbors(self.index)
@@ -516,6 +533,7 @@ impl Atom {
 // b6d1e417-27da-4384-879a-db28960ed161 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::d333cb1f-e622-462f-a892-4906c85b7da0][d333cb1f-e622-462f-a892-4906c85b7da0]]
+/// Atom specific data independent of the molecule
 #[derive(Debug, Clone)]
 pub struct AtomData {
     /// Atom type, could be an element or a pseudo-atom
@@ -524,8 +542,15 @@ pub struct AtomData {
     position: Point3D,
     /// Atom nick name
     name: String,
+    /// Vector quantity equal to the derivative of the position vector with respect to time
+    velocity: Point3D,
+    /// Atomic mass
+    mass: f64,
     /// Atomic momentum vector
     momentum: Point3D,
+    /// Atomic partial charge
+    partial_charge: f64,
+
 }
 
 impl Default for AtomData {
@@ -534,7 +559,11 @@ impl Default for AtomData {
             kind: Element(6),   // carbon atom
             position: [0.0; 3],
             momentum: [0.0; 3],
+            velocity: [0.0; 3],
+            partial_charge: 0.0,
             name: "carbon".into(),
+            // FIXME
+            mass: 6.0,
         }
     }
 }
@@ -545,24 +574,20 @@ impl AtomData {
     }
 
     /// Set atom position
-    #[inline]
     pub fn position(&mut self, x: f64, y: f64, z: f64) -> &mut Self {
         self.position = [x, y, z]; self
     }
 
-    /// Set atom kink using element number
-    #[inline]
+    /// Set atom kind using element number
     pub fn element(&mut self, n: usize) -> &mut Self {
         self.kind = Element(n); self
     }
 
     /// Set atom kind using element symbol
-    #[inline]
     pub fn symbol<T: Into<String>>(&mut self, s: T) -> &mut Self {
         self.kind = atom_kind_from_string(s.into()); self
     }
 
-    #[inline]
     pub fn momentum(&mut self, x: f64, y: f64, z: f64) -> &mut Self {
         self.momentum = [x, y, z]; self
     }
@@ -687,6 +712,14 @@ pub enum BondKind {
     Quadruple,
 }
 
+/// There is a chemical bond between two atoms or groups of atoms in the case
+/// that the forces acting between them are such as to lead to the formation of
+/// an aggregate with sufficient stability to make it convenient for the chemist
+/// to consider it as an independent 'molecular species'.
+///
+/// # Reference
+/// https://goldbook.iupac.org/html/B/B00697.html
+///
 #[derive(Debug, Clone)]
 pub struct Bond {
     pub kind : BondKind,
@@ -795,7 +828,7 @@ impl Bond {
         }
     }
 
-    /// read-only access of bond index
+    /// Read-only access of bond index
     pub fn index(&self) -> BondIndex {
         self.index
     }
@@ -825,8 +858,9 @@ fn test_bond() {
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::e1d0c51a-0dd7-4977-ae54-7928ee46d373][e1d0c51a-0dd7-4977-ae54-7928ee46d373]]
 use std::ops::Index;
 
+/// A list-like object providing a convenient view on atoms in molecule
 #[derive(Debug, Clone)]
-pub struct AtomView<'a> {
+pub struct AtomsView<'a> {
     /// mapping a positive integer to internal graph node index
     mapping: HashMap<usize, AtomIndex>,
     /// parent molecule struct
@@ -836,7 +870,7 @@ pub struct AtomView<'a> {
     cur: usize,
 }
 
-impl<'a> AtomView<'a> {
+impl<'a> AtomsView<'a> {
     pub fn new(mol: &'a Molecule) -> Self {
         // use a hash map to cache graph node indices
         let mut mapping = HashMap::new();
@@ -846,7 +880,7 @@ impl<'a> AtomView<'a> {
             i += 1;
         }
 
-        AtomView {
+        AtomsView {
             mapping,
             parent: mol,
             cur: 0,
@@ -856,7 +890,7 @@ impl<'a> AtomView<'a> {
 
 /// Index the atoms in `Molecule` by index counting from 1
 /// Will panic if index is invalid
-impl<'a> Index<usize> for AtomView<'a>
+impl<'a> Index<usize> for AtomsView<'a>
 {
     type Output = Atom;
 
@@ -866,7 +900,7 @@ impl<'a> Index<usize> for AtomView<'a>
     }
 }
 
-impl<'a> Iterator for AtomView<'a> {
+impl<'a> Iterator for AtomsView<'a> {
     type Item = (usize, &'a Atom);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -888,7 +922,7 @@ fn test_atom_view() {
     mol.add_atom(Atom::new("Fe", [0.0; 3]));
     mol.add_atom(Atom::new("C", [0.0; 3]));
 
-    let av = AtomView::new(&mol);
+    let av = AtomsView::new(&mol);
     assert_eq!("Fe", av[1].symbol());
 
     // iterate with a index (counting from 1) and an atom object
@@ -898,8 +932,8 @@ fn test_atom_view() {
 }
 
 impl Molecule {
-    pub fn view_atoms(&self) -> AtomView {
-        AtomView::new(&self)
+    pub fn view_atoms(&self) -> AtomsView {
+        AtomsView::new(&self)
     }
 }
 // e1d0c51a-0dd7-4977-ae54-7928ee46d373 ends here
@@ -907,9 +941,9 @@ impl Molecule {
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::5916eec2-ec7e-4525-bc6c-fade1d250a16][5916eec2-ec7e-4525-bc6c-fade1d250a16]]
 use indexmap::IndexMap;
 
+/// A list-like object providing a convenient view on bonds in molecule
 #[derive(Debug, Clone)]
-/// Convenient read-only view of bonds in molecule
-pub struct BondView<'a> {
+pub struct BondsView<'a> {
     mapping: IndexMap<(usize, usize), BondIndex>,
     parent: &'a Molecule,
 
@@ -917,7 +951,7 @@ pub struct BondView<'a> {
     cur: usize,
 }
 
-impl<'a> BondView<'a> {
+impl<'a> BondsView<'a> {
     pub fn new(mol: &'a Molecule) -> Self {
         // reverse mapping atom id and internal graph node index
         let mut d = HashMap::new();
@@ -940,7 +974,7 @@ impl<'a> BondView<'a> {
             }
         }
 
-        BondView {
+        BondsView {
             mapping,
             parent: mol,
             cur: 0,
@@ -948,7 +982,7 @@ impl<'a> BondView<'a> {
     }
 }
 
-impl<'a> Index<(usize, usize)> for BondView<'a>
+impl<'a> Index<(usize, usize)> for BondsView<'a>
 {
     type Output = Bond;
 
@@ -964,7 +998,7 @@ impl<'a> Index<(usize, usize)> for BondView<'a>
     }
 }
 
-impl<'a> Iterator for BondView<'a> {
+impl<'a> Iterator for BondsView<'a> {
     type Item = (usize, usize, &'a Bond);
 
     /// return a tuple in (index_i, index_j, bond)
@@ -996,7 +1030,7 @@ fn test_bonds_view() {
     mol.add_bond(a1, a3, Bond::default());
     // update bond type
     mol.add_bond(a3, a1, Bond::double());
-    let bv = BondView::new(&mol);
+    let bv = BondsView::new(&mol);
     {
         let b12 = &bv[(1, 2)];
         let b13 = &bv[(1, 3)];
@@ -1010,8 +1044,8 @@ fn test_bonds_view() {
 }
 
 impl Molecule {
-    pub fn view_bonds(&self) -> BondView {
-        BondView::new(&self)
+    pub fn view_bonds(&self) -> BondsView {
+        BondsView::new(&self)
     }
 }
 // 5916eec2-ec7e-4525-bc6c-fade1d250a16 ends here
@@ -1061,19 +1095,19 @@ impl Molecule {
         e
     }
 
-    /// access bond by bond index
+    /// Access bond by bond index
     pub fn get_bond<T: IntoBondIndex>(&self, e: T) -> Option<&Bond> {
         let e = e.into_bond_index();
         self.graph.edge_weight(e)
     }
 
-    /// Get the bond index between two atoms
+    /// Get the bond index between two atoms.
     /// Return None if not found
     fn bond_index_between(&self, n1: AtomIndex, n2: AtomIndex) -> Option<BondIndex> {
         self.graph.find_edge(n1, n2)
     }
 
-    /// Return any bond bween two atoms
+    /// Return any bond bween two atoms.
     /// Return None if it does not exist
     pub fn get_bond_between<T: IntoAtomIndex>(&self, index1: T, index2: T) -> Option<&Bond> {
         let n1 = index1.into_atom_index();
@@ -1103,6 +1137,26 @@ impl Molecule {
             self.remove_bond(e)
         } else {
             None
+        }
+    }
+
+    /// Removes all bonds between two selections to respect pymol's unbond command.
+    ///
+    /// Parameters
+    /// ----------
+    /// atom_indices1: the first collection of atoms
+    ///
+    /// atom_indices2: the other collection of atoms
+    ///
+    /// Reference
+    /// ---------
+    /// https://pymolwiki.org/index.php/Unbond
+    ///
+    pub fn unbond(&mut self, atom_indices1: Vec<AtomIndex>, atom_indices2: Vec<AtomIndex>) {
+        for &index1 in atom_indices1.iter() {
+            for &index2 in atom_indices2.iter() {
+                self.remove_bond_between(index1, index2);
+            }
         }
     }
 
@@ -1228,7 +1282,7 @@ impl Molecule {
     }
 
     /// Removes all existing bonds between atoms
-    pub fn unbond(&mut self) {
+    pub fn unbound(&mut self) {
         self.graph.clear_edges();
     }
 
