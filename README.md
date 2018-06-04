@@ -1,23 +1,9 @@
-
-# Table of Contents
-
-1.  [Features](#orgebbb3d6)
-2.  [Installing](#org374e644)
-    1.  [install rust:](#org9f8c853)
-    2.  [add Cargo.toml in your project:](#orge65a875)
-3.  [Molecule](#orgf78138d)
-4.  [Read/write chemical files](#org02078bd)
-5.  [Templating](#orgb084e82)
-6.  [Related projects](#orgc6b83b7)
-
 gchemol is a graph-based chemical object library implemented in Rust programming
 language.
 
 [![Build Status](https://travis-ci.org/ybyygu/gchemol.svg?branch=master)](https://travis-ci.org/ybyygu/gchemol)
 [![GPL3 licensed](https://img.shields.io/badge/license-GPL3-blue.svg)](./LICENSE)
 
-
-<a id="orgebbb3d6"></a>
 
 # Features
 
@@ -29,19 +15,13 @@ language.
 -   render molecule in user defined formats by templating with [handlebars](https://github.com/sunng87/handlebars-rust)
 
 
-<a id="org374e644"></a>
-
 # Installing
 
-
-<a id="org9f8c853"></a>
 
 ## install rust:
 
 TBD
 
-
-<a id="orge65a875"></a>
 
 ## add Cargo.toml in your project:
 
@@ -49,21 +29,15 @@ TBD
     gchemol = {git = "https://github.com/ybyygu/gchemol"}
 
 
-<a id="orgf78138d"></a>
-
-# Molecule
+# Edit molecule
 
 TBD
 
-
-<a id="org02078bd"></a>
 
 # Read/write chemical files
 
 TBD
 
-
-<a id="orgb084e82"></a>
 
 # Templating
 
@@ -121,8 +95,6 @@ alignment control:
     {{align="right"}}
     {{align="center"}}
 
-
-<a id="orgc6b83b7"></a>
 
 # Related projects
 

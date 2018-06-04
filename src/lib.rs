@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-06-01 Fri 11:15>
+//       UPDATED:  <2018-06-04 Mon 15:37>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -17,7 +17,7 @@ extern crate petgraph;
 #[macro_use] extern crate nom;
 #[macro_use] extern crate indexmap;
 extern crate nalgebra;
-extern crate cgmath;
+// extern crate cgmath;
 #[macro_use] extern crate timeit;
 #[macro_use] extern crate approx;
 extern crate rand;

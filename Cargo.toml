@@ -7,7 +7,7 @@ authors = ["Wenping Guo <ybyygu@gmail.com>"]
 [dependencies]
 approx = "*"
 nalgebra = ">=0.14.4"
-cgmath = "*"
+#cgmath = "*"
 nom = ">=4.0.0"
 petgraph = "*"
 indexmap = {version=">=1.0.0", features=["serde-1"]}
