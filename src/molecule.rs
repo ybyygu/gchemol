@@ -1,6 +1,6 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::7e391e0e-a3e8-4c22-b881-e0425d0926bc][7e391e0e-a3e8-4c22-b881-e0425d0926bc]]
 //===============================================================================#
-//   DESCRIPTION:  molecular entity repsented in graph data structure
+//   DESCRIPTION:  molecule repsented in graph data structure
 //
 //       OPTIONS:  ---
 //  REQUIREMENTS:  ---
@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-02 Sat 19:27>
+//       UPDATED:  <2018-06-06 Wed 17:02>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -126,15 +126,19 @@ impl Molecule {
     }
 
     /// Set positions of atoms
-    pub fn set_positions(&mut self, positions: Points)
+    pub fn set_positions(&mut self, positions: Points) -> Result<()>
     {
         let indices: Vec<_> = self.graph.node_indices().collect();
-        debug_assert!(indices.len() == positions.len());
+        if indices.len() != positions.len() {
+            bail!("the number of cartesian coordinates is different from the number of atoms in molecule.")
+        }
 
         for (&index, position) in indices.iter().zip(positions) {
             let mut atom = &mut self.graph[index];
             atom.set_position(position);
         }
+
+        Ok(())
     }
 
     /// TODO
@@ -142,11 +146,69 @@ impl Molecule {
         //
     }
 
+    /// Set periodic lattice
     pub fn set_lattice(&mut self, lat: Lattice) {
         self.lattice = Some(lat);
     }
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::ab071843-5a26-4f16-9068-17da002d5a10][ab071843-5a26-4f16-9068-17da002d5a10]]
+impl Molecule {
+    /// Return fractional coordinates relative to unit cell.
+    pub fn scaled_positions(&self) -> Option<Vec<Point3D>> {
+        if let Some(mut lat) = self.lattice {
+            let mut fxyzs = vec![];
+            for a in self.atoms() {
+                let xyz = a.position();
+                let fxyz = lat.to_frac(xyz);
+                fxyzs.push(fxyz)
+            }
+            Some(fxyzs)
+        } else {
+            None
+        }
+    }
+
+    /// Set positions relative to unit cell.
+    pub fn set_scaled_positions(&mut self, scaled: &Points) -> Result<()> {
+        if let Some(mut lat) = self.lattice {
+            let mut positions = vec![];
+            for &p in scaled {
+                let xyz = lat.to_cart(p);
+                positions.push(p);
+            }
+
+            self.set_positions(positions)
+        } else {
+            bail!("cannot set scaled positions for aperiodic structure")
+        }
+    }
+}
+// ab071843-5a26-4f16-9068-17da002d5a10 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::80dcc47b-b7dc-4ba7-a9d6-a567831bae93][80dcc47b-b7dc-4ba7-a9d6-a567831bae93]]
+impl Molecule {
+    // TODO
+    /// Return molecule net charge
+    pub fn charge(&self) -> usize {
+        unimplemented!()
+    }
+
+    // TODO
+    /// Return spin multiplicity of the molecule
+    pub fn spin_multiplicity(&self) -> usize {
+        unimplemented!()
+    }
+
+    // TODO
+    /// Return the number of electrons in the system, based on the atomic numbers and
+    /// molecular formal charge
+    pub fn nelectrons(&self) -> usize {
+        unimplemented!()
+    }
+}
+// 80dcc47b-b7dc-4ba7-a9d6-a567831bae93 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08][a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08]]
 use serde::{
@@ -1265,6 +1327,7 @@ use geometry::get_distance_matrix;
 use data::guess_bond_kind;
 
 impl Molecule {
+    // FIXME: if PBC
     pub fn distance_matrix(&self) -> Vec<Vec<f64>>{
         let positions = self.positions();
         get_distance_matrix(positions)
@@ -1363,6 +1426,16 @@ impl Molecule {
     }
 }
 // 2a27ca30-0a99-4d5d-b544-5f5900304bbb ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::e2130a32-e39f-4b7b-9014-515f18ff5f48][e2130a32-e39f-4b7b-9014-515f18ff5f48]]
+impl Molecule {
+    /// Interpolate between this structure and end_structure. Useful for
+    /// construction of NEB inputs.
+    fn interpolate(&self, end_mol: &Molecule, nimages: usize) -> Vec<Molecule> {
+        unimplemented!()
+    }
+}
+// e2130a32-e39f-4b7b-9014-515f18ff5f48 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::82294367-1b69-4638-a70b-fd8daf02ff3e][82294367-1b69-4638-a70b-fd8daf02ff3e]]
 type Bounds = HashMap<(AtomIndex, AtomIndex), f64>;
@@ -1787,7 +1860,25 @@ mod test {
         let a = mol.get_atom(a1).expect("failed to get atom a1");
         assert_eq!("Fe", a.symbol());
         assert_eq!(1.2, a.position()[0]);
+    }
 
+    #[test]
+    fn test_molecule_scaled_position() {
+        let mut mol = Molecule::default();
+        mol.add_atom(Atom::default());
+        mol.add_atom(Atom::default());
+        mol.add_atom(Atom::default());
+        mol.add_atom(Atom::default());
+        let lat = Lattice::default();
+        mol.set_lattice(lat);
+        let fxyzs = [[ 0.41737596,  0.75597855,  0.16098257],
+                     [ 0.41565679,  0.68546917,  0.19264617],
+                     [ 0.38461882,  0.68391421,  0.22795131],
+                     [ 0.37458942,  0.74128686,  0.24842385]].to_vec();
+
+        mol.set_scaled_positions(&fxyzs);
+        let fxyzs2 = mol.scaled_positions().unwrap();
+        assert_eq!(fxyzs, fxyzs2);
     }
 
     #[test]
