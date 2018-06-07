@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-06-01 Fri 10:39>
+//       UPDATED:  <2018-06-07 Thu 16:11>
 //===============================================================================#
 
 use nalgebra::{
@@ -264,6 +264,8 @@ impl Lattice {
 // b17e625d-352f-419e-9d10-a84fcdb9ff07 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::83cff231-cc63-4077-b07e-a26a2c2b906d][83cff231-cc63-4077-b07e-a26a2c2b906d]]
+use std::f64;
+
 impl Lattice {
     /// minimal images required for neighborhood search
     pub fn relevant_images(&mut self, radius: f64) -> Vec<Vector3<f64>> {
@@ -296,12 +298,83 @@ impl Lattice {
 
         ns
     }
+
+    /// Return the distance between two points computed using the minimum image
+    /// convention.
+    ///
+    /// Reference
+    /// ---------
+    /// (1) Tuckerman, M. E. Statistical Mechanics: Theory and Molecular
+    /// Simulation, 1 edition.; Oxford University Press: Oxford ; New York,
+    /// 2010.
+    fn distance_tuckerman(&mut self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
+        let pij = [pj[0] - pi[0],
+                   pj[1] - pi[1],
+                   pj[2] - pi[2]];
+
+        // apply minimum image convention on the scaled coordinates
+        let mut fij = self.to_frac(pij);
+        for x in 0..3 {
+            fij[x] -= fij[x].round();
+        }
+
+        // transform back to cartesian coordinates
+        let pij = self.to_cart(fij);
+        Vec3D::from(pij).norm()
+    }
+
+
+    /// Return the shortest distance between `pi` and the periodic images of `pj`
+    /// This algorithm will loop over all relevant images
+    fn distance_brute_force(&mut self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
+        // the cutoff radius for finding relevant images
+        let cutoff = self.distance_tuckerman(pi, pj);
+        let relevant_images = self.relevant_images(cutoff);
+
+        let mut distance = f64::MAX;
+        for v in relevant_images {
+            let dd = self.to_cart(v.into());
+            let ipij = [
+                pj[0] + dd[0] - pi[0],
+                pj[1] + dd[1] - pi[1],
+                pj[2] + dd[2] - pi[2],
+            ];
+
+            let d = Vec3D::from(ipij).norm();
+            if d < distance {
+                distance = d;
+            }
+        }
+
+        distance
+    }
+}
+
+#[test]
+fn test_lattice_mic_distance() {
+    let mut lat = Lattice::new([
+        [5.0, 0.0, 0.0],
+        [1.0, 5.0, 0.0],
+        [1.0, 1.0, 5.0],
+    ]);
+
+    // the shortest distance: 2.61383
+    let d = lat.distance_tuckerman([0.; 3], [-0.94112, -4.34823, 2.53058]);
+    assert_relative_eq!(2.66552, d, epsilon=1e-4);
+    let d = lat.distance_brute_force([0.; 3], [-0.94112, -4.34823, 2.53058]);
+    assert_relative_eq!(2.61383, d, epsilon=1e-4);
+
+    // the shortest distance: 2.53575
+    let d = lat.distance_tuckerman([0.; 3], [-2.46763, 0.57717, 0.08775]);
+    assert_relative_eq!(2.59879, d, epsilon=1e-4);
+    let d = lat.distance_brute_force([0.; 3], [-2.46763, 0.57717, 0.08775]);
+    assert_relative_eq!(2.53575, d, epsilon=1e-4);
 }
 // 83cff231-cc63-4077-b07e-a26a2c2b906d ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::4bc21235-f285-4976-a32a-b33506381b58][4bc21235-f285-4976-a32a-b33506381b58]]
 #[test]
-fn test_lattice_init() {
+fn test_lattice_construct() {
     let mut lat = Lattice::default();
     let loc = [1.0, 2.0, 3.0];
     lat.set_origin(loc);
@@ -329,10 +402,11 @@ fn test_lattice_init() {
 
 #[test]
 fn test_lattice_neighborhood() {
-    let mut lat = Lattice::new([[ 18.256,   0.   ,   0.   ],
-                             [  0.   ,  20.534,   0.   ],
-                             [  0.   ,   0.   ,  15.084]]
-    );
+    let mut lat = Lattice::new([
+        [ 18.256,   0.   ,   0.   ],
+        [  0.   ,  20.534,   0.   ],
+        [  0.   ,   0.   ,  15.084],
+    ]);
 
     assert_eq!([1, 1, 1], lat.n_min_images(9.));
     assert_eq!([2, 1, 2], lat.n_min_images(19.));
@@ -393,7 +467,7 @@ fn test_lattice_volume() {
 }
 
 #[test]
-fn test_lattice() {
+fn test_lattice_frac_cart() {
     // ovito/tests/files/LAMMPS/multi_sequence_1.dump
     let mut lat = Lattice::new([[5.09, 0.00, 0.00],
                                 [0.00, 6.74, 0.00],
