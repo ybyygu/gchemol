@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-06-07 Thu 16:11>
+//       UPDATED:  <2018-06-07 Thu 17:10>
 //===============================================================================#
 
 use nalgebra::{
@@ -260,6 +260,14 @@ impl Lattice {
     pub fn vectors(&self) -> [[f64; 3]; 3] {
         self.matrix.into()
     }
+
+    /// Check if lattice is orthorhombic
+    pub fn is_orthorhombic(&self) -> bool {
+        let diag = self.matrix.diagonal();
+        let m = Matrix3::from_diagonal(&diag);
+        // self.matrix.is_orthogonal(1.0e-5)
+        m == self.matrix
+    }
 }
 // b17e625d-352f-419e-9d10-a84fcdb9ff07 ends here
 
@@ -267,7 +275,8 @@ impl Lattice {
 use std::f64;
 
 impl Lattice {
-    /// minimal images required for neighborhood search
+    /// Return the relevant periodic images required for neighborhood search
+    /// within cutoff radius
     pub fn relevant_images(&mut self, radius: f64) -> Vec<Vector3<f64>> {
         let ns = self.n_min_images(radius);
         let na = ns[0] as isize;
@@ -287,7 +296,8 @@ impl Lattice {
         images
     }
 
-    /// Return the minimal number of images for neighborhood search on each cell direction
+    /// Return the minimal number of images for neighborhood search on each cell
+    /// direction within cutoff radius
     fn n_min_images(&mut self, radius: f64) -> [usize; 3]{
         let mut ns = [0; 3];
 
@@ -349,27 +359,6 @@ impl Lattice {
         distance
     }
 }
-
-#[test]
-fn test_lattice_mic_distance() {
-    let mut lat = Lattice::new([
-        [5.0, 0.0, 0.0],
-        [1.0, 5.0, 0.0],
-        [1.0, 1.0, 5.0],
-    ]);
-
-    // the shortest distance: 2.61383
-    let d = lat.distance_tuckerman([0.; 3], [-0.94112, -4.34823, 2.53058]);
-    assert_relative_eq!(2.66552, d, epsilon=1e-4);
-    let d = lat.distance_brute_force([0.; 3], [-0.94112, -4.34823, 2.53058]);
-    assert_relative_eq!(2.61383, d, epsilon=1e-4);
-
-    // the shortest distance: 2.53575
-    let d = lat.distance_tuckerman([0.; 3], [-2.46763, 0.57717, 0.08775]);
-    assert_relative_eq!(2.59879, d, epsilon=1e-4);
-    let d = lat.distance_brute_force([0.; 3], [-2.46763, 0.57717, 0.08775]);
-    assert_relative_eq!(2.53575, d, epsilon=1e-4);
-}
 // 83cff231-cc63-4077-b07e-a26a2c2b906d ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::4bc21235-f285-4976-a32a-b33506381b58][4bc21235-f285-4976-a32a-b33506381b58]]
@@ -385,6 +374,7 @@ fn test_lattice_construct() {
                                 [  0.    ,   0.    ,  17.4858]]);
 
     let [a, b, c] = lat.lengths();
+    assert_eq!(false, lat.is_orthorhombic());
 
     assert_relative_eq!(a, 15.3643, epsilon=1e-4);
     assert_relative_eq!(b, 16.1652, epsilon=1e-4);
@@ -407,6 +397,7 @@ fn test_lattice_neighborhood() {
         [  0.   ,  20.534,   0.   ],
         [  0.   ,   0.   ,  15.084],
     ]);
+    assert_eq!(true, lat.is_orthorhombic());
 
     assert_eq!([1, 1, 1], lat.n_min_images(9.));
     assert_eq!([2, 1, 2], lat.n_min_images(19.));
@@ -486,5 +477,26 @@ fn test_lattice_frac_cart() {
     assert_relative_eq!(coords[0], 2.1832, epsilon=1e-3);
     assert_relative_eq!(coords[1], 1.6850, epsilon=1e-3);
     assert_relative_eq!(coords[2], 3.8505, epsilon=1e-3);
+}
+
+#[test]
+fn test_lattice_mic_distance() {
+    let mut lat = Lattice::new([
+        [5.0, 0.0, 0.0],
+        [1.0, 5.0, 0.0],
+        [1.0, 1.0, 5.0],
+    ]);
+
+    // the shortest distance: 2.61383
+    let d = lat.distance_tuckerman([0.; 3], [-0.94112, -4.34823, 2.53058]);
+    assert_relative_eq!(2.66552, d, epsilon=1e-4);
+    let d = lat.distance_brute_force([0.; 3], [-0.94112, -4.34823, 2.53058]);
+    assert_relative_eq!(2.61383, d, epsilon=1e-4);
+
+    // the shortest distance: 2.53575
+    let d = lat.distance_tuckerman([0.; 3], [-2.46763, 0.57717, 0.08775]);
+    assert_relative_eq!(2.59879, d, epsilon=1e-4);
+    let d = lat.distance_brute_force([0.; 3], [-2.46763, 0.57717, 0.08775]);
+    assert_relative_eq!(2.53575, d, epsilon=1e-4);
 }
 // 4bc21235-f285-4976-a32a-b33506381b58 ends here
