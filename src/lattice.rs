@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-06-07 Thu 17:10>
+//       UPDATED:  <2018-06-07 Thu 17:20>
 //===============================================================================#
 
 use nalgebra::{
@@ -265,7 +265,6 @@ impl Lattice {
     pub fn is_orthorhombic(&self) -> bool {
         let diag = self.matrix.diagonal();
         let m = Matrix3::from_diagonal(&diag);
-        // self.matrix.is_orthogonal(1.0e-5)
         m == self.matrix
     }
 }
@@ -357,6 +356,15 @@ impl Lattice {
         }
 
         distance
+    }
+
+    /// Return the shortest distance between `pi` and the periodic images of `pj`
+    pub fn distance(&mut self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
+        if self.is_orthorhombic() {
+            self.distance_tuckerman(pi, pj)
+        } else {
+            self.distance_brute_force(pi, pj)
+        }
     }
 }
 // 83cff231-cc63-4077-b07e-a26a2c2b906d ends here
