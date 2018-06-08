@@ -136,7 +136,7 @@ fn get_atoms<'a>(input: &'a str) -> IResult<&'a str, Vec<Atom>> {
             {
                 let mut atoms = vec![];
                 for row in rows {
-                    let fx: f64 = row[ify].parse().map_err(|err| {
+                    let fx: f64 = row[ifx].parse().map_err(|err| {
                         nom::Err::Failure(
                             nom::Context::Code(row[ifx], nom::ErrorKind::Custom(28))
                         )}

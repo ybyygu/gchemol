@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-06-07 Thu 17:20>
+//       UPDATED:  <2018-06-08 Fri 15:06>
 //===============================================================================#
 
 use nalgebra::{
@@ -332,11 +332,13 @@ impl Lattice {
         Vec3D::from(pij).norm()
     }
 
-
-    /// Return the shortest distance between `pi` and the periodic images of `pj`
-    /// This algorithm will loop over all relevant images
+    /// Return the shortest distance between `pi` (point i) and the periodic
+    /// images of `pj` (point j). This algorithm will loop over all relevant
+    /// images
     fn distance_brute_force(&mut self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
-        // the cutoff radius for finding relevant images
+        // The cutoff radius for finding relevant images.
+        // Use the value from Tuckerman algorithm as cutoff radius, since it is
+        // always larger than the real distance using minimum image convention
         let cutoff = self.distance_tuckerman(pi, pj);
         let relevant_images = self.relevant_images(cutoff);
 
@@ -358,7 +360,9 @@ impl Lattice {
         distance
     }
 
-    /// Return the shortest distance between `pi` and the periodic images of `pj`
+    // TODO: return the closest periodic image?
+    /// Return the shortest distance between `pi` (point i) and the periodic
+    /// images of `pj` (point j) under the minimum image convention
     pub fn distance(&mut self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
         if self.is_orthorhombic() {
             self.distance_tuckerman(pi, pj)

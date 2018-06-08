@@ -8,11 +8,9 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-06 Wed 17:02>
+//       UPDATED:  <2018-06-08 Fri 16:12>
 //===============================================================================#
-// 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::942dedaa-9351-426e-9be9-cdb640ec2b75][942dedaa-9351-426e-9be9-cdb640ec2b75]]
 use std::collections::HashMap;
 use petgraph;
 use petgraph::prelude::*;
@@ -24,240 +22,7 @@ use {
     Points,
     lattice::Lattice,
 };
-
-pub type MolGraph = StableUnGraph<Atom, Bond>;
-pub type AtomIndex = NodeIndex;
-pub type BondIndex = EdgeIndex;
-
-/// Molecule is the most important data structure in gchemol, which repsents one or
-/// more atoms held together by chemical bonds.
-///
-/// Reference
-/// ---------
-/// 1. http://goldbook.iupac.org/M03986.html
-/// 2. https://en.wikipedia.org/wiki/Molecular_entity
-///
-#[derive(Debug, Clone)]
-pub struct Molecule {
-    /// Molecule name
-    pub name: String,
-    /// core data in graph
-    pub graph: MolGraph,
-    /// Crystalline lattice for structure using periodic boundary conditions
-    pub lattice: Option<Lattice>,
-    /// Arbitrary molecular property stored in key-value pair. Key is a string
-    /// type, but it is the responsibility of the setter/getter to interpret the
-    /// value.
-    pub properties: PropertyStore,
-
-    /// Mapping user defined atom index to internal graph node index
-    atom_indices: HashMap<String, NodeIndex>,
-    /// Mapping bond tuple to EdgeIndex
-    bond_indices: HashMap<[String; 2], EdgeIndex>,
-    /// User defined atom labels
-    pub atom_labels: HashMap<AtomIndex, String>,
-}
-
-impl Default for Molecule {
-    fn default() -> Self {
-        let graph = MolGraph::default();
-        Molecule {
-            name: "default".to_string(),
-            graph: graph,
-            lattice: None,
-            properties: PropertyStore::new(),
-            atom_indices: HashMap::new(),
-            bond_indices: HashMap::new(),
-            atom_labels: HashMap::new(),
-        }
-    }
-}
-
-impl Molecule {
-    /// Create a new empty molecule with specific name
-    pub fn new(name: &str) -> Self {
-        Molecule {
-            name: name.to_string(),
-            ..Default::default()
-        }
-    }
-
-    /// Return the number of atoms in the molecule.
-    pub fn natoms(&self) -> usize {
-        self.graph.node_count()
-    }
-
-    /// Return the number of bonds in the molecule.
-    pub fn nbonds(&self) -> usize {
-        self.graph.edge_count()
-    }
-
-    /// Construct from an existing graph
-    pub fn from_graph(graph: MolGraph) -> Self{
-        Molecule {
-            graph: graph,
-            ..Default::default()
-        }
-    }
-
-    /// A convenient alias of molecular name
-    pub fn title(&self) -> String {
-        self.name.to_owned()
-    }
-
-    /// Return an iterator over the atoms in the molecule.
-    pub fn atoms(&self) -> impl Iterator<Item = &Atom> {
-        self.graph.node_indices().map(move |n| &self.graph[n])
-    }
-
-    /// Return an iterator over the bonds in the molecule.
-    pub fn bonds(&self) -> impl Iterator<Item = &Bond> {
-        self.graph.edge_indices().map(move |e| &self.graph[e])
-    }
-
-    /// Return positions of all atoms in the molecule.
-    pub fn positions(&self) -> Vec<Point3D> {
-        self.atoms().map(|ref a| a.position()).collect()
-    }
-
-    /// Return symbols of all  atoms in the molecule.
-    pub fn symbols(&self) -> Vec<&str> {
-        self.atoms().map(|ref a| a.symbol()).collect()
-    }
-
-    /// Set positions of atoms
-    pub fn set_positions(&mut self, positions: Points) -> Result<()>
-    {
-        let indices: Vec<_> = self.graph.node_indices().collect();
-        if indices.len() != positions.len() {
-            bail!("the number of cartesian coordinates is different from the number of atoms in molecule.")
-        }
-
-        for (&index, position) in indices.iter().zip(positions) {
-            let mut atom = &mut self.graph[index];
-            atom.set_position(position);
-        }
-
-        Ok(())
-    }
-
-    /// TODO
-    pub fn set_symbols(&mut self, symbols: Vec<String>) {
-        //
-    }
-
-    /// Set periodic lattice
-    pub fn set_lattice(&mut self, lat: Lattice) {
-        self.lattice = Some(lat);
-    }
-}
-// 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::ab071843-5a26-4f16-9068-17da002d5a10][ab071843-5a26-4f16-9068-17da002d5a10]]
-impl Molecule {
-    /// Return fractional coordinates relative to unit cell.
-    pub fn scaled_positions(&self) -> Option<Vec<Point3D>> {
-        if let Some(mut lat) = self.lattice {
-            let mut fxyzs = vec![];
-            for a in self.atoms() {
-                let xyz = a.position();
-                let fxyz = lat.to_frac(xyz);
-                fxyzs.push(fxyz)
-            }
-            Some(fxyzs)
-        } else {
-            None
-        }
-    }
-
-    /// Set positions relative to unit cell.
-    pub fn set_scaled_positions(&mut self, scaled: &Points) -> Result<()> {
-        if let Some(mut lat) = self.lattice {
-            let mut positions = vec![];
-            for &p in scaled {
-                let xyz = lat.to_cart(p);
-                positions.push(p);
-            }
-
-            self.set_positions(positions)
-        } else {
-            bail!("cannot set scaled positions for aperiodic structure")
-        }
-    }
-}
-// ab071843-5a26-4f16-9068-17da002d5a10 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::80dcc47b-b7dc-4ba7-a9d6-a567831bae93][80dcc47b-b7dc-4ba7-a9d6-a567831bae93]]
-impl Molecule {
-    // TODO
-    /// Return molecule net charge
-    pub fn charge(&self) -> usize {
-        unimplemented!()
-    }
-
-    // TODO
-    /// Return spin multiplicity of the molecule
-    pub fn spin_multiplicity(&self) -> usize {
-        unimplemented!()
-    }
-
-    // TODO
-    /// Return the number of electrons in the system, based on the atomic numbers and
-    /// molecular formal charge
-    pub fn nelectrons(&self) -> usize {
-        unimplemented!()
-    }
-}
-// 80dcc47b-b7dc-4ba7-a9d6-a567831bae93 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08][a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08]]
-use serde::{
-    de::DeserializeOwned,
-    ser::Serialize,
-};
-
-use serde_json;
-use std::result;
-
-/// A container storing extra information managed as key/value pairs
-#[derive(Debug, Clone)]
-pub struct PropertyStore {
-    data: HashMap<String, String>,
-}
-
-impl PropertyStore {
-    fn new() -> Self {
-        PropertyStore {
-            data: HashMap::new(),
-        }
-    }
-
-    /// retrieve property associated with the `key`
-    pub fn load<D: DeserializeOwned>(&self, key: &str) -> result::Result<D, serde_json::Error> {
-        let serialized = self.data.get(key).unwrap();
-        serde_json::from_str(&serialized)
-    }
-
-    /// store property associatd with a `key`
-    pub fn store<D: Serialize>(&mut self, key: &str, value: D) {
-        let serialized = serde_json::to_string(&value).unwrap();
-        self.data.insert(key.into(), serialized);
-    }
-
-    pub fn discard(&mut self, key: &str) {
-        self.data.remove(key.into());
-    }
-}
-
-#[test]
-fn test_atom_store() {
-    let mut x = PropertyStore::new();
-    let d = [1, 2, 3];
-    x.store("k", d);
-    let x: [usize; 3] = x.load("k").unwrap();
-    assert_eq!(d, x);
-}
-// a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08 ends here
+// 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a806642c-37da-4ce1-aa7b-0fb8d00233e3][a806642c-37da-4ce1-aa7b-0fb8d00233e3]]
 use std::fmt::{self, Debug, Display};
@@ -588,6 +353,7 @@ impl Atom {
 use geometry::euclidean_distance;
 
 impl Atom {
+    /// Return the distance to other atom
     pub fn distance(&self, other: &Atom) -> f64 {
         euclidean_distance(self.position(), other.position())
     }
@@ -917,200 +683,235 @@ fn test_bond() {
 }
 // 486bd5a4-e762-46bf-a237-e692393a795d ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::e1d0c51a-0dd7-4977-ae54-7928ee46d373][e1d0c51a-0dd7-4977-ae54-7928ee46d373]]
-use std::ops::Index;
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::942dedaa-9351-426e-9be9-cdb640ec2b75][942dedaa-9351-426e-9be9-cdb640ec2b75]]
+pub type MolGraph = StableUnGraph<Atom, Bond>;
+pub type AtomIndex = NodeIndex;
+pub type BondIndex = EdgeIndex;
 
-/// A list-like object providing a convenient view on atoms in molecule
+/// Molecule is the most important data structure in gchemol, which repsents one or
+/// more atoms held together by chemical bonds.
+///
+/// Reference
+/// ---------
+/// 1. http://goldbook.iupac.org/M03986.html
+/// 2. https://en.wikipedia.org/wiki/Molecular_entity
+///
 #[derive(Debug, Clone)]
-pub struct AtomsView<'a> {
-    /// mapping a positive integer to internal graph node index
-    mapping: HashMap<usize, AtomIndex>,
-    /// parent molecule struct
-    parent: &'a Molecule,
+pub struct Molecule {
+    /// Molecule name
+    pub name: String,
+    /// core data in graph
+    pub graph: MolGraph,
+    /// Crystalline lattice for structure using periodic boundary conditions
+    pub lattice: Option<Lattice>,
+    /// Arbitrary molecular property stored in key-value pair. Key is a string
+    /// type, but it is the responsibility of the setter/getter to interpret the
+    /// value.
+    pub properties: PropertyStore,
 
-    // current position in iteration
-    cur: usize,
+    /// Mapping user defined atom index to internal graph node index
+    atom_indices: HashMap<String, NodeIndex>,
+    /// Mapping bond tuple to EdgeIndex
+    bond_indices: HashMap<[String; 2], EdgeIndex>,
+    /// User defined atom labels
+    pub atom_labels: HashMap<AtomIndex, String>,
 }
 
-impl<'a> AtomsView<'a> {
-    pub fn new(mol: &'a Molecule) -> Self {
-        // use a hash map to cache graph node indices
-        let mut mapping = HashMap::new();
-        let mut i = 1;
-        for index in mol.graph.node_indices() {
-            mapping.insert(i, index);
-            i += 1;
+impl Default for Molecule {
+    fn default() -> Self {
+        let graph = MolGraph::default();
+        Molecule {
+            name: "default".to_string(),
+            graph: graph,
+            lattice: None,
+            properties: PropertyStore::new(),
+            atom_indices: HashMap::new(),
+            bond_indices: HashMap::new(),
+            atom_labels: HashMap::new(),
         }
-
-        AtomsView {
-            mapping,
-            parent: mol,
-            cur: 0,
-        }
-    }
-}
-
-/// Index the atoms in `Molecule` by index counting from 1
-/// Will panic if index is invalid
-impl<'a> Index<usize> for AtomsView<'a>
-{
-    type Output = Atom;
-
-    fn index(&self, index: usize) -> &Atom {
-        let n = self.mapping[&index];
-        &self.parent.graph[n]
-    }
-}
-
-impl<'a> Iterator for AtomsView<'a> {
-    type Item = (usize, &'a Atom);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.cur >= self.mapping.len() {
-            None
-        } else {
-            self.cur += 1;
-            let n = self.mapping[&self.cur];
-            let a = &self.parent.graph[n];
-
-            Some((self.cur, &a))
-        }
-    }
-}
-
-#[test]
-fn test_atom_view() {
-    let mut mol = Molecule::default();
-    mol.add_atom(Atom::new("Fe", [0.0; 3]));
-    mol.add_atom(Atom::new("C", [0.0; 3]));
-
-    let av = AtomsView::new(&mol);
-    assert_eq!("Fe", av[1].symbol());
-
-    // iterate with a index (counting from 1) and an atom object
-    for (i, a) in av {
-        //
     }
 }
 
 impl Molecule {
-    pub fn view_atoms(&self) -> AtomsView {
-        AtomsView::new(&self)
-    }
-}
-// e1d0c51a-0dd7-4977-ae54-7928ee46d373 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::5916eec2-ec7e-4525-bc6c-fade1d250a16][5916eec2-ec7e-4525-bc6c-fade1d250a16]]
-use indexmap::IndexMap;
-
-/// A list-like object providing a convenient view on bonds in molecule
-#[derive(Debug, Clone)]
-pub struct BondsView<'a> {
-    mapping: IndexMap<(usize, usize), BondIndex>,
-    parent: &'a Molecule,
-
-    // current position in iteration
-    cur: usize,
-}
-
-impl<'a> BondsView<'a> {
-    pub fn new(mol: &'a Molecule) -> Self {
-        // reverse mapping atom id and internal graph node index
-        let mut d = HashMap::new();
-        let mut i = 1;
-        for n in mol.graph.node_indices() {
-            d.insert(n, i);
-            i += 1;
-        }
-        // use a hash map to cache graph edge indices
-        let mut mapping = indexmap!{};
-        for e in mol.graph.edge_indices() {
-            let (ni, nj) = mol.graph.edge_endpoints(e).expect("bondview endpoints");
-            let ai = d[&ni];
-            let aj = d[&nj];
-            // make sure ai is always smaller than aj
-            if ai < aj {
-                mapping.insert((ai, aj), e);
-            } else {
-                mapping.insert((aj, ai), e);
-            }
-        }
-
-        BondsView {
-            mapping,
-            parent: mol,
-            cur: 0,
+    /// Create a new empty molecule with specific name
+    pub fn new(name: &str) -> Self {
+        Molecule {
+            name: name.to_string(),
+            ..Default::default()
         }
     }
-}
 
-impl<'a> Index<(usize, usize)> for BondsView<'a>
-{
-    type Output = Bond;
-
-    fn index(&self, b: (usize, usize)) -> &Bond {
-        // make sure the first index number is always smaller
-        let e = if b.0 < b.1 {
-            self.mapping[&b]
-        } else {
-            self.mapping[&(b.1, b.0)]
-        };
-
-        &self.parent.graph[e]
+    /// Return the number of atoms in the molecule.
+    pub fn natoms(&self) -> usize {
+        self.graph.node_count()
     }
-}
 
-impl<'a> Iterator for BondsView<'a> {
-    type Item = (usize, usize, &'a Bond);
+    /// Return the number of bonds in the molecule.
+    pub fn nbonds(&self) -> usize {
+        self.graph.edge_count()
+    }
 
-    /// return a tuple in (index_i, index_j, bond)
-    /// index_i is always smaller than index_j
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.cur >= self.mapping.len() {
-            None
-        } else {
-            let (&(i, j), &e) = self.mapping.get_index(self.cur).expect("bondview: get bond by index");
-            let b = &self.parent.get_bond(e).expect("bondview: get bond by edge index");
-            self.cur += 1;
-
-            if i < j {
-                Some((i, j, &b))
-            } else {
-                Some((j, i, &b))
-            }
+    /// Construct from an existing graph
+    pub fn from_graph(graph: MolGraph) -> Self{
+        Molecule {
+            graph: graph,
+            ..Default::default()
         }
     }
-}
 
-#[test]
-fn test_bonds_view() {
-    let mut mol = Molecule::default();
-    let a1 = mol.add_atom(Atom::new("C", [0.0; 3]));
-    let a2 = mol.add_atom(Atom::new("H", [1.0; 3]));
-    let a3 = mol.add_atom(Atom::new("H", [2.0; 3]));
-    mol.add_bond(a1, a2, Bond::default());
-    mol.add_bond(a1, a3, Bond::default());
-    // update bond type
-    mol.add_bond(a3, a1, Bond::double());
-    let bv = BondsView::new(&mol);
+    /// A convenient alias of molecular name
+    pub fn title(&self) -> String {
+        self.name.to_owned()
+    }
+
+    /// Return an iterator over the atoms in the molecule.
+    pub fn atoms(&self) -> impl Iterator<Item = &Atom> {
+        self.graph.node_indices().map(move |n| &self.graph[n])
+    }
+
+    /// Return an iterator over the bonds in the molecule.
+    pub fn bonds(&self) -> impl Iterator<Item = &Bond> {
+        self.graph.edge_indices().map(move |e| &self.graph[e])
+    }
+
+    /// Return positions of all atoms in the molecule.
+    pub fn positions(&self) -> Vec<Point3D> {
+        self.atoms().map(|ref a| a.position()).collect()
+    }
+
+    /// Return symbols of all  atoms in the molecule.
+    pub fn symbols(&self) -> Vec<&str> {
+        self.atoms().map(|ref a| a.symbol()).collect()
+    }
+
+    /// Set positions of atoms
+    pub fn set_positions(&mut self, positions: Points) -> Result<()>
     {
-        let b12 = &bv[(1, 2)];
-        let b13 = &bv[(1, 3)];
+        let indices: Vec<_> = self.graph.node_indices().collect();
+        if indices.len() != positions.len() {
+            bail!("the number of cartesian coordinates is different from the number of atoms in molecule.")
+        }
+
+        for (&index, position) in indices.iter().zip(positions) {
+            let mut atom = &mut self.graph[index];
+            atom.set_position(position);
+        }
+
+        Ok(())
     }
 
-    // a list of tuple: (1, 2, Bond)
-    let ijbs: Vec<_> = bv.collect();
-    assert_eq!(2, ijbs.len());
-    let (i, j, _) = ijbs[0];
-    assert_eq!((1, 2), (i, j));
+    /// TODO
+    pub fn set_symbols(&mut self, symbols: Vec<String>) {
+        unimplemented!()
+    }
 }
+// 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::ab071843-5a26-4f16-9068-17da002d5a10][ab071843-5a26-4f16-9068-17da002d5a10]]
 impl Molecule {
-    pub fn view_bonds(&self) -> BondsView {
-        BondsView::new(&self)
+    /// Return fractional coordinates relative to unit cell.
+    pub fn scaled_positions(&self) -> Option<Vec<Point3D>> {
+        if let Some(mut lat) = self.lattice {
+            let mut fxyzs = vec![];
+            for a in self.atoms() {
+                let xyz = a.position();
+                let fxyz = lat.to_frac(xyz);
+                fxyzs.push(fxyz)
+            }
+            Some(fxyzs)
+        } else {
+            None
+        }
+    }
+
+    /// Set positions relative to unit cell.
+    pub fn set_scaled_positions(&mut self, scaled: &Points) -> Result<()> {
+        if let Some(mut lat) = self.lattice {
+            let mut positions = vec![];
+            for &p in scaled {
+                let xyz = lat.to_cart(p);
+                positions.push(p);
+            }
+
+            self.set_positions(positions)
+        } else {
+            bail!("cannot set scaled positions for aperiodic structure")
+        }
     }
 }
-// 5916eec2-ec7e-4525-bc6c-fade1d250a16 ends here
+// ab071843-5a26-4f16-9068-17da002d5a10 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::80dcc47b-b7dc-4ba7-a9d6-a567831bae93][80dcc47b-b7dc-4ba7-a9d6-a567831bae93]]
+impl Molecule {
+    // TODO
+    /// Return molecule net charge
+    pub fn charge(&self) -> usize {
+        unimplemented!()
+    }
+
+    // TODO
+    /// Return spin multiplicity of the molecule
+    pub fn spin_multiplicity(&self) -> usize {
+        unimplemented!()
+    }
+
+    // TODO
+    /// Return the number of electrons in the system, based on the atomic numbers and
+    /// molecular formal charge
+    pub fn nelectrons(&self) -> usize {
+        unimplemented!()
+    }
+}
+// 80dcc47b-b7dc-4ba7-a9d6-a567831bae93 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08][a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08]]
+use serde::{
+    de::DeserializeOwned,
+    ser::Serialize,
+};
+
+use serde_json;
+use std::result;
+
+/// A container storing extra information managed as key/value pairs
+#[derive(Debug, Clone)]
+pub struct PropertyStore {
+    data: HashMap<String, String>,
+}
+
+impl PropertyStore {
+    fn new() -> Self {
+        PropertyStore {
+            data: HashMap::new(),
+        }
+    }
+
+    /// retrieve property associated with the `key`
+    pub fn load<D: DeserializeOwned>(&self, key: &str) -> result::Result<D, serde_json::Error> {
+        let serialized = self.data.get(key).unwrap();
+        serde_json::from_str(&serialized)
+    }
+
+    /// store property associatd with a `key`
+    pub fn store<D: Serialize>(&mut self, key: &str, value: D) {
+        let serialized = serde_json::to_string(&value).unwrap();
+        self.data.insert(key.into(), serialized);
+    }
+
+    pub fn discard(&mut self, key: &str) {
+        self.data.remove(key.into());
+    }
+}
+
+#[test]
+fn test_atom_store() {
+    let mut x = PropertyStore::new();
+    let d = [1, 2, 3];
+    x.store("k", d);
+    let x: [usize; 3] = x.load("k").unwrap();
+    assert_eq!(d, x);
+}
+// a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::9924e323-dd02-49d0-ab07-41208114546f][9924e323-dd02-49d0-ab07-41208114546f]]
 impl Molecule {
@@ -1322,10 +1123,21 @@ impl Molecule {
 }
 // 72dd0c31-26e5-430b-9f67-1c5bd5220a84 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3][a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3]]
-use geometry::get_distance_matrix;
-use data::guess_bond_kind;
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::5754ca07-a93d-47e5-8256-c7236777b2ee][5754ca07-a93d-47e5-8256-c7236777b2ee]]
+impl Molecule {
+    /// Set periodic lattice
+    pub fn set_lattice(&mut self, lat: Lattice) {
+        self.lattice = Some(lat);
+    }
 
+    /// Unbuild current crystal structure leaving a nonperiodic structure
+    pub fn unbuild_crystal(&mut self) {
+        self.lattice = None
+    }
+}
+// 5754ca07-a93d-47e5-8256-c7236777b2ee ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::1f8f3a9a-dc8d-4a1e-816b-c5228ddf0607][1f8f3a9a-dc8d-4a1e-816b-c5228ddf0607]]
 impl Molecule {
     // FIXME: if PBC
     pub fn distance_matrix(&self) -> Vec<Vec<f64>>{
@@ -1333,6 +1145,37 @@ impl Molecule {
         get_distance_matrix(positions)
     }
 
+    // TODO: improve performance
+    /// Return the distance between `atom i` and `atom j`.
+    ///
+    /// Force periodic structure, this method will return the distance under the
+    /// minimum image convention.
+    pub fn distance(&self, i: AtomIndex, j: AtomIndex) -> Option<f64> {
+        if let Some(ai) = self.get_atom(i) {
+            if let Some(aj) = self.get_atom(j) {
+                if let Some(mut lat) = self.lattice {
+                    let pi = ai.position();
+                    let pj = aj.position();
+                    let dij = lat.distance(pi, pj);
+                    Some(dij)
+                } else {
+                    Some(ai.distance(aj))
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+}
+// 1f8f3a9a-dc8d-4a1e-816b-c5228ddf0607 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3][a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3]]
+use geometry::get_distance_matrix;
+use data::guess_bond_kind;
+
+impl Molecule {
     /// Access the bonded atom indices for bond `b`
     pub fn partners<T: IntoBondIndex>(&self, b: &T) -> Option<(AtomIndex, AtomIndex)>{
         let b = b.into_bond_index();
@@ -1426,6 +1269,201 @@ impl Molecule {
     }
 }
 // 2a27ca30-0a99-4d5d-b544-5f5900304bbb ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::e1d0c51a-0dd7-4977-ae54-7928ee46d373][e1d0c51a-0dd7-4977-ae54-7928ee46d373]]
+use std::ops::Index;
+
+/// A list-like object providing a convenient view on atoms in molecule
+#[derive(Debug, Clone)]
+pub struct AtomsView<'a> {
+    /// mapping a positive integer to internal graph node index
+    mapping: HashMap<usize, AtomIndex>,
+    /// parent molecule struct
+    parent: &'a Molecule,
+
+    // current position in iteration
+    cur: usize,
+}
+
+impl<'a> AtomsView<'a> {
+    pub fn new(mol: &'a Molecule) -> Self {
+        // use a hash map to cache graph node indices
+        let mut mapping = HashMap::new();
+        let mut i = 1;
+        for index in mol.graph.node_indices() {
+            mapping.insert(i, index);
+            i += 1;
+        }
+
+        AtomsView {
+            mapping,
+            parent: mol,
+            cur: 0,
+        }
+    }
+}
+
+/// Index the atoms in `Molecule` by index counting from 1
+/// Will panic if index is invalid
+impl<'a> Index<usize> for AtomsView<'a>
+{
+    type Output = Atom;
+
+    fn index(&self, index: usize) -> &Atom {
+        let n = self.mapping[&index];
+        &self.parent.graph[n]
+    }
+}
+
+impl<'a> Iterator for AtomsView<'a> {
+    type Item = (usize, &'a Atom);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.cur >= self.mapping.len() {
+            None
+        } else {
+            self.cur += 1;
+            let n = self.mapping[&self.cur];
+            let a = &self.parent.graph[n];
+
+            Some((self.cur, &a))
+        }
+    }
+}
+
+#[test]
+fn test_atom_view() {
+    let mut mol = Molecule::default();
+    mol.add_atom(Atom::new("Fe", [0.0; 3]));
+    mol.add_atom(Atom::new("C", [0.0; 3]));
+
+    let av = AtomsView::new(&mol);
+    assert_eq!("Fe", av[1].symbol());
+
+    // iterate with a index (counting from 1) and an atom object
+    for (i, a) in av {
+        //
+    }
+}
+
+impl Molecule {
+    pub fn view_atoms(&self) -> AtomsView {
+        AtomsView::new(&self)
+    }
+}
+// e1d0c51a-0dd7-4977-ae54-7928ee46d373 ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::5916eec2-ec7e-4525-bc6c-fade1d250a16][5916eec2-ec7e-4525-bc6c-fade1d250a16]]
+use indexmap::IndexMap;
+
+/// A list-like object providing a convenient view on bonds in molecule
+#[derive(Debug, Clone)]
+pub struct BondsView<'a> {
+    mapping: IndexMap<(usize, usize), BondIndex>,
+    parent: &'a Molecule,
+
+    // current position in iteration
+    cur: usize,
+}
+
+impl<'a> BondsView<'a> {
+    pub fn new(mol: &'a Molecule) -> Self {
+        // reverse mapping atom id and internal graph node index
+        let mut d = HashMap::new();
+        let mut i = 1;
+        for n in mol.graph.node_indices() {
+            d.insert(n, i);
+            i += 1;
+        }
+        // use a hash map to cache graph edge indices
+        let mut mapping = indexmap!{};
+        for e in mol.graph.edge_indices() {
+            let (ni, nj) = mol.graph.edge_endpoints(e).expect("bondview endpoints");
+            let ai = d[&ni];
+            let aj = d[&nj];
+            // make sure ai is always smaller than aj
+            if ai < aj {
+                mapping.insert((ai, aj), e);
+            } else {
+                mapping.insert((aj, ai), e);
+            }
+        }
+
+        BondsView {
+            mapping,
+            parent: mol,
+            cur: 0,
+        }
+    }
+}
+
+impl<'a> Index<(usize, usize)> for BondsView<'a>
+{
+    type Output = Bond;
+
+    fn index(&self, b: (usize, usize)) -> &Bond {
+        // make sure the first index number is always smaller
+        let e = if b.0 < b.1 {
+            self.mapping[&b]
+        } else {
+            self.mapping[&(b.1, b.0)]
+        };
+
+        &self.parent.graph[e]
+    }
+}
+
+impl<'a> Iterator for BondsView<'a> {
+    type Item = (usize, usize, &'a Bond);
+
+    /// return a tuple in (index_i, index_j, bond)
+    /// index_i is always smaller than index_j
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.cur >= self.mapping.len() {
+            None
+        } else {
+            let (&(i, j), &e) = self.mapping.get_index(self.cur).expect("bondview: get bond by index");
+            let b = &self.parent.get_bond(e).expect("bondview: get bond by edge index");
+            self.cur += 1;
+
+            if i < j {
+                Some((i, j, &b))
+            } else {
+                Some((j, i, &b))
+            }
+        }
+    }
+}
+
+#[test]
+fn test_bonds_view() {
+    let mut mol = Molecule::default();
+    let a1 = mol.add_atom(Atom::new("C", [0.0; 3]));
+    let a2 = mol.add_atom(Atom::new("H", [1.0; 3]));
+    let a3 = mol.add_atom(Atom::new("H", [2.0; 3]));
+    mol.add_bond(a1, a2, Bond::default());
+    mol.add_bond(a1, a3, Bond::default());
+    // update bond type
+    mol.add_bond(a3, a1, Bond::double());
+    let bv = BondsView::new(&mol);
+    {
+        let b12 = &bv[(1, 2)];
+        let b13 = &bv[(1, 3)];
+    }
+
+    // a list of tuple: (1, 2, Bond)
+    let ijbs: Vec<_> = bv.collect();
+    assert_eq!(2, ijbs.len());
+    let (i, j, _) = ijbs[0];
+    assert_eq!((1, 2), (i, j));
+}
+
+impl Molecule {
+    pub fn view_bonds(&self) -> BondsView {
+        BondsView::new(&self)
+    }
+}
+// 5916eec2-ec7e-4525-bc6c-fade1d250a16 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::e2130a32-e39f-4b7b-9014-515f18ff5f48][e2130a32-e39f-4b7b-9014-515f18ff5f48]]
 impl Molecule {
@@ -1800,6 +1838,7 @@ fn test_formula() {
 #[cfg(test)]
 mod test {
     use super::*;
+    use io;
 
     #[test]
     fn test_molecule_basic() {
@@ -1940,6 +1979,22 @@ mod test {
         let b35 = &bonds[(3, 5)];
 
         let (p1, p2) = b35.partners(&mol).unwrap();
+    }
+
+    #[test]
+    fn test_molecule_pbc_distance() {
+        let mut mols = io::read("tests/files/cif/MS-MOR.cif")
+            .expect("structure from cif file");
+        let mut mol = &mut mols[0];
+        let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12))
+            .expect("distance between 0 and 12");
+        assert_relative_eq!(12.6753, d, epsilon=1e-4);
+
+        // remove periodic bound
+        mol.unbuild_crystal();
+        let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12))
+            .expect("distance between 0 and 12");
+        assert_relative_eq!(16.203993, d, epsilon=1e-4);
     }
 }
 // 5052eafc-f1ab-4612-90d7-0924c3bacb16 ends here
