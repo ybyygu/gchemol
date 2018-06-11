@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-08 Fri 16:12>
+//       UPDATED:  <2018-06-11 Mon 16:22>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1504,8 +1504,8 @@ fn get_distance_bounds_v1(mol: &Molecule) -> Bounds {
             let vrij = vri + vrj;
 
             // use covalent radii as the lower bound for bonded pair
-            let cri = atom_i.covalent_radius().unwrap();
-            let crj = atom_j.covalent_radius().unwrap();
+            let cri = atom_i.cov_radius().unwrap();
+            let crj = atom_j.cov_radius().unwrap();
             let crij = cri + crj;
 
             let lij = crij * 0.8;

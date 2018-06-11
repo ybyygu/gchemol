@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-05-08 Tue 15:10>
+//       UPDATED:  <2018-06-11 Mon 16:22>
 //===============================================================================#
 
 use {
@@ -197,7 +197,7 @@ pub fn guess_bond_kind(atom1: &Atom, atom2: &Atom) -> BondKind {
 impl Atom {
     /// Access covalent atomic radii for single bond
     /// Return None if no data available
-    pub fn covalent_radius(&self) -> Option<f64> {
+    pub fn cov_radius(&self) -> Option<f64> {
         get_cov_radius(self.number(), 1)
     }
 
@@ -226,8 +226,8 @@ impl Molecule {
         let srwij = rwi + rwj;
 
         // covalent radii as cutoff for bonding interaction
-        let rci1 = atom_i.covalent_radius().ok_or(msg)?;
-        let rcj1 = atom_j.covalent_radius().ok_or(msg)?;
+        let rci1 = atom_i.cov_radius().ok_or(msg)?;
+        let rcj1 = atom_j.cov_radius().ok_or(msg)?;
         // radii for double bond
         let rci2 = get_cov_radius(atom_i.number(), 2).ok_or(msg)?;
         let rcj2 = get_cov_radius(atom_j.number(), 2).ok_or(msg)?;
@@ -320,7 +320,7 @@ fn test_guess_bond_kind() {
     let x = guess_bond_kind(&atom2, &atom3);
     assert!(x == BondKind::Dummy);
 
-    assert!(atom1.covalent_radius().is_some());
+    assert!(atom1.cov_radius().is_some());
     assert!(atom1.vdw_radius().is_some());
 }
 // 2d6a4ce4-f616-4bea-a5fd-65ed9117e613 ends here

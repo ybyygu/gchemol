@@ -95,12 +95,12 @@ pub trait ChemFileLike {
         let mut remained = String::new();
         let mut chunk = String::new();
         let mut final_stream = false;
-        // let mut i = 0;
         'out: loop {
             // i += 1;
             let length = {
                 let buffer = reader.fill_buf().chain_err(|| "file buffer reading error")?;
-                // FIXME: need a better fix
+                // FIXME: cannot handle binary file
+                // FIXME: need a better fix.
                 // temporary fix for nom 4.0: append a newline to make stream `complete`
                 let new = if buffer.len() == 0 {
                     final_stream = true;
@@ -115,9 +115,6 @@ pub trait ChemFileLike {
                 chunk.push_str(&new);
                 // let mut j = 0;
                 loop {
-                    // j += 1;
-                    // println!("{:?}", (i, j));
-                    // println!("{:?}", chunk);
                     // fill chunk with remained data
                     match self.parse_molecule(&chunk) {
                         Ok((r, mol)) => {

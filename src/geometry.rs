@@ -137,6 +137,34 @@ pub fn rand_point_on_sphere(radius: f64) -> Point3D {
         }
     }
 }
+
+/// Create many random points within a sphere
+///
+/// Parameters
+/// ----------
+/// * radius: cutoff radius
+/// * ntps: the number of points to be generated
+pub fn rand_points_within_sphere(radius: f64, npts: usize) -> Points {
+    let mut rng = rand::thread_rng();
+    let range = Range::new(-radius, radius);
+
+    // using the discarding method, which is simple and also fast
+    let radius2 = radius*radius;
+
+    let mut points = vec![];
+    loop {
+        let x = rng.sample(range);
+        let y = rng.sample(range);
+        let z = rng.sample(range);
+        let r2 = x*x + y*y + z*z;
+        if r2 <= radius2 {
+            points.push([x, y, z]);
+        }
+        if points.len() >= npts {
+            return points
+        }
+    }
+}
 // 9413e1bc-8f8f-4b07-b305-9d2911afabc6 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::976ea5bc-07b5-40f3-bfc8-42e2980d6f31][976ea5bc-07b5-40f3-bfc8-42e2980d6f31]]

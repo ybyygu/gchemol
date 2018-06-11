@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-05-10 Thu 15:55>
+//       UPDATED:  <2018-06-11 Mon 14:58>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -332,7 +332,7 @@ pub fn to_mol2file(molecule: &Molecule, filename: &str) -> Result<()>{
     lines.push_str("@<TRIPOS>ATOM\n");
     for (i, &ref atom) in molecule.atoms().enumerate() {
         let symbol = format_mol2_atom_type(atom);
-        let name = atom.name();
+        let name = atom.label();
         let position = atom.position();
         let xyz = format!("{:-12.6} {:-12.6} {:-12.6}",
                           position[0],

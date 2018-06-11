@@ -1,6 +1,8 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ff90f63c-4f42-4a44-8333-59dac76a029f][ff90f63c-4f42-4a44-8333-59dac76a029f]]
 use super::*;
 
+// parse mol2 atom type. example records:
+// C.2, C.3, C.ar
 named!(mm_type<&str, (&str, Option<&str>)>, do_parse!(
     symbol: alpha >>
     mtype:   opt!(preceded!(tag!("."), alphanumeric)) >>
@@ -87,7 +89,7 @@ fn test_formats_mol2_atom() {
 
 named!(get_atoms_from<&str, Vec<(usize, Atom)>>, do_parse!(
            ws!(tag!("@<TRIPOS>ATOM")) >>
-    atoms: many0!(atom_record)           >>
+    atoms: many0!(atom_record)        >>
     (
         atoms
     )
@@ -107,7 +109,8 @@ fn test_formats_mol2_get_atoms() {
       8 H          -0.8071    2.2860   -0.0318 H       1  UNL1        0.0845
       9 H           0.8071   -2.2861    0.0273 H       1  UNL1        0.0845
      10 H          -1.6611   -1.7660    0.0214 H       1  UNL1        0.0845
-@<TRIPOS>BOND \n";
+
+";
     let (_, atoms) = get_atoms_from(lines)
         .expect("mol2 atoms");
     assert_eq!(10, atoms.len());
@@ -289,16 +292,16 @@ use std::collections::HashMap;
 // [status_bits [mol_comment]]
 //
 named!(get_molecule_from<&str, Molecule>, do_parse!(
-                  take_until!("@<TRIPOS>MOLECUL")     >>
-                  read_until_eol               >>
-    title       : sp!(read_until_eol)          >>
-    counts      : sp!(counts_line)                     >>
-    mol_type    : read_until_eol               >>
-    charge_type : read_until_eol               >>
-    atoms       : get_atoms_from >>
-                  take_until!("@<TRIPOS>")             >>
-    bonds       : opt!(get_bonds_from)      >>
-    lattice     : opt!(get_lattice_from)    >>
+                  take_until!("@<TRIPOS>MOLECUL")           >>
+                  read_until_eol                            >>
+    title       : sp!(read_until_eol)                       >>
+    counts      : sp!(counts_line)                          >>
+    mol_type    : read_until_eol                            >>
+    charge_type : read_until_eol                            >>
+    atoms       : get_atoms_from                            >>
+                  opt!(complete!(take_until!("@<TRIPOS>"))) >>
+    bonds       : opt!(complete!(get_bonds_from))           >>
+    lattice     : opt!(complete!(get_lattice_from))         >>
     (
         {
             let natoms = counts[0];
@@ -346,45 +349,45 @@ fn test_formats_counts_line() {
 
 #[test]
 fn test_formats_mol2_molecule() {
+    // if missing bonds
     let lines = "# created with PyMOL 2.1.0
 @<TRIPOS>MOLECULE
 Molecule Name
-12
+2
+SMALL
+USER_CHARGES
+@<TRIPOS>ATOM
+1	  N1	-1.759	-2.546	0.000	N.3	1	UNK0	0.000
+2	  H2	-0.759	-2.575	0.000	 H	1	UNK0	0.000
+\n";
+
+    let (_, mol) = get_molecule_from(lines)
+        .expect("mol2 format test1");
+    assert_eq!(2, mol.natoms());
+
+    // for nonperiodic molecule
+    let lines = "# created with PyMOL 2.1.0
+@<TRIPOS>MOLECULE
+Molecule Name
+3
 SMALL
 USER_CHARGES
 @<TRIPOS>ATOM
 1	  N1	-1.759	-2.546	0.000	N.3	1	UNK0	0.000
 2	  H2	-0.759	-2.575	0.000	 H	1	UNK0	0.000
 3	  C3	-2.446	-1.270	0.000	C.3	1	UNK0	0.000
-4	  H4	-3.071	-1.193	-0.890	 H	1	UNK0	0.000
-5	  C5	-3.333	-1.124	1.232	C.3	1	UNK0	0.000
-6	  C6	-1.456	-0.114	0.000	C.2	1	UNK0	0.000
-7	  H7	-2.720	-1.189	2.131	 H	1	UNK0	0.000
-8	  H8	-3.836	-0.157	1.206	 H	1	UNK0	0.000
-9	  H9	-4.077	-1.920	1.241	 H	1	UNK0	0.000
-10	 O10	-0.219	-0.346	0.000	O.2	1	UNK0	0.000
-11	 H11	-2.284	-3.396	0.000	 H	1	UNK0	0.000
-12	 H12	-1.811	0.895	0.000	 H	1	UNK0	0.000
 @<TRIPOS>BOND
 1 1 2 1
 2 1 3 1
-3 1 11 1
-4 3 4 1
-5 3 5 1
-6 3 6 1
-7 5 7 1
-8 5 8 1
-9 5 9 1
-10 6 10 2
-11 6 12 1
 @<TRIPOS>SUBSTRUCTURE
 1	UNK0	1	GROUP	1 ****	UNK\n";
 
     let (_, mol) = get_molecule_from(lines)
         .expect("mol2 format test1");
-    assert_eq!(12, mol.natoms());
-    assert_eq!(11, mol.nbonds());
+    assert_eq!(3, mol.natoms());
+    assert_eq!(2, mol.nbonds());
 
+    // for molecule with periodic crystal
     let lines = "@<TRIPOS>MOLECULE
 Molecule Name
 12
@@ -502,6 +505,9 @@ impl ChemFileLike for Mol2File {
 
             lines.push_str(&line);
         }
+
+        // final blank line
+        lines.push_str("\n");
 
         Ok(lines)
     }
