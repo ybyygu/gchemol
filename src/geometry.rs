@@ -70,6 +70,24 @@ pub fn translate(points: &mut Points, loc: Point3D) {
 }
 // 26f9be7f-1dbd-4ac0-9cdf-4759ede5d338 ends here
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::c7248d32-74e1-47a8-8a78-56fef9ca529c][c7248d32-74e1-47a8-8a78-56fef9ca529c]]
+/// rotate coordinates about x axis in radian
+pub fn rotate_about_x_axis(points: &Points, angle: f64, center: Point3D) -> Points {
+    let axis = Vector3::x_axis();
+    let r = Rotation3::from_axis_angle(&axis, angle);
+
+    let mut rpoints = vec![];
+    let center = Vector3::from(center);
+    for &p in points.iter() {
+        let v = Vector3::from(p) - center;
+        let t: Point3D = (r*v + center).into();
+        rpoints.push(t);
+    }
+
+    rpoints
+}
+// c7248d32-74e1-47a8-8a78-56fef9ca529c ends here
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::9413e1bc-8f8f-4b07-b305-9d2911afabc6][9413e1bc-8f8f-4b07-b305-9d2911afabc6]]
 use rand::{self, Rng};
 use rand::distributions::{Range, Normal};
@@ -121,24 +139,6 @@ pub fn rand_point_on_sphere(radius: f64) -> Point3D {
 }
 // 9413e1bc-8f8f-4b07-b305-9d2911afabc6 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::c7248d32-74e1-47a8-8a78-56fef9ca529c][c7248d32-74e1-47a8-8a78-56fef9ca529c]]
-/// rotate coordinates about x axis in radian
-pub fn rotate_about_x_axis(points: &Points, angle: f64, center: Point3D) -> Points {
-    let axis = Vector3::x_axis();
-    let r = Rotation3::from_axis_angle(&axis, angle);
-
-    let mut rpoints = vec![];
-    let center = Vector3::from(center);
-    for &p in points.iter() {
-        let v = Vector3::from(p) - center;
-        let t: Point3D = (r*v + center).into();
-        rpoints.push(t);
-    }
-
-    rpoints
-}
-// c7248d32-74e1-47a8-8a78-56fef9ca529c ends here
-
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::976ea5bc-07b5-40f3-bfc8-42e2980d6f31][976ea5bc-07b5-40f3-bfc8-42e2980d6f31]]
 pub fn rand_rotate(points: &Points) -> Points {
     let p = rand_point_on_sphere(1.0);
@@ -161,14 +161,14 @@ fn test_rand_rotate() {
                   [-1.46366314,  1.28242565, -0.77914068],
                   [-1.20324889,  1.43034987,  0.82615384]].to_vec();
 
-    let p = rotate_about_x_axis(&points, f64::to_radians(10.0), [0.0, 0.0, 0.0]);
-    let expected = [[-2.26401900e-02, -1.87835058e-03, -6.42524208e-02],
-                    [ 1.37326881e+00, -1.87835058e-03, -6.42524208e-02],
-                    [-4.42228190e-01, -8.66603457e-01,  6.88320920e-01],
-                    [-7.92573550e-01, -1.02062062e+00, -1.90462380e+00],
-                    [-7.65879620e-01,  1.28668463e+00,  1.62955999e-01],
-                    [-1.46366314e+00,  1.39823908e+00, -5.44612905e-01],
-                    [-1.20324889e+00,  1.26515953e+00,  1.06198036e+00]];
+    let p = rotate_about_x_axis(&points, f64::to_radians(10.0), [0.1, 1.0, 0.9]);
+    let expected = [[-0.02264019,  0.16959726, -0.22422758],
+                    [ 1.37326881,  0.16959726, -0.22422758],
+                    [-0.44222819, -0.69512785,  0.52834576],
+                    [-0.79257355, -0.84914501, -2.06459895],
+                    [-0.76587962,  1.45816024,  0.00298084],
+                    [-1.46366314,  1.56971469, -0.70458806],
+                    [-1.20324889,  1.43663514,  0.9020052 ]];
 
     assert_relative_eq!(p[2][0], expected[2][0], epsilon=1e-4);
     assert_relative_eq!(p[3][1], expected[3][1], epsilon=1e-4);
@@ -178,7 +178,6 @@ fn test_rand_rotate() {
 
     let npoints = points.len();
     assert_eq!(npoints, rpoints.len());
-    // assert!(points[0][0] != rpoints[0][0]);
 
     for i in 0..npoints {
         for j in (i+1)..npoints {
