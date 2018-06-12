@@ -17,6 +17,6 @@ serde_json = "*"
 serde_derive = "1.0"
 handlebars = "*"
 itertools = "*"
-error-chain = "*"
+quicli = "*"
 rand = ">=0.5.0-pre.0"
 # c45d1413-12b8-471e-b060-da682339ad4b ends here

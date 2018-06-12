@@ -23,7 +23,7 @@ impl ChemFileLike for FdfFile {
             eprintln!("WARNING: only the last molecule will be used.");
         }
 
-        let mol = &mols.last().ok_or("no molecule")?;
+        let mol = &mols.last().ok_or(format_err!("no molecule"))?;
         let mut lines = String::new();
         lines.push_str(&format!("SystemLabel               {}\n", "siesta"));
         lines.push_str(&format!("NumberOfAtoms             {}\n", mol.natoms()));

@@ -22,7 +22,7 @@ impl ChemFileLike for CarFile {
             eprintln!("WARNING: only the last molecule will be used.");
         }
 
-        let mol = &mols.last().ok_or("no molecule")?;
+        let mol = &mols.last().ok_or(format_err!("no molecule"))?;
         let mut lines = String::new();
         lines.push_str("!BIOSYM archive 3\nPBC=OFF\n\n");
         lines.push_str("!xxxx\n");
@@ -85,7 +85,7 @@ impl ChemFileLike for XtlFile {
             eprintln!("WARNING: only the last molecule will be kept.");
         }
 
-        let mol = &mols.last().ok_or("no molecule")?;
+        let mol = &mols.last().ok_or(format_err!("no molecule"))?;
         let mut lines = String::new();
         // FIXME: multiple-lines?
         lines.push_str(&format!("TITLE {}\n", mol.title()));

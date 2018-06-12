@@ -8,14 +8,14 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-11 Mon 16:22>
+//       UPDATED:  <2018-06-12 Tue 15:34>
 //===============================================================================#
 
 use std::collections::HashMap;
 use petgraph;
 use petgraph::prelude::*;
 use std::convert;
-use errors::*;
+use quicli::prelude::*;
 
 use {
     Point3D,
@@ -457,7 +457,6 @@ fn test_atom_builder() {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::7e463bf4-a6ab-4648-a8a2-4b2023d1c588][7e463bf4-a6ab-4648-a8a2-4b2023d1c588]]
 use std::str::FromStr;
-use errors::*;
 
 impl FromStr for Atom {
     type Err = Error;
@@ -469,12 +468,9 @@ impl FromStr for Atom {
         }
 
         let sym = parts[0];
-        let msg = format!("Incorrect coordindate fields: {:}", parts[1]);
-        let px: f64 = parts[1].parse().chain_err(|| msg)?;
-        let msg = format!("Incorrect coordindate fields: {:}", parts[2]);
-        let py: f64 = parts[2].parse().chain_err(|| msg)?;
-        let msg = format!("Incorrect coordindate fields: {:}", parts[3]);
-        let pz: f64 = parts[3].parse().chain_err(|| msg)?;
+        let px: f64 = parts[1].parse()?;
+        let py: f64 = parts[2].parse()?;
+        let pz: f64 = parts[3].parse()?;
 
         let mut atom = Atom::new(sym, [px, py, pz]);
         atom.set_name(sym);

@@ -1,6 +1,6 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::7faf1529-aae1-4bc5-be68-02d8ccdb9267][7faf1529-aae1-4bc5-be68-02d8ccdb9267]]
 pub use parser::*;
-use errors::*;
+use quicli::prelude::*;
 use io;
 use std::str;
 use std::fs::File;
@@ -25,6 +25,7 @@ pub mod siesta;
 pub mod gulp;
 
 const BUF_SIZE: usize = 8 * 1024;
+pub const MAGIC_EOF: &str = "$THIS_IS_THE$MAGIC_END_OF_FILE";
 
 use nom;
 
@@ -88,7 +89,7 @@ pub trait ChemFileLike {
 
     /// Default implementation: parse multiple molecules from `filename`
     fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
-        let fp = File::open(filename).chain_err(|| "failed")?;
+        let fp = File::open(filename)?;
         let mut reader = BufReader::with_capacity(BUF_SIZE, fp);
 
         let mut mols: Vec<Molecule> = vec![];
@@ -98,30 +99,30 @@ pub trait ChemFileLike {
         'out: loop {
             // i += 1;
             let length = {
-                let buffer = reader.fill_buf().chain_err(|| "file buffer reading error")?;
+                let buffer = reader.fill_buf()?;
+
                 // FIXME: cannot handle binary file
-                // FIXME: need a better fix.
                 // temporary fix for nom 4.0: append a newline to make stream `complete`
                 let new = if buffer.len() == 0 {
                     final_stream = true;
-                    String::from("\n")
+                    String::from(MAGIC_EOF)
                 } else {
                     str::from_utf8(&buffer).unwrap().to_string()
                 };
 
                 // chunk = buffer + remained
                 chunk.clear();
+                // fill chunk with remained data
                 chunk.push_str(&remained);
                 chunk.push_str(&new);
-                // let mut j = 0;
                 loop {
-                    // fill chunk with remained data
                     match self.parse_molecule(&chunk) {
+                        // 1. successfully parsed one molecule
                         Ok((r, mol)) => {
-                            // println!("got mol with {:?} atoms", mol.natoms());
                             mols.push(mol);
                             remained = String::from(r);
                         },
+                        // 2. buffer is incomplete, need to read more in
                         Err(nom::Err::Incomplete(i)) => {
                             remained = chunk.clone();
                             if final_stream {
@@ -129,12 +130,14 @@ pub trait ChemFileLike {
                             }
                             break
                         },
+                        // 3. found parse errors
                         Err(nom::Err::Error(err)) => {
                             eprintln!("found error in {}: {:?}",
                                       filename,
                                       err);
                             break 'out;
                         },
+                        // 4. found serious errors
                         Err(nom::Err::Failure(err)) => {
                             eprintln!("hard failure in {}: {:?}",
                                       filename,
@@ -149,7 +152,9 @@ pub trait ChemFileLike {
                 buffer.len()
             };
 
-            if length == 0 { break; }
+            if length == 0 {
+                break;
+            }
             reader.consume(length);
         }
 

@@ -381,7 +381,7 @@ impl ChemFileLike for CifFile {
         lines.push_str("_symmetry_equiv_pos_as_xyz\n");
         lines.push_str(" x,y,z\n");
 
-        let mut lat = mol.lattice.ok_or("Not a periodic moelcule.")?;
+        let mut lat = mol.lattice.ok_or(format_err!("Not a periodic moelcule."))?;
         let [a, b, c] = lat.lengths();
         let [alpha, beta, gamma] = lat.angles();
         lines.push_str(&format!("_cell_length_a     {:10.4}\n", a));

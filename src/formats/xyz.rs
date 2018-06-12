@@ -1,7 +1,5 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::8842a219-a252-4367-bb8a-7a28b6bb8c2f][8842a219-a252-4367-bb8a-7a28b6bb8c2f]]
 use super::*;
-use errors::*;
-// use nom::types::CompleteStr;
 
 named!(get_atom_from<&str, Atom>, do_parse!(
     // element symbol, "1" or "H"

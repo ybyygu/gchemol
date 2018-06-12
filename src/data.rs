@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-06-11 Mon 16:22>
+//       UPDATED:  <2018-06-12 Tue 16:03>
 //===============================================================================#
 
 use {
@@ -18,8 +18,8 @@ use {
     molecule::AtomIndex,
     BondKind,
     geometry::euclidean_distance,
+    quicli::prelude::*,
 };
-use errors::*;
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01][fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01]]
@@ -215,25 +215,24 @@ impl Molecule {
         let min_rij = 0.5;
         let max_rij = 40.0;
 
-        let atom_i = self.get_atom(i).ok_or(format!("no atom {:?} in molecule", i))?;
-        let atom_j = self.get_atom(j).ok_or(format!("no atom {:?} in molecule", j))?;
+        let atom_i = self.get_atom(i).ok_or(format_err!("no atom {:?} in molecule", i))?;
+        let atom_j = self.get_atom(j).ok_or(format_err!("no atom {:?} in molecule", j))?;
 
         // 1. get data
-        let msg = "no radius data";
         // vdw radii as cutoff for non-bonding interaction
-        let rwi = atom_i.vdw_radius().ok_or(msg)?;
-        let rwj = atom_j.vdw_radius().ok_or(msg)?;
+        let rwi = atom_i.vdw_radius().ok_or(format_err!("no radius data"))?;
+        let rwj = atom_j.vdw_radius().ok_or(format_err!("no radius data"))?;
         let srwij = rwi + rwj;
 
         // covalent radii as cutoff for bonding interaction
-        let rci1 = atom_i.cov_radius().ok_or(msg)?;
-        let rcj1 = atom_j.cov_radius().ok_or(msg)?;
+        let rci1 = atom_i.cov_radius().ok_or(format_err!("no radius data"))?;
+        let rcj1 = atom_j.cov_radius().ok_or(format_err!("no radius data"))?;
         // radii for double bond
-        let rci2 = get_cov_radius(atom_i.number(), 2).ok_or(msg)?;
-        let rcj2 = get_cov_radius(atom_j.number(), 2).ok_or(msg)?;
+        let rci2 = get_cov_radius(atom_i.number(), 2).ok_or(format_err!("no radius data"))?;
+        let rcj2 = get_cov_radius(atom_j.number(), 2).ok_or(format_err!("no radius data"))?;
         // radii for triple bond
-        let rci3 = get_cov_radius(atom_i.number(), 3).ok_or(msg)?;
-        let rcj3 = get_cov_radius(atom_j.number(), 3).ok_or(msg)?;
+        let rci3 = get_cov_radius(atom_i.number(), 3).ok_or(format_err!("no radius data"))?;
+        let rcj3 = get_cov_radius(atom_j.number(), 3).ok_or(format_err!("no radius data"))?;
 
         let srcij1 = rci1 + rcj1;
         let srcij2 = rci2 + rcj2;

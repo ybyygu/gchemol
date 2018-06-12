@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-06-11 Mon 14:58>
+//       UPDATED:  <2018-06-12 Tue 16:21>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -18,7 +18,8 @@ use std::io::{BufWriter, BufReader};
 use std::fs::File;
 use std::path::Path;
 
-use errors::*;
+// use errors::*;
+use quicli::prelude::*;
 use Point3D;
 use Points;
 
@@ -28,8 +29,10 @@ pub fn read_file<P: AsRef<Path>>(filename: P) -> Result<String> {
     let filename = filename.as_ref();
     let mut buffer = String::new();
 
-    let mut fp = File::open(filename).chain_err(|| format!("unable to open {} for reading", filename.display()))?;
-    fp.read_to_string(&mut buffer).chain_err(||format!("failed to read content: {}", filename.display()))?;
+    let mut fp = File::open(filename)
+        .map_err(|e| format_err!("unable to open {} for reading", filename.display()))?;
+    fp.read_to_string(&mut buffer)
+        .map_err(|e| format_err!("failed to read content: {}", filename.display()))?;
 
     Ok(buffer)
 }
@@ -39,14 +42,11 @@ pub fn read_file<P: AsRef<Path>>(filename: P) -> Result<String> {
 /// write string content to an external file
 pub fn write_file<P: AsRef<Path>>(content: String, filename: P) -> Result<()> {
     let path = filename.as_ref();
-    let msg = format!("failed to create output file: {}", path.display());
-    let f = File::create(path)
-        .chain_err(|| msg)?;
+    // let msg = format!("failed to create output file: {}", path.display());
+    let f = File::create(path)?;
     let mut writer = BufWriter::new(&f);
 
-    let msg = format!("failed to write output file: {}", path.display());
-    writer.write_all(&content.as_bytes())
-        .chain_err(|| msg)?;
+    writer.write_all(&content.as_bytes())?;
 
     Ok(())
 }
@@ -94,8 +94,7 @@ fn read_xyzfile(filename: &str) -> Result<(Vec<String>, Points)> {
     let mut lines: Vec<_> = text.lines().collect();
 
     let nlines = lines.len();
-    let natoms: usize = lines[0].parse()
-        .chain_err(|| format!("failed to parse int number from: {:?}", lines[0]))?;
+    let natoms: usize = lines[0].parse()?;
     if natoms != nlines - 2 {
         eprintln!("the expected number of atoms is inconsistent with the xyz records.");
     }
@@ -104,7 +103,7 @@ fn read_xyzfile(filename: &str) -> Result<(Vec<String>, Points)> {
     let mut symbols = vec![];
     for line in &lines[2..(natoms+2)] {
         let attrs: Vec<_> = line.split_whitespace().collect();
-        let (symbol, position) = attrs.split_first().ok_or("encountering empty line")?;
+        let (symbol, position) = attrs.split_first().ok_or(format_err!("empty line"))?;
         if position.len() != 3 {
             let msg = format!("informal xyz records: {}", line);
             bail!(msg);
@@ -149,7 +148,7 @@ fn guess_mol2_bondkind(label: &str) -> BondKind {
 ///
 /// Parameters
 /// ---------
-/// filename: the path to a tripos mol2 file
+/// * filename: the path to a tripos mol2 file
 ///
 /// Return
 /// ------
@@ -183,8 +182,8 @@ pub fn from_mol2file(filename: &str) -> Result<Molecule> {
     if let (_, Some(line)) = (lines.next(), lines.next()) {
         let parts: Vec<_> = line.split_whitespace().collect();
         if parts.len() == 2 {
-            natoms = parts[0].parse().chain_err(|| "cannot get natoms")?;
-            nbonds = parts[1].parse().chain_err(|| "cannot get nbonds")?;
+            natoms = parts[0].parse()?;
+            nbonds = parts[1].parse()?;
         } else {
             bail!("wrong line: {}", line);
         }
@@ -356,7 +355,7 @@ pub fn to_mol2file(molecule: &Molecule, filename: &str) -> Result<()>{
         lines.push_str("@<TRIPOS>BOND\n");
         for (i, &ref b) in molecule.bonds().enumerate() {
             let bond_index = i + 1;
-            let (a1, a2) = b.partners(&molecule).ok_or("cannot find bond partner atoms")?;
+            let (a1, a2) = b.partners(&molecule).ok_or(format_err!("cannot find bond partner atoms"))?;
             let atom1_index = user_indices[&a1.index()];
             let atom2_index = user_indices[&a2.index()];
             let bond_order = format_bond_order(&b);
@@ -384,8 +383,8 @@ use {
 };
 
 fn file_extension_lower(path: &Path) -> Result<String> {
-    let ext = path.extension().ok_or("cannot find file extension")?;
-    let ext = ext.to_str().ok_or("cannot handle wield file extention")?;
+    let ext = path.extension().ok_or(format_err!("cannot find file extension"))?;
+    let ext = ext.to_str().ok_or(format_err!("cannot handle wield file extention"))?;
     let ext = ext.to_lowercase();
 
     Ok(ext.to_string())
@@ -477,7 +476,7 @@ impl<'a> FileOptions<'a> {
 
     /// read molecules from file
     pub fn read(&self, path: &str) -> ReadResult {
-        let msg = format!("not supported file\nfilename: {:}\n fmt: {:?}", path, self.fmt);
+        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", path, self.fmt);
         let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
         let mols = chemfile.parse(path)?;
 
@@ -485,7 +484,7 @@ impl<'a> FileOptions<'a> {
     }
 
     pub fn write(&self, path: &str, mols: &Vec<Molecule>) -> Result<()> {
-        let msg = format!("not supported file\nfilename: {:}\n fmt: {:?}", path, self.fmt);
+        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", path, self.fmt);
         let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
         chemfile.write(path, mols)
     }
