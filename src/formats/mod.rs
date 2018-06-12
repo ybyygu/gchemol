@@ -1,10 +1,11 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::7faf1529-aae1-4bc5-be68-02d8ccdb9267][7faf1529-aae1-4bc5-be68-02d8ccdb9267]]
-pub use parser::*;
-use quicli::prelude::*;
 use io;
 use std::str;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+
+pub use parser::*;
+use quicli::prelude::*;
 
 pub use Atom;
 pub use Molecule;
@@ -24,8 +25,8 @@ pub mod ms;
 pub mod siesta;
 pub mod gulp;
 
-const BUF_SIZE: usize = 8 * 1024;
-pub const MAGIC_EOF: &str = "$THIS_IS_THE$MAGIC_END_OF_FILE";
+const BUF_SIZE: usize = 20 * 1024;
+pub const MAGIC_EOF: &str = "$THIS_IS_THE=MAGIC_END_OF_FILE$";
 
 use nom;
 
@@ -67,14 +68,14 @@ pub trait ChemFileLike {
         Ok(ms)
     }
 
-    /// Save multiple molecules in a file
+    /// Save multiple molecules into a file
     fn write(&self, filename: &str, mols: &Vec<Molecule>) -> Result<()> {
         let lines = self.format(mols)?;
         io::write_file(lines, filename)?;
         Ok(())
     }
 
-    /// brief description about a chemical file format
+    /// print a brief description about a chemical file format
     fn describe(&self) {
         println!("filetype: {:?}, possible extensions: {:?}",
                  self.ftype(),
@@ -89,72 +90,97 @@ pub trait ChemFileLike {
 
     /// Default implementation: parse multiple molecules from `filename`
     fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
-        let fp = File::open(filename)?;
+        let fp = File::open(filename)
+            .map_err(|e| format_err!("failed to open {}: {:?}", filename, e))?;
+
         let mut reader = BufReader::with_capacity(BUF_SIZE, fp);
 
         let mut mols: Vec<Molecule> = vec![];
         let mut remained = String::new();
         let mut chunk = String::new();
         let mut final_stream = false;
-        'out: loop {
-            // i += 1;
-            let length = {
-                let buffer = reader.fill_buf()?;
 
-                // FIXME: cannot handle binary file
-                // temporary fix for nom 4.0: append a newline to make stream `complete`
-                let new = if buffer.len() == 0 {
+        // streaming the file parsing
+        // FIXME: how to parse a binary file?
+        // FIXME: if the file is extremely large
+        'out: loop {
+            // restrict reader/buffer variables scope
+            let (new, length) = {
+                let buffer = reader.fill_buf()?;
+                let length = buffer.len();
+
+                // a workaround for nom 4.0 changes: append a magic eof to make stream `complete`
+                let new: String = if length == 0 {
                     final_stream = true;
                     String::from(MAGIC_EOF)
                 } else {
-                    str::from_utf8(&buffer).unwrap().to_string()
+                    str::from_utf8(&buffer)?.to_string()
                 };
 
-                // chunk = buffer + remained
-                chunk.clear();
-                // fill chunk with remained data
-                chunk.push_str(&remained);
-                chunk.push_str(&new);
-                loop {
-                    match self.parse_molecule(&chunk) {
-                        // 1. successfully parsed one molecule
-                        Ok((r, mol)) => {
-                            mols.push(mol);
-                            remained = String::from(r);
-                        },
-                        // 2. buffer is incomplete, need to read more in
-                        Err(nom::Err::Incomplete(i)) => {
-                            remained = chunk.clone();
-                            if final_stream {
-                                println!("{:?}", "fixmefixme");
-                            }
-                            break
-                        },
-                        // 3. found parse errors
-                        Err(nom::Err::Error(err)) => {
-                            eprintln!("found error in {}: {:?}",
-                                      filename,
-                                      err);
-                            break 'out;
-                        },
-                        // 4. found serious errors
-                        Err(nom::Err::Failure(err)) => {
-                            eprintln!("hard failure in {}: {:?}",
-                                      filename,
-                                      err);
-                            break 'out;
-                        },
-                    }
-                    // clear chunk
-                    chunk.clear();
-                    chunk.push_str(&remained);
-                }
-                buffer.len()
+                (
+                    new,
+                    length,
+                )
             };
 
-            if length == 0 {
-                break;
+            // 0. fill the chunk
+            // chunk = remained + buffer
+            chunk.clear();
+            // remained data by nom parser
+            chunk.push_str(&remained);
+            // new data from the file
+
+            // FIXME: define a maximal size to which the buffer can grow to
+            // avoid out of memory death
+            chunk.push_str(&new);
+
+            loop {
+                // 1. process molecular file parsing
+                match self.parse_molecule(&chunk) {
+                    // 1.1 successfully parsed into one molecule
+                    Ok((r, mol)) => {
+                        // println!("ooooooooooooooooo {}", filename);
+                        // println!("{:#}", &chunk);
+                        // println!("--ooooooooooooooo {}", filename);
+                        // println!("{:#}", r);
+                        remained.clear();
+                        remained.push_str(r);
+                        mols.push(mol);
+                    },
+                    // 1.2 when chunk is incomplete
+                    // `Incomplete` means the nom parser does not have enough data to decide,
+                    // so we wait for the next refill and then retry parsing
+                    Err(nom::Err::Incomplete(i)) => {
+                        // println!("xxxxxxxxinnnnnnnnnnnnn {}", filename);
+                        // println!("{:#}", &chunk);
+                        // // should not happen
+                        // if final_stream {
+                        //     println!("nom parser warning: fixmefixmefixme");
+                        // }
+                        remained.clear();
+                        remained.push_str(&chunk);
+                        break;
+                    },
+                    // 1.3 found parse errors
+                    Err(nom::Err::Error(err)) => {
+                        eprintln!("found error in {}: {:?}", filename, err);
+                        break 'out;
+                    },
+                    // 1.4 found serious errors
+                    Err(nom::Err::Failure(err)) => {
+                        bail!("hard failure in {}: {:?}", filename, err);
+                    },
+                }
+                // clear chunk
+                chunk.clear();
+                chunk.push_str(&remained);
             }
+
+            if final_stream {
+                break
+            }
+
+            // consume the reader buffer
             reader.consume(length);
         }
 

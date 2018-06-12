@@ -300,9 +300,12 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
     charge_type : read_until_eol                            >>
     atoms       : get_atoms_from                            >>
                   opt!(complete!(take_until!("@<TRIPOS>"))) >>
+                  //opt!(take_until!("@<TRIPOS>"))            >>
+    // bonds       : opt!(get_bonds_from)           >>
     bonds       : opt!(complete!(get_bonds_from))           >>
+    // lattice     : opt!(get_lattice_from)         >>
     lattice     : opt!(complete!(get_lattice_from))         >>
-                  opt!(complete!(take_until!(MAGIC_EOF)))   >>
+                  alt!(complete!(take_until!("@<TRIPOS>MOLECULE")) | take_until!(MAGIC_EOF))         >>
     (
         {
             let natoms = counts[0];
@@ -360,12 +363,11 @@ USER_CHARGES
 @<TRIPOS>ATOM
 1	  N1	-1.759	-2.546	0.000	N.3	1	UNK0	0.000
 2	  H2	-0.759	-2.575	0.000	 H	1	UNK0	0.000";
+
     let lines = &format!("{}\n{}", lines, MAGIC_EOF);
 
-    println!("{:#}", lines);
-    let (r, mol) = get_molecule_from(lines)
+    let (_, mol) = get_molecule_from(lines)
         .expect("mol2 format test1");
-    println!("{:#?}", r);
     assert_eq!(2, mol.natoms());
 
     // for nonperiodic molecule
@@ -383,12 +385,11 @@ USER_CHARGES
 1 1 2 1
 2 1 3 1
 @<TRIPOS>SUBSTRUCTURE
-1	UNK0	1	GROUP	1 ****	UNK";
+1	UNK0	1	GROUP	1 ****	UNK\n";
 
-    let (_, mol) = get_molecule_from(&format!("{}{}",
-                                              lines,
-                                              MAGIC_EOF))
-        .expect("mol2 format test1");
+    let lines = &format!("{}\n{}", lines, MAGIC_EOF);
+
+    let (_, mol) = get_molecule_from(lines).expect("mol2 format test2");
     assert_eq!(3, mol.natoms());
     assert_eq!(2, mol.nbonds());
 
@@ -415,10 +416,10 @@ USER_CHARGES
 18.126000 18.126000 7.567000 90.000000 90.000000 120.000000 191 1
 @<TRIPOS>SUBSTRUCTURE
 1	UNK0	1	GROUP	1 ****	UNK
-";
+\n";
 
-    let (_, mol) = get_molecule_from(lines)
-        .expect("mol2 format test2");
+    let lines = &format!("{}\n{}", lines, MAGIC_EOF);
+    let (_, mol) = get_molecule_from(lines).expect("mol2 format test3");
     assert_eq!(12, mol.natoms());
     assert_eq!(0, mol.nbonds());
     assert!(mol.lattice.is_some());
@@ -525,21 +526,21 @@ fn test_formats_mol2() {
 
     // single molecule with a lattice
     // discovery studio generated .mol2 file
-    let mols = file.parse("tests/files/mol2/LTL-crysin-ds.mol2").unwrap();
+    let mols = file.parse("tests/files/mol2/LTL-crysin-ds.mol2").expect("mol2 crysin");
     assert_eq!(1, mols.len());
     assert!(mols[0].lattice.is_some());
 
     // when missing final blank line
     // gaussview generated .mol2 file
-    // let mols = file.parse("tests/files/mol2/alanine-gv.mol2").expect("gv generated mol2 file");
-    // assert_eq!(1, mols.len());
-    // let mol = &mols[0];
-    // assert_eq!(12, mol.natoms());
-    // assert_eq!(11, mol.nbonds());
+    let mols = file.parse("tests/files/mol2/alanine-gv.mol2").expect("gv generated mol2 file");
+    assert_eq!(1, mols.len());
+    let mol = &mols[0];
+    assert_eq!(12, mol.natoms());
+    assert_eq!(11, mol.nbonds());
 
     // molecule trajectory
     // openbabel converted .mol2 file
-    let mols = file.parse("tests/files/mol2/multi-obabel.mol2").unwrap();
+    let mols = file.parse("tests/files/mol2/multi-obabel.mol2").expect("mol2 multi");
     assert_eq!(6, mols.len());
 }
 // 91746805-686b-489a-b077-2b7182f18e3b ends here
