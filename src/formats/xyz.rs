@@ -52,7 +52,8 @@ H -9.1509  1.5395  0.0000
 H -9.1509 -1.0905  0.0000
 H -11.4286 -2.4055  0.0000
 H -13.7062 -1.0905  0.0000
-H -13.7062  1.5395  0.0000\n";
+H -13.7062  1.5395  0.0000
+";
     let (_, mol) = get_molecule(txt).unwrap();
     assert_eq!(12, mol.natoms());
 }
@@ -101,8 +102,63 @@ impl ChemFileLike for XYZFile {
 #[test]
 fn test_formats_xyz() {
     let file = XYZFile();
-    // let x = file.parse("/home/ybyygu/Workspace/Projects/structure-prediction/nanoreactor/tests/deMon.xyz");
-    let mols = file.parse("tests/files/xyz/multi.xyz").unwrap();
+    let mols = file.parse("tests/files/xyz/multi.xyz").expect("multi xyz");
     assert_eq!(6, mols.len());
+}
+
+
+/// plain xyz coordinates with atom symbols
+#[derive(Debug)]
+pub struct PlainXYZFile();
+
+impl ChemFileLike for PlainXYZFile {
+    /// possible file extensions
+    fn extensions(&self) -> Vec<&str> {
+        [".coord"].to_vec()
+    }
+
+    fn ftype(&self) -> &str {
+        "text/coord"
+    }
+
+    /// parse molecules from file `filename`
+    fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
+        let txt = io::read_file(filename)?;
+        let mut mol = Molecule::new("from plain coordinates");
+        for line in txt.lines() {
+            let line = line.trim();
+            if line.is_empty() {
+                break;
+            }
+            let a: Atom = line.parse()?;
+            mol.add_atom(a);
+        }
+
+        Ok(vec![mol])
+    }
+
+    /// Return a string representation of the last molecule in the list
+    /// Return empty string if no molecule found
+    fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
+        let mut lines = String::new();
+
+        if let Some(mol) = mols.last() {
+            for a in mol.atoms() {
+                lines.push_str(format!("{}\n", a.to_string()).as_ref());
+            }
+        }
+
+        Ok(lines)
+    }
+}
+
+#[test]
+fn test_formats_plainxyz() {
+    let filename = "tests/files/plain-coords/test.coord";
+    let file = PlainXYZFile();
+    assert!(file.parsable(filename));
+    let mols = file.parse(filename).unwrap();
+    assert_eq!(1, mols.len());
+    assert_eq!(12, mols[0].natoms());
 }
 // c6258370-89a6-4eda-866c-41d60ef03e44 ends here

@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-12 Tue 15:34>
+//       UPDATED:  <2018-06-13 Wed 10:09>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1713,9 +1713,11 @@ impl Molecule {
 }
 // 2351f71f-246f-4193-85c9-7bbe4a9d7587 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::f0258648-03f4-41c9-949e-f3677c3b44bc][f0258648-03f4-41c9-949e-f3677c3b44bc]]
+// fragmentation
+// #+name: f0258648-03f4-41c9-949e-f3677c3b44bc
+
 impl Molecule {
-    /// fragment into a list of sub-molecules based on connectivity
+    /// Break molecule into smaller fragments based on its bonding connectivity
     pub fn fragment(&self) -> Vec<Molecule> {
         let graph = &self.graph;
 
@@ -1764,7 +1766,28 @@ fn connected_component_subgraphs(graph: &MolGraph) -> Vec<MolGraph>{
 
     graphs
 }
-// f0258648-03f4-41c9-949e-f3677c3b44bc ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::9b65e04a-b7a8-4118-a2df-d0345c13832c][9b65e04a-b7a8-4118-a2df-d0345c13832c]]
+impl Molecule {
+    // FIXME: add bonds
+    /// Create molecule from small fragments (molecules)
+    pub fn combined(mols: &Vec<Molecule>) -> Self {
+        let mut mol = Molecule::new("combined");
+        for m in mols {
+            // add atoms
+            for a in m.atoms() {
+                let n = mol.add_atom(a.clone());
+            }
+            // add bonds
+            for b in m.bonds() {
+                //
+            }
+        }
+
+        mol
+    }
+}
+// 9b65e04a-b7a8-4118-a2df-d0345c13832c ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ddf54b1b-6bda-496a-8444-b9762645cc94][ddf54b1b-6bda-496a-8444-b9762645cc94]]
 use std::iter::IntoIterator;

@@ -188,66 +188,12 @@ pub trait ChemFileLike {
     }
 }
 
-/// plain xyz coordinates with atom symbols
-#[derive(Debug)]
-pub struct PlainXYZFile();
-
-impl ChemFileLike for PlainXYZFile {
-    /// possible file extensions
-    fn extensions(&self) -> Vec<&str> {
-        [".coord"].to_vec()
-    }
-
-    fn ftype(&self) -> &str {
-        "text/coord"
-    }
-
-    /// parse molecules from file `filename`
-    fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
-        let txt = io::read_file(filename)?;
-        let mut mol = Molecule::new("from plain coordinates");
-        for line in txt.lines() {
-            let line = line.trim();
-            if line.is_empty() {
-                break;
-            }
-            let a: Atom = line.parse()?;
-            mol.add_atom(a);
-        }
-
-        Ok(vec![mol])
-    }
-
-    /// Return a string representation of the last molecule in the list
-    /// Return empty string if no molecule found
-    fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
-        let mut lines = String::new();
-
-        if let Some(mol) = mols.last() {
-            for a in mol.atoms() {
-                lines.push_str(format!("{}\n", a.to_string()).as_ref());
-            }
-        }
-
-        Ok(lines)
-    }
-}
-
-#[test]
-fn test_formats_plainxyz() {
-    let filename = "tests/files/plain-coords/test.coord";
-    let file = PlainXYZFile();
-    assert!(file.parsable(filename));
-    let mols = file.parse(filename).unwrap();
-    assert_eq!(1, mols.len());
-    assert_eq!(12, mols[0].natoms());
-}
 
 /// guess the most appropriate file format by its file extensions
 pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>>{
     let backends: Vec<Box<ChemFileLike>> = vec![
         Box::new(xyz::XYZFile()),
-        Box::new(PlainXYZFile()),
+        Box::new(xyz::PlainXYZFile()),
         Box::new(mol2::Mol2File()),
         Box::new(sdf::SdfFile()),
         Box::new(vasp::PoscarFile()),
@@ -285,8 +231,8 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
 pub fn describe_backends() {
     let backends: Vec<Box<ChemFileLike>> = vec![
         Box::new(xyz::XYZFile()),
+        Box::new(xyz::PlainXYZFile()),
         Box::new(mol2::Mol2File()),
-        Box::new(PlainXYZFile()),
         Box::new(sdf::SdfFile()),
         Box::new(vasp::PoscarFile()),
         Box::new(cif::CifFile()),
