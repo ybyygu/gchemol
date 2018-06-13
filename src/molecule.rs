@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-13 Wed 10:09>
+//       UPDATED:  <2018-06-13 Wed 11:31>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1251,18 +1251,55 @@ impl Molecule {
         }
     }
 
-    /// Translate molecule to a new location
-    pub fn translate(&mut self, loc: Point3D) {
+    /// Translate atomic positions by a displacement
+    pub fn translate(&mut self, displacement: Point3D) {
         let nodes: Vec<_> = self.graph.node_indices().collect();
         for n in nodes {
             let mut atom = &mut self.graph[n];
             let mut position = atom.position();
             for v in 0..3 {
-                position[v] += loc[v];
+                position[v] += displacement[v];
             }
             atom.set_position(position);
         }
     }
+
+    /// Return the center of mass of molecule (COM).
+    pub fn center_of_mass(&self) -> Point3D {
+        unimplemented!()
+    }
+
+    /// Return the center of geometry of molecule (COG).
+    pub fn center_of_geometry(&self) -> Point3D {
+        let mut p = [0.0; 3];
+        for [x, y, z] in self.positions() {
+            p[0] += x;
+            p[1] += y;
+            p[2] += z;
+        }
+
+        let n = self.natoms() as f64;
+        p[0] /= n;
+        p[1] /= n;
+        p[2] /= n;
+
+        p
+    }
+}
+
+#[test]
+fn test_molecule_center() {
+    let mol = Molecule::from_file("tests/files/mol2/alanine-gv.mol2").expect("mol2 gv");
+    let pc = mol.center_of_geometry();
+    let pe = [-2.31413333, -1.24455833,  0.41005833];
+
+    for i in 0..3 {
+        assert_relative_eq!(pe[i], pc[i], epsilon=1e-4);
+    }
+
+    // TODO
+    // center of mass
+    // let pe = [-1.8295483 , -1.10700382,  0.25332597];
 }
 // 2a27ca30-0a99-4d5d-b544-5f5900304bbb ends here
 
