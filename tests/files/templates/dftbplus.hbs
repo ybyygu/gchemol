@@ -1,0 +1,32 @@
+Geometry = GenFormat {
+{{molecule.number_of_atoms}} C
+{{#each molecule.element_types as |e| ~}} {{e.0}} {{/each}}
+{{#each molecule.atoms as |a| ~}}
+{{a.index}} {{a.element_index}} {{a.x}} {{a.y}} {{a.z}}
+{{/each~}}
+}
+
+Driver = gDIIS {
+  MaxSteps = 100
+  ConvergentForcesOnly = no
+}
+
+Hamiltonian = DFTB {
+  SCC = Yes
+  SCCTolerance = 1e-004
+  MaxSCCIterations  = 100
+  MaxAngularMomentum = {
+    C = "p"
+    H = "s"
+  }
+
+  Filling = Fermi {
+    Temperature[K] = 0.0
+  }
+
+  SlaterKosterFiles = Type2FileNames {   # File names with two atom type names
+    Prefix = "SKFiles/"      # Path as prefix
+    Separator = "-"         # Dash between type names
+    Suffix = ".skf"         # Suffix after second type name
+  }
+}

@@ -78,6 +78,8 @@ fn format(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
 
 #[derive(Debug, Serialize)]
 struct AtomData {
+    index: usize,
+    element_index: usize,
     symbol: String,
     number: usize,
     x: f64,
@@ -91,6 +93,8 @@ struct AtomData {
 impl Default for AtomData {
     fn default() -> Self {
         AtomData {
+            index: 0,
+            element_index: 0,
             symbol: "C".into(),
             number: 6,
             x: 0.0,
@@ -135,7 +139,7 @@ struct MoleculeData {
     // mapping element type:
     // O C H
     // 1 2 3
-    element_types: IndexMap<String, usize>,
+    element_types: Vec<(String, usize)>,
 }
 
 /// construct a shallow representation of molecule for templating
@@ -163,17 +167,34 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
         None
     };
 
+    let mut bonds = vec![];
+
+    let mut element_types = indexmap!{};
+    for a in mol.atoms() {
+        let k = a.symbol().into();
+        let c = element_types.entry(k).or_insert(0);
+        *c += 1;
+    }
+
     // atoms data
     let mut atoms = vec![];
-    for a in mol.atoms() {
+    for (i, a) in mol.view_atoms() {
         let [x, y, z] = a.position();
+        let index = i;
         let number = a.number();
         let symbol = a.symbol().to_string();
         let [fx, fy, fz] = mol.lattice
             .map(|mut lat| lat.to_frac([x, y, z]))
             .unwrap_or([0.0; 3]);
+        let element_index = {
+            let (x, _, _) = element_types.get_full(a.symbol())
+                .expect("element type index");
+            x + 1
+        };
 
         atoms.push(AtomData{
+            index,
+            element_index,
             symbol,
             number,
             x,
@@ -185,15 +206,8 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
         })
     }
 
-    let mut bonds = vec![];
-
-    let mut element_types = indexmap!{};
-    for a in mol.atoms() {
-        let k = a.symbol().into();
-        let c = element_types.entry(k).or_insert(0);
-        *c += 1;
-    }
-
+    // convert to indexmap to plain list
+    let element_types: Vec<(_, _)> = element_types.into_iter().collect();
     let mut md = MoleculeData {
         title: mol.title(),
         number_of_atoms: mol.natoms(),

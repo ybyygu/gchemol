@@ -1,3 +1,6 @@
+
+# gchemol
+
 gchemol is a graph-based chemical object library implemented in Rust programming
 language.
 
@@ -15,7 +18,7 @@ language.
 -   render molecule in user defined formats by templating with [handlebars](https://github.com/sunng87/handlebars-rust)
 
 
-# Installing
+# How to use
 
 
 ## install rust
@@ -23,6 +26,9 @@ language.
 follow the official guide:
 
 -   [Installation · The Rust Programming Language](https://www.rust-lang.org/en-US/install.html)
+
+
+## setup
 
 add gchemol dependency to your Cargo.toml:
 
@@ -41,13 +47,13 @@ add gchemol dependency to your Cargo.toml:
     let a = Atom::new("C", [0.0, 0.0, 0.0]);
     let b = Atom::new("C", [1.2, 1.2, 1.2]);
 
-convert from string:
+or simply convert from a string:
 
     let a: Atom = "C 1.0 1.0 0.2"
         .parse()
         .expect("atom from string");
 
-using the builder pattern
+set more attributes using the builder pattern
 
     let a = Atom::build()
         .symbol("Fe")
@@ -108,7 +114,14 @@ using the builder pattern
 
 1.  bonding connectivity
 
-    TBD
+        let b = mol.get_bond(bond_index);
+        let [a1, a2] = b.partners(&mol);
+        
+        let (atom_index1, atom_index2) = mol.partners(bond_index);
+        
+        let neighbors = mol.neighbors(atom_index);
+    
+    TBD: more &#x2026;
 
 
 ## lattice
@@ -163,11 +176,21 @@ total number of bonds in molecule
 
     {{molecule.number_of_bonds}}
 
-loop over atoms
+loop over atoms:
 
     {{#each molecule.atoms as |a| ~}}
-    {{a.symbol}} {{a.x}} {{a.y}} {{a.z}}
+    {{a.index}} {{a.symbol}} {{a.x}} {{a.y}} {{a.z}}
     {{/each~}}
+
+Atom index (a.index) is counting from 1.
+
+element types (Fe 4, C 5 &#x2026;):
+
+    {{#each molecule.element_types as |e| ~}} {{e.0}} {{e.1}} {{/each}}
+
+elment index of atom (element index in element types array, counting from 1):
+
+    {{a.element_index}}
 
 atom properties
 
