@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-13 Wed 11:31>
+//       UPDATED:  <2018-06-15 Fri 13:59>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -174,7 +174,7 @@ impl AtomKind {
 
     pub fn name(&self) -> String {
         match self {
-            &Element(num) => ELEMENT_DATA[num-1].1.to_string(),
+            &Element(num) => String::from(ELEMENT_DATA[num-1].1),
             &Dummy(ref sym) => format!("dummy atom {}", sym),
         }
     }
@@ -227,6 +227,7 @@ fn test_element() {
     let k = atom_kind_from_string("11");
     assert_eq!(k.number(), 11);
     assert_eq!(k.symbol(), "Na");
+    assert_eq!(k.name(), "sodium");
 }
 // b95edc21-e696-4625-ba99-94257394772d ends here
 
@@ -280,6 +281,12 @@ impl Atom {
         self.data.kind.number()
     }
 
+    // FIXME: return &str?
+    /// Return element name
+    pub fn name(&self) -> String {
+        self.data.kind.name()
+    }
+
     /// Provide read-only access to atom index
     pub fn index(&self) -> AtomIndex {
         self.index
@@ -320,16 +327,6 @@ impl Atom {
         // example: Fe120
         // counting from 1 instead of 0
         format!("{}{}", self.symbol(), self.index.index() + 1)
-    }
-
-    /// Return atom name
-    pub fn name(&self) -> &str {
-        &self.data.name
-    }
-
-    /// Set atom name
-    pub fn set_name<T: Into<String>>(&mut self, s: T) {
-        self.data.name = s.into();
     }
 
     /// Return a list of atoms bonded to current atom
@@ -473,7 +470,7 @@ impl FromStr for Atom {
         let pz: f64 = parts[3].parse()?;
 
         let mut atom = Atom::new(sym, [px, py, pz]);
-        atom.set_name(sym);
+        atom.set_label(sym);
 
         Ok(atom)
     }

@@ -1,7 +1,7 @@
 # [[file:~/Workspace/Programming/gchemol/gchemol.note::c45d1413-12b8-471e-b060-da682339ad4b][c45d1413-12b8-471e-b060-da682339ad4b]]
 [package]
 name = "gchemol"
-version = "0.0.13"
+version = "0.0.14"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
@@ -11,7 +11,6 @@ nalgebra = ">=0.14.4"
 nom = ">=4.0.0"
 petgraph = "*"
 indexmap = {version=">=1.0.0", features=["serde-1"]}
-timeit = "*"
 serde = "*"
 serde_json = "*"
 serde_derive = "1.0"

@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-06-12 Tue 16:21>
+//       UPDATED:  <2018-06-15 Fri 13:54>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -218,7 +218,7 @@ pub fn from_mol2file(filename: &str) -> Result<Molecule> {
             let y: f64 = parts[3].parse().unwrap();
             let z: f64 = parts[4].parse().unwrap();
             let mut atom = Atom::new(symbol, [x, y, z]);
-            atom.set_name(label);
+            atom.set_label(label);
             let a = molecule.add_atom(atom);
             atoms.insert(index, a);
         } else {
