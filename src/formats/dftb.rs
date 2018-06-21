@@ -243,6 +243,8 @@ fn test_dftb_molecule() {
     let stream = format_molecule(&mol).expect("dftb stream");
     let (_, rmol) = get_molecule(&stream).expect("dftb molecule from stream");
     assert_eq!(mol.natoms(), rmol.natoms());
+
+    // lattice
     assert!(rmol.lattice.is_some());
     let lat1 = mol.lattice.unwrap();
     let lat2 = rmol.lattice.unwrap();
@@ -250,6 +252,16 @@ fn test_dftb_molecule() {
     let va2 = lat2.vector_a();
     for i in 0..3 {
         assert_relative_eq!(va1[i], va2[i], epsilon=1e-3);
+    }
+
+    // symbol and position
+    for (a, b) in mol.atoms().zip(rmol.atoms()) {
+        assert_eq!(a.symbol(), b.symbol());
+        let pa = a.position();
+        let pb = b.position();
+        for i in 0..3 {
+            assert_relative_eq!(pa[i], pb[i], epsilon=1e-4);
+        }
     }
 }
 // cb010521-689c-4b07-9cba-4e2dbea7fac3 ends here
