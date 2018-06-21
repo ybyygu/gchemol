@@ -24,6 +24,7 @@ pub mod gaussian;
 pub mod ms;
 pub mod siesta;
 pub mod gulp;
+pub mod dftb;
 
 const BUF_SIZE: usize = 20 * 1024;
 pub const MAGIC_EOF: &str = "$THIS_IS_THE=MAGIC_END_OF_FILE$";
@@ -88,6 +89,7 @@ pub trait ChemFileLike {
         unimplemented!()
     }
 
+    // FIXME: rename to from_file
     /// Default implementation: parse multiple molecules from `filename`
     fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
         let fp = File::open(filename)
@@ -188,7 +190,6 @@ pub trait ChemFileLike {
     }
 }
 
-
 /// guess the most appropriate file format by its file extensions
 pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>>{
     let backends: Vec<Box<ChemFileLike>> = vec![
@@ -204,6 +205,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
         Box::new(ms::XtlFile()),
         Box::new(siesta::FdfFile()),
         Box::new(gulp::GulpInputFile()),
+        Box::new(dftb::DftbInputFile()),
     ];
 
     // 1. by file type
@@ -242,6 +244,7 @@ pub fn describe_backends() {
         Box::new(ms::XtlFile()),
         Box::new(siesta::FdfFile()),
         Box::new(gulp::GulpInputFile()),
+        Box::new(dftb::DftbInputFile()),
     ];
 
     for cf in backends {
