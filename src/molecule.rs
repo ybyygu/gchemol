@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-15 Fri 13:59>
+//       UPDATED:  <2018-06-21 Thu 16:38>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -434,6 +434,11 @@ impl Atom {
             .finish()
     }
 
+    // FIXME
+    pub fn set_symbol<T: Into<String>>(&mut self, symbol: T) {
+        self.data.kind = atom_kind_from_string(symbol.into());
+    }
+
     pub fn build() -> AtomData {
         AtomData::new()
     }
@@ -777,6 +782,7 @@ impl Molecule {
         self.atoms().map(|ref a| a.symbol()).collect()
     }
 
+    // FIXME: opt performance
     /// Set positions of atoms
     pub fn set_positions(&mut self, positions: Points) -> Result<()>
     {
@@ -793,9 +799,22 @@ impl Molecule {
         Ok(())
     }
 
-    /// TODO
-    pub fn set_symbols(&mut self, symbols: Vec<String>) {
-        unimplemented!()
+    // FIXME: add a test
+    /// Set element symbols
+    pub fn set_symbols<'a, I>(&mut self, symbols: I) -> Result<()>
+    where
+        I: IntoIterator,
+        I::Item: Into<String>,
+    {
+        let indices: Vec<_> = self.graph.node_indices().collect();
+        let symbols = symbols.into_iter();
+
+        for (&index, symbol) in indices.iter().zip(symbols) {
+            let mut atom = &mut self.graph[index];
+            atom.set_symbol(symbol);
+        }
+
+        Ok(())
     }
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
@@ -1281,6 +1300,15 @@ impl Molecule {
         p[2] /= n;
 
         p
+    }
+
+    /// Center the molecule around its center of geometry
+    pub fn recenter(&mut self) {
+        let mut p = self.center_of_geometry();
+        for i in 0..3 {
+            p[i] *= -1.0;
+        }
+        self.translate(p);
     }
 }
 
@@ -1826,7 +1854,7 @@ impl Molecule {
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ddf54b1b-6bda-496a-8444-b9762645cc94][ddf54b1b-6bda-496a-8444-b9762645cc94]]
 use std::iter::IntoIterator;
 
-pub fn get_reduced_formula<'a, I>(symbols: I) -> String
+fn get_reduced_symbols<'a, I>(symbols: I) -> HashMap<String, usize>
 where
     I: IntoIterator,
     I::Item: fmt::Display,
@@ -1837,10 +1865,20 @@ where
 
     // 1. count symbols: CCCC ==> C 4
     let mut counts = HashMap::new();
-    for x in &symbols {
+    for x in symbols {
         let c = counts.entry(x).or_insert(0);
         *c += 1;
     }
+
+    counts
+}
+
+pub fn get_reduced_formula<'a, I>(symbols: I) -> String
+where
+    I: IntoIterator,
+    I::Item: fmt::Display,
+{
+    let counts = get_reduced_symbols(symbols);
 
     let mut syms: Vec<String> = Vec::new();
     let mut to_append = String::new();
@@ -1853,9 +1891,9 @@ where
         }
         // 2.2 special treatments for C and H
         let reduced = format!("{}{}", k, s);
-        if *k == "C" {
+        if k == "C" {
             syms.insert(0, reduced);
-        } else if *k == "H" {
+        } else if k == "H" {
             to_append = reduced;
         } else {
             syms.push(reduced);
@@ -1870,9 +1908,14 @@ where
 impl Molecule {
     /// Return the molecule formula represented in string
     /// Return empty string if molecule containing no atom
-    fn formula(&self) -> String
+    pub fn formula(&self) -> String
     {
         get_reduced_formula(self.symbols())
+    }
+
+    // FIXME: add test
+    pub fn reduced_symbols(&self) -> HashMap<String, usize> {
+        get_reduced_symbols(self.symbols())
     }
 }
 
