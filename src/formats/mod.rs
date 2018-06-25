@@ -3,6 +3,7 @@ use io;
 use std::str;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+// use std::path::{Path, PathBuf};
 
 pub use parser::*;
 use quicli::prelude::*;
@@ -191,7 +192,12 @@ pub trait ChemFileLike {
 }
 
 /// guess the most appropriate file format by its file extensions
-pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>>{
+// pub fn guess_chemfile<P: AsRef<Path>>(path: P, fmt: Option<&str>) -> Option<Box<ChemFileLike>>{
+// filename: stick to &str, instead of Path
+pub fn guess_chemfile(filename: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>>{
+    // let path = path.as_ref();
+    // let filename = &format!("{}", path.display());
+
     let backends: Vec<Box<ChemFileLike>> = vec![
         Box::new(xyz::XYZFile()),
         Box::new(xyz::PlainXYZFile()),
@@ -218,7 +224,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
     // 2. or by file extension
     } else {
         for x in backends {
-            if x.parsable(path) {
+            if x.parsable(filename) {
                 return Some(x);
             }
         }
@@ -227,6 +233,7 @@ pub fn guess_chemfile(path: &str, fmt: Option<&str>) -> Option<Box<ChemFileLike>
     // 3. return None if no suitable backend
     None
 }
+
 
 /// description of all backends
 // FIXME:

@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-06-15 Fri 13:54>
+//       UPDATED:  <2018-06-25 Mon 11:32>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -376,7 +376,7 @@ pub fn to_mol2file(molecule: &Molecule, filename: &str) -> Result<()>{
 }
 // bd8ea4f1-b38f-4c81-a722-96cf78fb53a6 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::448a8479-f0e8-412a-9e8d-83865581eb43][448a8479-f0e8-412a-9e8d-83865581eb43]]
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::00093c10-2247-4242-a287-e5640c00cadb][00093c10-2247-4242-a287-e5640c00cadb]]
 use {
     Atom,
     Molecule,
@@ -391,6 +391,7 @@ fn file_extension_lower(path: &Path) -> Result<String> {
 }
 
 impl Molecule {
+    // FIXME: use formats module
     /// Construct molecule from external text file
     pub fn from_file<T: Into<String>>(filename: T) -> Result<Self> {
         let filename = filename.into();
@@ -413,6 +414,7 @@ impl Molecule {
         }
     }
 
+    // FIXME: use formats module
     /// Save molecule to an external file
     pub fn to_file<T: Into<String>>(&self, filename: T) -> Result<()> {
         let filename = filename.into();
@@ -430,14 +432,42 @@ impl Molecule {
             bail!("Not supported file format for writing");
         }
     }
+
+    /// format molecule as string in specific type
+    pub fn format_as<S: AsRef<str>>(&self, fmt: S) -> Result<String> {
+        let fmt = fmt.as_ref();
+        let cf = guess_chemfile_from_fmt(fmt)?;
+        cf.format_molecule(&self)
+    }
+
+    // fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
+    /// construct molecule from string in specific type
+    pub fn parse_from<S: AsRef<str>, T: AsRef<str>>(s: S, fmt: T) -> Result<Molecule> {
+        let fmt = fmt.as_ref();
+        let cf = guess_chemfile_from_fmt(fmt)?;
+
+        let s = s.as_ref();
+        let (_, m) = cf.parse_molecule(s).map_err(|e| format_err!("{:?}", e))?;
+
+        Ok(m)
+    }
+}
+
+fn guess_chemfile_from_fmt(fmt: &str) -> Result<Box<ChemFileLike>> {
+    let msg = format_err!("not supported format: {:?}", fmt);
+    guess_chemfile("", Some(fmt)).ok_or(msg)
 }
 
 #[test]
-fn test_molecule_from_file() {
+fn test_molecule_formats() {
     let mol = Molecule::from_file("tests/files/xyz/c2h4.xyz").unwrap();
     assert_eq!(6, mol.natoms());
+
+    let txt = mol.format_as("text/xyz").expect("format mol as xyz");
+    let mol2 = Molecule::parse_from(txt, "text/xyz").expect("parse molecule from xyz stream");
+    assert_eq!(mol.natoms(), mol2.natoms());
 }
-// 448a8479-f0e8-412a-9e8d-83865581eb43 ends here
+// 00093c10-2247-4242-a287-e5640c00cadb ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::d317857c-a18d-4630-9155-119cf3533d5a][d317857c-a18d-4630-9155-119cf3533d5a]]
 use formats::{
@@ -475,31 +505,37 @@ impl<'a> FileOptions<'a> {
     }
 
     /// read molecules from file
-    pub fn read(&self, path: &str) -> ReadResult {
-        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", path, self.fmt);
-        let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
-        let mols = chemfile.parse(path)?;
+    pub fn read<P: AsRef<Path>>(&self, path: P) -> ReadResult {
+        let path = path.as_ref();
+        let filename = &format!("{}", path.display());
+        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", filename, self.fmt);
+        let chemfile = guess_chemfile(filename, self.fmt).ok_or(msg)?;
+        let mols = chemfile.parse(filename)?;
 
         Ok(mols)
     }
 
-    pub fn write(&self, path: &str, mols: &Vec<Molecule>) -> Result<()> {
-        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", path, self.fmt);
-        let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
-        chemfile.write(path, mols)
+    pub fn write<P: AsRef<Path>>(&self, path: P, mols: &Vec<Molecule>) -> Result<()> {
+        let path = path.as_ref();
+        let filename = &format!("{}", path.display());
+        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", filename, self.fmt);
+        let chemfile = guess_chemfile(filename, self.fmt).ok_or(msg)?;
+        chemfile.write(filename, mols)
     }
 }
 
 /// Read an iterator over `Molecule` from file.
 /// file format will be determined according to the path
 // https://stackoverflow.com/questions/26368288/how-do-i-stop-iteration-and-return-an-error-when-iteratormap-returns-a-result
-pub fn read(path: &str) -> Result<Vec<Molecule>> {
+pub fn read<P: AsRef<Path>>(path: P) -> Result<Vec<Molecule>> {
+    let path = path.as_ref();
     FileOptions::new().read(path)
 }
 
 /// Write molecules into file
 /// file format will be determined according to the path
-pub fn write(path: &str, mols: &Vec<Molecule>) -> Result<()>{
+pub fn write<P: AsRef<Path>>(path: P, mols: &Vec<Molecule>) -> Result<()>{
+    let path = path.as_ref();
     FileOptions::new().write(path, mols)
 }
 
