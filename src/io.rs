@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-06-25 Mon 11:32>
+//       UPDATED:  <2018-06-26 Tue 09:36>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -25,16 +25,22 @@ use Points;
 
 /// Return content of text file in string
 /// don't use this if file is very large
-pub fn read_file<P: AsRef<Path>>(filename: P) -> Result<String> {
-    let filename = filename.as_ref();
-    let mut buffer = String::new();
+pub fn read_file<P: AsRef<Path>>(path: P) -> Result<String> {
+    let path = path.as_ref();
+    ensure!(
+        path.exists() && path.is_file(),
+        "Path {:?} is not a file!",
+        path
+    );
 
-    let mut fp = File::open(filename)
-        .map_err(|e| format_err!("unable to open {} for reading", filename.display()))?;
-    fp.read_to_string(&mut buffer)
-        .map_err(|e| format_err!("failed to read content: {}", filename.display()))?;
+    let file = File::open(path).with_context(|_| format!("Could not open file {:?}", path))?;
+    let mut file = BufReader::new(file);
 
-    Ok(buffer)
+    let mut result = String::new();
+    file.read_to_string(&mut result)
+        .with_context(|_| format!("Could not read file {:?}", path))?;
+
+    Ok(result)
 }
 // 0f52a1ef-c664-45a9-ab96-6d31741ae8c0 ends here
 
@@ -62,8 +68,7 @@ pub fn write_lines(lines: Vec<String>, filename: &str) -> Result<()> {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::618eea82-a702-4d2f-a873-3807ead50d4b][618eea82-a702-4d2f-a873-3807ead50d4b]]
 /// write coordinates in xyz format
-pub fn write_as_xyz(symbols: &[&str], positions: &Points, filename: &str) -> Result<()>
-{
+pub fn write_as_xyz(symbols: &[&str], positions: &Points, filename: &str) -> Result<()> {
     let mut lines = String::new();
 
     // meta information
@@ -382,55 +387,39 @@ use {
     Molecule,
 };
 
-fn file_extension_lower(path: &Path) -> Result<String> {
-    let ext = path.extension().ok_or(format_err!("cannot find file extension"))?;
-    let ext = ext.to_str().ok_or(format_err!("cannot handle wield file extention"))?;
-    let ext = ext.to_lowercase();
+// fn file_extension_lower(path: &Path) -> Result<String> {
+//     let ext = path.extension().ok_or(format_err!("cannot find file extension"))?;
+//     let ext = ext.to_str().ok_or(format_err!("cannot handle wield file extention"))?;
+//     let ext = ext.to_lowercase();
 
-    Ok(ext.to_string())
-}
+//     Ok(ext.to_string())
+// }
 
 impl Molecule {
     // FIXME: use formats module
     /// Construct molecule from external text file
-    pub fn from_file<T: Into<String>>(filename: T) -> Result<Self> {
-        let filename = filename.into();
-        let path = Path::new(&filename);
-        let ext = file_extension_lower(&path)?;
-        if ext == "xyz" {
-            let (symbols, positions) = read_xyzfile(&filename)?;
-            let mut mol = Molecule::default();
-            for i in 0..symbols.len() {
-                let sym = &symbols[i];
-                let pos = &positions[i];
-                let atom = Atom::new(sym.clone(), pos.clone());
-                mol.add_atom(atom);
-            }
-            return Ok(mol);
-        } else if ext == "mol2" {
-            return from_mol2file(&filename);
-        } else {
-            bail!("File format is not supported yet.");
-        }
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let path = path.as_ref();
+        let cf = guess_chemfile_from_filename(path)?;
+        let filename = format!("{}", path.display());
+        // FIXME: Path or &str?
+        let mut mols = cf.parse(&filename)?;
+        mols
+            .pop()
+            .ok_or(format_err!("no molecule: {:?}", path.display()))
     }
 
     // FIXME: use formats module
     /// Save molecule to an external file
-    pub fn to_file<T: Into<String>>(&self, filename: T) -> Result<()> {
-        let filename = filename.into();
+    pub fn to_file<T: AsRef<str>>(&self, filename: T) -> Result<()> {
+        let filename = filename.as_ref();
+        let cf = guess_chemfile(filename, None)
+            .ok_or(format_err!("not supported file format: {:?}", filename))?;
+        let t = cf.format_molecule(&self)?;
 
-        let path = Path::new(&filename);
-        let ext = file_extension_lower(&path)?;
-        if ext == "xyz" {
-            let symbols = self.symbols();
-            let positions = self.positions();
+        write_file(t, filename)?;
 
-            return write_as_xyz(&symbols, &positions, &filename);
-        } else if ext == "mol2" {
-            return to_mol2file(&self, &filename);
-        } else {
-            bail!("Not supported file format for writing");
-        }
+        Ok(())
     }
 
     /// format molecule as string in specific type
@@ -447,6 +436,7 @@ impl Molecule {
         let cf = guess_chemfile_from_fmt(fmt)?;
 
         let s = s.as_ref();
+        // FIXME: ....
         let (_, m) = cf.parse_molecule(s).map_err(|e| format_err!("{:?}", e))?;
 
         Ok(m)
@@ -456,6 +446,12 @@ impl Molecule {
 fn guess_chemfile_from_fmt(fmt: &str) -> Result<Box<ChemFileLike>> {
     let msg = format_err!("not supported format: {:?}", fmt);
     guess_chemfile("", Some(fmt)).ok_or(msg)
+}
+
+fn guess_chemfile_from_filename<P: AsRef<Path>>(path: P) -> Result<Box<ChemFileLike>> {
+    let filename = format!("{}", path.as_ref().display());
+    let msg = format_err!("not supported format: {:?}", filename);
+    guess_chemfile(&filename, None).ok_or(msg)
 }
 
 #[test]
