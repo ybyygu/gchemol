@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-21 Thu 16:38>
+//       UPDATED:  <2018-06-28 Thu 17:01>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1234,7 +1234,7 @@ impl Molecule {
 impl Molecule {
     /// Return an iterator of all atoms connected to a.
     fn connected() {
-        //
+        unimplemented!()
     }
 }
 // ec7b11d2-6f13-49fd-b253-af4b213b49a3 ends here
@@ -1792,7 +1792,38 @@ impl Molecule {
 
         mols
     }
+
+    /// Return a shallow connectivity graph without copying atom/bond data
+    pub fn bond_graph(&self) -> UnGraph<usize, usize> {
+        let graph = &self.graph;
+        let mut result_g = UnGraph::with_capacity(graph.node_count(), graph.edge_count());
+        // mapping from old node index to new node index
+        let mut node_index_map = vec![AtomIndex::new(0); graph.node_count()];
+
+        for (i, a) in self.view_atoms() {
+            node_index_map[i-1] = result_g.add_node(i);
+        }
+        for (i, j, b) in self.view_bonds() {
+            let source = node_index_map[i-1];
+            let target = node_index_map[j-1];
+            result_g.add_edge(source, target, 1);
+        }
+        result_g
+    }
+
+    /// Return the number of fragments in molecule
+    pub fn nfragments(&self) -> usize {
+        let gr = &self.bond_graph();
+        // create a temporary graph
+        let n = self.natoms();
+        if n <= 1 {
+            n
+        } else {
+            petgraph::algo::connected_components(&gr)
+        }
+    }
 }
+
 
 /// Generate connected components as subgraphs
 fn connected_component_subgraphs(graph: &MolGraph) -> Vec<MolGraph>{
@@ -2034,6 +2065,7 @@ mod test {
 
         // loop over fragments
         let frags = mol.fragment();
+        assert_eq!(mol.nfragments(), frags.len());
         for m in frags {
             m.formula();
         }
