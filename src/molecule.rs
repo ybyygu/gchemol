@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-06-28 Thu 17:01>
+//       UPDATED:  <2018-07-02 Mon 13:59>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -707,10 +707,6 @@ pub struct Molecule {
     /// value.
     pub properties: PropertyStore,
 
-    /// Mapping user defined atom index to internal graph node index
-    atom_indices: HashMap<String, NodeIndex>,
-    /// Mapping bond tuple to EdgeIndex
-    bond_indices: HashMap<[String; 2], EdgeIndex>,
     /// User defined atom labels
     pub atom_labels: HashMap<AtomIndex, String>,
 }
@@ -723,8 +719,6 @@ impl Default for Molecule {
             graph: graph,
             lattice: None,
             properties: PropertyStore::new(),
-            atom_indices: HashMap::new(),
-            bond_indices: HashMap::new(),
             atom_labels: HashMap::new(),
         }
     }
@@ -1092,37 +1086,11 @@ impl IntoBondIndex for BondIndex {
 impl Molecule {
     /// add many atoms from a hashmap
     pub fn add_atoms_from(&mut self, atoms: HashMap<&str, Atom>) -> Result<()>{
-        for (k, a) in atoms {
-            let n = self.add_atom(a);
-            self.atom_labels.insert(n, k.into());
-            self.atom_indices.insert(k.into(), n);
-        }
-
-        Ok(())
+        unimplemented!()
     }
 
     pub fn add_bonds_from(&mut self, bonds: HashMap<(String, String), Bond>) -> Result<()>{
-        for ((ki, kj), b) in bonds {
-            if ki == kj {
-                bail!("Bonding with self is not allowed.");
-            }
-
-            if let Some(&ni) = self.atom_indices.get(&ki) {
-                if let Some(&nj) = self.atom_indices.get(&kj) {
-                    // get bond key from the user
-                    let kij = if ki < kj {[ki, kj]} else {[kj, ki]};
-                    // get internal graph edge index
-                    let e = self.add_bond(ni, nj, b);
-                    self.bond_indices.insert(kij, e);
-                } else {
-                    bail!("atom {} is not presented in molecule.", kj);
-                }
-            } else {
-                bail!("atom {} is not presented in molecule.", ki);
-            }
-        }
-
-        Ok(())
+        unimplemented!()
     }
 
     pub fn remove_atoms_from(&mut self) {

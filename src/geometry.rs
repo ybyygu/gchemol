@@ -97,6 +97,7 @@ use rand::distributions::{Range, Normal};
 /// ----------
 /// https://stackoverflow.com/a/5408344
 pub fn rand_point_within_sphere(radius: f64) -> Point3D {
+    debug_assert!(radius.is_sign_positive(), "sphere radius cannot be negative: {:?}", radius);
     let mut rng = rand::thread_rng();
     let range = Range::new(-radius, radius);
 
@@ -138,7 +139,7 @@ pub fn rand_point_on_sphere(radius: f64) -> Point3D {
     }
 }
 
-/// Create many random points within a sphere
+/// Create random points within a sphere
 ///
 /// Parameters
 /// ----------
