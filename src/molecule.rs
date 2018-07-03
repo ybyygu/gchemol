@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-07-03 Tue 09:11>
+//       UPDATED:  <2018-07-03 Tue 14:00>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -685,10 +685,10 @@ pub type AtomIndex = NodeIndex;
 pub type BondIndex = EdgeIndex;
 
 /// Molecule is the most important data structure in gchemol, which repsents
-/// "any constitutionally or isotopically distinct atom, molecule, ion, ion
-/// pair, radical, radical ion, complex, conformer etc., identifiable as a
-/// separately distinguishable entity". Molecule can have zero or more chemical
-/// bonds.
+/// "any singular entity, irrespective of its nature, used to concisely express
+/// any type of chemical particle that can exemplify some process: for example,
+/// atoms, molecules, ions, etc. can all undergo a chemical reaction". Molecule
+/// may have chemical bonds between atoms.
 ///
 /// Reference
 /// ---------
@@ -707,9 +707,6 @@ pub struct Molecule {
     /// type, but it is the responsibility of the setter/getter to interpret the
     /// value.
     pub properties: PropertyStore,
-
-    // for reorder/reorder_by methods
-    ordering: Option<Vec<AtomIndex>>,
 }
 
 impl Default for Molecule {
@@ -720,8 +717,6 @@ impl Default for Molecule {
             graph: graph,
             lattice: None,
             properties: PropertyStore::new(),
-
-            ordering: None,
         }
     }
 }
@@ -758,8 +753,8 @@ impl Molecule {
         self.name.to_owned()
     }
 
-    /// Return all atom indices
-    pub fn atom_indices(&self) -> Vec<AtomIndex> {
+    /// Return the sites (AtomIndex) that hosting atoms.
+    pub fn sites(&self) -> Vec<AtomIndex> {
         self.graph.node_indices().collect()
     }
 
@@ -792,7 +787,7 @@ impl Molecule {
     /// Set positions of atoms
     pub fn set_positions(&mut self, positions: Points) -> Result<()>
     {
-        let indices: Vec<_> = self.graph.node_indices().collect();
+        let indices = self.sites();
         if indices.len() != positions.len() {
             bail!("the number of cartesian coordinates is different from the number of atoms in molecule.")
         }
@@ -812,7 +807,7 @@ impl Molecule {
         I: IntoIterator,
         I::Item: Into<String>,
     {
-        let indices: Vec<_> = self.graph.node_indices().collect();
+        let indices = self.sites();
         let symbols = symbols.into_iter();
 
         for (&index, symbol) in indices.iter().zip(symbols) {
@@ -1108,8 +1103,9 @@ impl Molecule {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a762197d-df95-433c-8499-8148d0241a9f][a762197d-df95-433c-8499-8148d0241a9f]]
 impl Molecule {
+    // FIXME: keep or remove?
     /// Update atom indices
-    pub fn reindex(&mut self) {
+    pub fn reorder(&mut self) {
         let ns: Vec<_> = self.graph.node_indices().collect();
         for (i, &n) in ns.iter().enumerate() {
             let atom = &mut self.graph[n];
@@ -1117,17 +1113,46 @@ impl Molecule {
         }
     }
 
-    pub fn reorder(&mut self) {
-        unimplemented!()
-    }
+    /// Return a new molecule with all atoms sorted by element number (hydrogen last)
+    pub fn sorted(&self) -> Molecule {
+        let title = format!("sorted {}", self.title());
+        let mut mol = Molecule::new(&title);
 
-    pub fn reorder_by<F>(&mut self, compare: F)
-        where F: FnMut(&AtomIndex, &AtomIndex) -> Ordering
-    {
-        if let Some(ref mut ordering) = &mut self.ordering {
-            ordering.sort_by(compare);
+        let numbers = self.numbers();
+        let sites = self.sites();
+        let mut pairs: Vec<_> = numbers.iter().zip(sites.iter()).collect();
+        pairs.sort();
+        pairs.reverse();
+
+        let mut mapping = HashMap::with_capacity(pairs.len());
+        for (_, &n) in pairs {
+            let a = self.get_atom(n).expect("sorted: pairs");
+            let new_n = mol.add_atom(a.clone());
+            mapping.insert(n, new_n);
         }
+
+        for b in self.bonds() {
+            let e = b.index();
+            let (o1, o2) = self.partners(&e).expect("sorted: bonds");
+            let (n1, n2) = (mapping[&o1], mapping[&o2]);
+            mol.add_bond(n1, n2, b.clone());
+        }
+
+        mol
     }
+}
+
+#[test]
+fn test_molecule_sorted() {
+    let mol = Molecule::from_file("tests/files/mol2/alanine-gv.mol2").expect("mol2 for reorder");
+    let mol_sorted = mol.sorted();
+    assert_eq!(mol.natoms(), mol_sorted.natoms());
+    assert_eq!(mol.nbonds(), mol_sorted.nbonds());
+    let numbers = mol_sorted.numbers();
+    assert_eq!(8, numbers[0]);
+    assert_eq!(7, numbers[1]);
+    assert_eq!(6, numbers[2]);
+    assert_eq!(6, numbers[3]);
 }
 // a762197d-df95-433c-8499-8148d0241a9f ends here
 
