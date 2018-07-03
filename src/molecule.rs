@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-07-02 Mon 13:59>
+//       UPDATED:  <2018-07-03 Tue 09:11>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -505,8 +505,6 @@ fn test_atom_init() {
     let atom = Atom::new("dummy", [9.3; 3]);
     assert_eq!("dummy", atom.symbol());
     assert_eq!(0, atom.number());
-
-
 }
 // b88435fd-d51c-48b8-880c-425b94b905e9 ends here
 
@@ -686,8 +684,11 @@ pub type MolGraph = StableUnGraph<Atom, Bond>;
 pub type AtomIndex = NodeIndex;
 pub type BondIndex = EdgeIndex;
 
-/// Molecule is the most important data structure in gchemol, which repsents one or
-/// more atoms held together by chemical bonds.
+/// Molecule is the most important data structure in gchemol, which repsents
+/// "any constitutionally or isotopically distinct atom, molecule, ion, ion
+/// pair, radical, radical ion, complex, conformer etc., identifiable as a
+/// separately distinguishable entity". Molecule can have zero or more chemical
+/// bonds.
 ///
 /// Reference
 /// ---------
@@ -707,8 +708,8 @@ pub struct Molecule {
     /// value.
     pub properties: PropertyStore,
 
-    /// User defined atom labels
-    pub atom_labels: HashMap<AtomIndex, String>,
+    // for reorder/reorder_by methods
+    ordering: Option<Vec<AtomIndex>>,
 }
 
 impl Default for Molecule {
@@ -719,7 +720,8 @@ impl Default for Molecule {
             graph: graph,
             lattice: None,
             properties: PropertyStore::new(),
-            atom_labels: HashMap::new(),
+
+            ordering: None,
         }
     }
 }
@@ -756,6 +758,11 @@ impl Molecule {
         self.name.to_owned()
     }
 
+    /// Return all atom indices
+    pub fn atom_indices(&self) -> Vec<AtomIndex> {
+        self.graph.node_indices().collect()
+    }
+
     /// Return an iterator over the atoms in the molecule.
     pub fn atoms(&self) -> impl Iterator<Item = &Atom> {
         self.graph.node_indices().map(move |n| &self.graph[n])
@@ -771,9 +778,14 @@ impl Molecule {
         self.atoms().map(|ref a| a.position()).collect()
     }
 
-    /// Return symbols of all  atoms in the molecule.
+    /// Return symbols of all atoms in the molecule.
     pub fn symbols(&self) -> Vec<&str> {
         self.atoms().map(|ref a| a.symbol()).collect()
+    }
+
+    /// Return element numbers of all atoms in the molecule.
+    pub fn numbers(&self) -> Vec<usize> {
+        self.atoms().map(|ref a| a.number()).collect()
     }
 
     // FIXME: opt performance
@@ -1034,15 +1046,6 @@ impl Molecule {
         let b = b.into_bond_index();
         self.graph.edge_weight_mut(b)
     }
-
-    /// Update atom indices
-    pub fn reorder(&mut self) {
-        let ns: Vec<_> = self.graph.node_indices().collect();
-        for (i, &n) in ns.iter().enumerate() {
-            let atom = &mut self.graph[n];
-            atom.index = n;
-        }
-    }
 }
 // 9924e323-dd02-49d0-ab07-41208114546f ends here
 
@@ -1103,19 +1106,30 @@ impl Molecule {
 }
 // 72dd0c31-26e5-430b-9f67-1c5bd5220a84 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::5754ca07-a93d-47e5-8256-c7236777b2ee][5754ca07-a93d-47e5-8256-c7236777b2ee]]
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::a762197d-df95-433c-8499-8148d0241a9f][a762197d-df95-433c-8499-8148d0241a9f]]
 impl Molecule {
-    /// Set periodic lattice
-    pub fn set_lattice(&mut self, lat: Lattice) {
-        self.lattice = Some(lat);
+    /// Update atom indices
+    pub fn reindex(&mut self) {
+        let ns: Vec<_> = self.graph.node_indices().collect();
+        for (i, &n) in ns.iter().enumerate() {
+            let atom = &mut self.graph[n];
+            atom.index = n;
+        }
     }
 
-    /// Unbuild current crystal structure leaving a nonperiodic structure
-    pub fn unbuild_crystal(&mut self) {
-        self.lattice = None
+    pub fn reorder(&mut self) {
+        unimplemented!()
+    }
+
+    pub fn reorder_by<F>(&mut self, compare: F)
+        where F: FnMut(&AtomIndex, &AtomIndex) -> Ordering
+    {
+        if let Some(ref mut ordering) = &mut self.ordering {
+            ordering.sort_by(compare);
+        }
     }
 }
-// 5754ca07-a93d-47e5-8256-c7236777b2ee ends here
+// a762197d-df95-433c-8499-8148d0241a9f ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::1f8f3a9a-dc8d-4a1e-816b-c5228ddf0607][1f8f3a9a-dc8d-4a1e-816b-c5228ddf0607]]
 impl Molecule {

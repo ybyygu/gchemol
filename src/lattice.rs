@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-06-08 Fri 15:06>
+//       UPDATED:  <2018-07-02 Mon 14:20>
 //===============================================================================#
 
 use nalgebra::{
@@ -372,6 +372,22 @@ impl Lattice {
     }
 }
 // 83cff231-cc63-4077-b07e-a26a2c2b906d ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::5754ca07-a93d-47e5-8256-c7236777b2ee][5754ca07-a93d-47e5-8256-c7236777b2ee]]
+use molecule::Molecule;
+
+impl Molecule {
+    /// Set periodic lattice
+    pub fn set_lattice(&mut self, lat: Lattice) {
+        self.lattice = Some(lat);
+    }
+
+    /// Unbuild current crystal structure leaving a nonperiodic structure
+    pub fn unbuild_crystal(&mut self) {
+        self.lattice = None
+    }
+}
+// 5754ca07-a93d-47e5-8256-c7236777b2ee ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::4bc21235-f285-4976-a32a-b33506381b58][4bc21235-f285-4976-a32a-b33506381b58]]
 #[test]
