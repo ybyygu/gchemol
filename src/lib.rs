@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-07-02 Mon 14:21>
+//       UPDATED:  <2018-07-03 Tue 14:07>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -43,7 +43,6 @@ pub use molecule::{
 
 pub mod topology;
 pub mod io;
-pub use io::{write_as_xyz};
 pub mod data;
 #[macro_use]
 pub mod parser;
