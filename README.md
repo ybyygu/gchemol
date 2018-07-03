@@ -101,11 +101,17 @@ set more attributes using the builder pattern
         // the number of atoms in different frame could be different
         let mols = io::read("path/to/trajectory.xyz");
 
-3.  coordinates
+3.  Coordinates
 
         let mut positions = mol.positions();
         positions[0] = [1.2, 1.0, 0.1];
         mol.set_positions(positions);
+
+4.  Sorted molecule
+
+    create new molecule with all atoms sorted by element number (hydrogen last):
+    
+        let m = mol.sorted();
     
     to be continued &#x2026;
 
@@ -115,7 +121,7 @@ set more attributes using the builder pattern
 1.  bonding connectivity
 
         let b = mol.get_bond(bond_index);
-        let [a1, a2] = b.partners(&mol);
+        let (a1, a2) = b.partners(&mol);
         
         let (atom_index1, atom_index2) = mol.partners(bond_index);
         
@@ -157,7 +163,14 @@ build a periodic structure
 
 # Read/write chemical files
 
-TBD
+construct molecule from file:
+
+    let mol = Molecule::from_file("tests/files/mol2/alanine-gv.mol2").unwrap();
+
+If the file contains molecules more than one:
+
+    use gchemol::io;
+    let mols = io::read("tests/files/mol2/multi-obabel.mol2").unwrap();
 
 
 # Templating
