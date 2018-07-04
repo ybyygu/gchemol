@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-07-03 Tue 14:00>
+//       UPDATED:  <2018-07-04 Wed 08:50>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1137,6 +1137,14 @@ impl Molecule {
             let (n1, n2) = (mapping[&o1], mapping[&o2]);
             mol.add_bond(n1, n2, b.clone());
         }
+
+        // lattice
+        if let Some(lat) = self.lattice {
+            mol.set_lattice(lat.clone());
+        }
+
+        // properties
+        mol.properties = self.properties.clone();
 
         mol
     }
