@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-07-04 Wed 08:50>
+//       UPDATED:  <2018-07-04 Wed 18:51>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1766,7 +1766,7 @@ impl Molecule {
                 fxz += fxzi;
             }
 
-            println!("cycle: {} energy = {:?}", icycle, fxz);
+            debug!("cycle: {} energy = {:?}", icycle, fxz);
 
             if fxz.is_nan() {
                 bail!("found invalid number: {:?}", fxz);
