@@ -83,13 +83,11 @@ set more attributes using the builder pattern
 
 2.  Reading and writing molecules
 
-    The format is automatically guessed from the filename.
-    
         use gchemol::io;
         use gchemol::Molecule;
         
         // Read an xyz file and write to a Gaussian Input file.
-        let mol = Molecule::from_file("path/to/file");
+        let mol = Molecule::from_file("path/to/file").unwrap();
         mol.to_file("methane.gjf")
         
         // get the total number of atoms
@@ -99,7 +97,7 @@ set more attributes using the builder pattern
         
         // read multiple molecules (trajectory) from a chemical file
         // the number of atoms in different frame could be different
-        let mols = io::read("path/to/trajectory.xyz");
+        let mols = io::read("path/to/trajectory.xyz").unwrap();
 
 3.  Coordinates
 
@@ -159,18 +157,6 @@ build a periodic structure
     
     // remove periodic boundary conditions
     mol.unbuild_crystal();
-
-
-# Read/write chemical files
-
-construct molecule from file:
-
-    let mol = Molecule::from_file("tests/files/mol2/alanine-gv.mol2").unwrap();
-
-If the file contains molecules more than one:
-
-    use gchemol::io;
-    let mols = io::read("tests/files/mol2/multi-obabel.mol2").unwrap();
 
 
 # Templating
