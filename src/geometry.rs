@@ -7,6 +7,103 @@ use nalgebra::{
     Rotation3,
 };
 
+pub trait PointMath {
+    fn norm(&self) -> f64;
+
+    fn distance(&self, other: Point3D) -> f64;
+
+    fn vdot(&self, other: Point3D) -> f64;
+
+    fn length(&self) -> f64 {
+        self.norm()
+    }
+
+    fn x(&self) -> f64;
+    fn y(&self) -> f64;
+    fn z(&self) -> f64;
+}
+
+impl PointMath for Point3D {
+    fn x(&self) -> f64 {
+        self[0]
+    }
+
+    fn y(&self) -> f64 {
+        self[1]
+    }
+
+    fn z(&self) -> f64 {
+        self[2]
+    }
+
+    fn norm(&self) -> f64 {
+        let mut d2: f64 = 0.0;
+        for v in 0..3 {
+            d2 += self[v].powi(2);
+        }
+        d2.sqrt()
+    }
+
+    fn distance(&self, other: Point3D) -> f64 {
+        euclidean_distance(*self, other)
+    }
+
+    /// Return the dot product of two 3D vectors.
+    fn vdot(&self, other: Point3D) -> f64 {
+        let mut s = 0.0;
+        for i in 0..self.len() {
+            s += self[i] * other[i];
+        }
+
+        s
+    }
+}
+
+pub trait PointsMath {
+    fn vdot(&self, other: &Points) -> f64;
+}
+
+impl PointsMath for Points {
+    fn vdot(&self, other: &Points) -> f64 {
+        let n = self.len();
+        debug_assert!(n == other.len());
+
+        let mut vret = 0.0;
+        for i in 0..n {
+            for j in 0..3 {
+                let vij1 = self[i][j];
+                let vij2 = other[i][j];
+                vret += vij1 * vij2;
+            }
+        }
+
+        vret
+    }
+}
+
+#[test]
+fn test_geometry_trait() {
+    let p1 = [0.0, 0.1, 0.0];
+    let p2 = [0.0, 0.1, 0.0];
+    let x = p1.norm();
+    assert_eq!(x, p1.length());
+
+    assert_eq!(0.1, p1.y());
+
+    let d = p1.distance(p2);
+    assert_relative_eq!(0.0, d, epsilon=1e-4);
+
+    let v1 = [1.0, 2.0, 3.0];
+    let v2 = [3.0, 4.0, 5.0];
+    let d = v1.vdot(v2);
+    assert_relative_eq!(26.0, d, epsilon=1e-4);
+
+    let pts1 = vec![[1.0, 2.0, 3.0], [1.0, 1.0, 1.0]];
+    let pts2 = vec![[3.0, 4.0, 5.0], [1.0, 1.0, 1.0]];
+    let d = pts1.vdot(&pts2);
+    assert_relative_eq!(29.0, d, epsilon=1e-4);
+}
+
 #[inline]
 pub fn euclidean_distance(p1: Point3D, p2: Point3D) -> f64 {
     let mut d2 = 0.0;
