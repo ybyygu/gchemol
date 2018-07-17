@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-07-04 Wed 18:51>
+//       UPDATED:  <2018-07-17 Tue 10:12>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1682,19 +1682,19 @@ fn get_distance_bounds_v2(mol: &Molecule) -> Bounds {
 // 82294367-1b69-4638-a70b-fd8daf02ff3e ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::2351f71f-246f-4193-85c9-7bbe4a9d7587][2351f71f-246f-4193-85c9-7bbe4a9d7587]]
-// force component between two atoms
-fn get_force_between(lij: f64, uij: f64, dij: f64) -> (f64, f64) {
-    let mut force = (lij - dij)/dij;
-    let mut weight = 1.0;
-    if dij >= lij && dij < uij {
-        weight = 0.0;
-    } else if dij < lij {
-        weight = 1.0;
-    } else {
-        weight = 1.0;
-    }
+// the weight between two atoms
+fn get_weight_between(lij: f64, uij: f64, dij: f64) -> f64 {
+    debug_assert!(lij <= uij);
 
-    (force, weight)
+    let weight = if dij >= lij && dij < uij {
+        0.0
+    } else if dij < lij {
+        1.0
+    } else {
+        1.0
+    };
+
+    weight
 }
 
 impl Molecule {
@@ -1711,68 +1711,69 @@ impl Molecule {
 
         let maxcycle = nnodes*100;
         let mut icycle = 0;
-        let ecut = 1.0E-4;
+        let ecut = 1E-4;
 
-        let mut ofxz = 0.0;
+        let mut old_stress = 0.0;
         loop {
-            let mut fxz = 0.0;
+            let mut stress = 0.0;
             for i in 0..nnodes {
                 let node_i = node_indices[i];
                 let mut pi = self.get_atom(node_i).expect("atom i from node_i").position();
-                let mut disp = [0.0; 3];
+                let mut pi_new = [0.0; 3];
                 let mut wijs = vec![];
                 let npairs = (nnodes - 1) as f64;
-                let mut fxzi = 0.0;
+                let mut stress_i = 0.0;
                 for j in 0..nnodes {
+                    // skip self-interaction
                     if i == j {continue};
+
                     let node_j = node_indices[j];
                     let pj = self.get_atom(node_j).expect("atom j from node_j").position();
-                    let dij = euclidean_distance(pi, pj);
-                    let mut bound = [
-                        bounds[&(node_i, node_j)],
-                        bounds[&(node_j, node_i)],
-                    ];
-                    if bound[0] > bound[1] {
-                        bound.swap(0, 1);
-                    }
-                    let lij = bound[0];
-                    let uij = bound[1];
 
-                    let xij = [pi[0] - pj[0], pi[1] - pj[1], pi[2] - pj[2]];
-                    let (eij, wij) = get_force_between(lij, uij, dij);
+                    // current distance
+                    let cur_dij = euclidean_distance(pi, pj);
+
+                    // lower bound and upper bound for pair distance
+                    let lij = bounds[&(node_i, node_j)];
+                    let uij = bounds[&(node_j, node_i)];
+                    let (lij, uij) = (lij.min(uij), uij.max(lij));
+
+                    // ij pair counts twice, so divide the weight
+                    let wij = get_weight_between(lij, uij, cur_dij);
                     let wij = 0.5*wij;
                     wijs.push(wij);
+
+                    // collect position contribution of atom j to atom i
+                    let xij = [pi[0] - pj[0], pi[1] - pj[1], pi[2] - pj[2]];
                     let mut fij = [0.0; 3];
                     for v in 0..3 {
-                        fij[v] = (1.0 - lij/dij)*xij[v];
-                        disp[v] += eij*(pi[v] - pj[v])*wij;
+                        pi_new[v] += wij * (pj[v] + lij / cur_dij * (pi[v] - pj[v]));
+                        fij[v] = (1.0 - lij/cur_dij)*xij[v];
                     }
-                    fxzi += wij*(fij[0]*fij[0] + fij[1]*fij[1] + fij[2]*fij[2]);
+                    stress_i += wij * (cur_dij - lij).powi(2);
                 }
 
-                let mut swij = 0.0;
-                for wij in wijs.iter() {
-                    swij += wij;
-                }
+                // weight sum
+                let swij: f64 = wijs.iter().sum();
 
                 // skip updating node_i if all pair weights are zero
                 if swij.abs() >= 1e-4 {
                     for v in 0..3 {
-                        pi[v] += disp[v]/swij;
+                        pi_new[v] /= swij;
                     }
-                    self.set_position(node_i, pi);
+                    self.set_position(node_i, pi_new);
                 }
-                // println!("{:?}", (i, fxzi, swij));
-                fxz += fxzi;
+                stress += stress_i;
             }
 
-            debug!("cycle: {} energy = {:?}", icycle, fxz);
+            debug!("cycle: {} energy = {:?}", icycle, stress);
+            // println!("cycle: {} energy = {:?}", icycle, stress);
 
-            if fxz.is_nan() {
-                bail!("found invalid number: {:?}", fxz);
+            if stress.is_nan() {
+                bail!("found invalid number: {:?}", stress);
             }
 
-            if fxz < ecut || (fxz - ofxz).abs() < ecut || (fxz - ofxz).abs() / fxz < ecut{
+            if stress < ecut || (stress - old_stress).abs() < ecut || (stress - old_stress).abs() / stress < ecut{
                 break;
             }
 
@@ -1781,12 +1782,11 @@ impl Molecule {
                 break;
             }
 
-            ofxz = fxz;
+            old_stress = stress;
         }
 
         Ok(())
     }
-
 }
 // 2351f71f-246f-4193-85c9-7bbe4a9d7587 ends here
 
