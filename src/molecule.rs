@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-07-17 Tue 10:12>
+//       UPDATED:  <2018-07-18 Wed 17:17>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1555,7 +1555,6 @@ type Bounds = HashMap<(AtomIndex, AtomIndex), f64>;
 // upper-tri for upper bounds
 // lower-tri for lower bounds
 fn get_distance_bounds_v1(mol: &Molecule) -> Bounds {
-    let mut dm = mol.distance_matrix();
     // max distance between two atoms
     let max_rij = 90.0;
 
@@ -1597,7 +1596,7 @@ fn get_distance_bounds_v1(mol: &Molecule) -> Bounds {
             // or set vdw radius as the lower bound if not bonded
             if let Some(nb) = mol.nbonds_between(node_i, node_j) {
                 if nb == 1 {
-                    if dij > bound[1] && dij < max_rij {
+                    if dij > bound[0] && dij < bound[1] {
                         bounds.insert((node_i, node_j), dij);
                         bounds.insert((node_j, node_i), dij);
                     } else {
@@ -1625,6 +1624,9 @@ fn get_distance_bounds_v1(mol: &Molecule) -> Bounds {
                 bounds.insert((node_i, node_j), bound[1]);
                 bounds.insert((node_j, node_i), max_rij);
             }
+            let lij = bounds[&(node_i, node_j)];
+            let uij = bounds[&(node_j, node_i)];
+            // println!("pair: {:3}-{:3}, lij = {:-4.1}, uij = {:-4.1}", node_i.index() + 1, node_j.index() + 1, lij, uij);
         }
     }
 
@@ -1662,22 +1664,6 @@ fn find_rigid_pairs(mol: &Molecule, bounds: &mut Bounds) {
             }
         }
     }
-}
-
-fn get_distance_bounds_v2(mol: &Molecule) -> Bounds {
-    let mut bounds = HashMap::new();
-    for a in mol.atoms() {
-        for b in mol.atoms() {
-            if a.index < b.index {
-                let dij = a.distance(b);
-                let bound = mol.distance_bound(a.index, b.index).unwrap();
-                bounds.insert((a.index, b.index), bound[0]);
-                bounds.insert((b.index, a.index), bound[1]);
-            }
-        }
-    }
-
-    bounds
 }
 // 82294367-1b69-4638-a70b-fd8daf02ff3e ends here
 
@@ -1734,11 +1720,13 @@ impl Molecule {
                     let cur_dij = euclidean_distance(pi, pj);
 
                     // lower bound and upper bound for pair distance
-                    let lij = bounds[&(node_i, node_j)];
-                    let uij = bounds[&(node_j, node_i)];
-                    let (lij, uij) = (lij.min(uij), uij.max(lij));
+                    let lij = if node_i < node_j {bounds[&(node_i, node_j)]} else {bounds[&(node_j, node_i)]};
+                    // let uij = bounds[&(node_j, node_i)];
+                    let uij = if node_i < node_j {bounds[&(node_j, node_i)]} else {bounds[&(node_i, node_j)]};
+                    // let (lij, uij) = (lij.min(uij), uij.max(lij));
 
                     // ij pair counts twice, so divide the weight
+                    // let wij = lij.powi(-4);
                     let wij = get_weight_between(lij, uij, cur_dij);
                     let wij = 0.5*wij;
                     wijs.push(wij);
