@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-07-18 Wed 17:17>
+//       UPDATED:  <2018-07-19 Thu 10:59>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1268,7 +1268,7 @@ impl Molecule {
     }
 
     /// Return the shortest distance numbered in bonds between two atoms
-    /// Return None if them are not connected
+    /// Return None if they are not connected
     pub fn nbonds_between(&self, index1: AtomIndex, index2: AtomIndex) -> Option<usize> {
         let path = algo::astar(&self.graph,
                                index1,
@@ -1277,6 +1277,21 @@ impl Molecule {
                                |_| 0);
         if let Some((n, _)) = path {
             Some(n)
+        } else {
+            None
+        }
+    }
+
+    /// Return the shortest path.
+    /// Return None if them are not connected
+    pub fn path_between(&self, index1: AtomIndex, index2: AtomIndex) -> Option<Vec<AtomIndex>> {
+        let path = algo::astar(&self.graph,
+                               index1,
+                               |finish| finish == index2,
+                               |e| 1,
+                               |_| 0);
+        if let Some((_, p)) = path {
+            Some(p)
         } else {
             None
         }
@@ -1559,14 +1574,13 @@ fn get_distance_bounds_v1(mol: &Molecule) -> Bounds {
     let max_rij = 90.0;
 
     let mut bounds = HashMap::new();
-    let node_indices: Vec<_> = mol.graph.node_indices().collect();
+    let node_indices = mol.sites();
     let nnodes = node_indices.len();
-    for node_i in mol.graph.node_indices() {
-        for node_j in mol.graph.node_indices() {
-            if node_i >= node_j {
-                continue;
-            }
 
+    for i in 0..nnodes {
+        for j in (i+1)..nnodes {
+            let node_i = node_indices[i];
+            let node_j = node_indices[j];
             let atom_i = &mol.graph[node_i];
             let atom_j = &mol.graph[node_j];
 
@@ -1584,86 +1598,46 @@ fn get_distance_bounds_v1(mol: &Molecule) -> Bounds {
             let uij = vrij * 0.8;
             let uij = if uij > crij*1.2 {uij} else {crij*1.2};
 
-            // make sure vdw radius larger than covalent radius (usually it is)
-            let mut bound = [lij, uij];
-            if crij > vrij {
-                bound.swap(0, 1);
-            }
-
+            debug_assert!(lij <= uij);
             let dij = atom_i.distance(atom_j);
             // if i and j is directly bonded
             // set covalent radius as the lower bound
             // or set vdw radius as the lower bound if not bonded
             if let Some(nb) = mol.nbonds_between(node_i, node_j) {
                 if nb == 1 {
-                    if dij > bound[0] && dij < bound[1] {
+                    if dij >= lij && dij < crij*1.2 {
                         bounds.insert((node_i, node_j), dij);
                         bounds.insert((node_j, node_i), dij);
                     } else {
-                        bounds.insert((node_i, node_j), bound[0]);
-                        bounds.insert((node_j, node_i), bound[0]);
+                        bounds.insert((node_i, node_j), lij);
+                        bounds.insert((node_j, node_i), lij);
                     }
                 } else if nb == 2 {
-                    if dij > bound[1] && dij < max_rij {
+                    if dij > uij && dij < max_rij {
                         bounds.insert((node_i, node_j), dij);
                         bounds.insert((node_j, node_i), dij);
                     } else {
-                        bounds.insert((node_i, node_j), bound[1]);
-                        bounds.insert((node_j, node_i), bound[1] + dij);
+                        bounds.insert((node_i, node_j), uij);
+                        bounds.insert((node_j, node_i), uij + dij);
                     }
                 } else {
-                    if dij > bound[1] && dij < max_rij {
+                    if dij > uij && dij < max_rij {
                         bounds.insert((node_i, node_j), dij);
                         bounds.insert((node_j, node_i), max_rij);
                     } else {
-                        bounds.insert((node_i, node_j), bound[1]);
+                        bounds.insert((node_i, node_j), uij);
                         bounds.insert((node_j, node_i), max_rij);
                     }
                 }
             } else {
-                bounds.insert((node_i, node_j), bound[1]);
+                bounds.insert((node_i, node_j), uij);
                 bounds.insert((node_j, node_i), max_rij);
             }
-            let lij = bounds[&(node_i, node_j)];
-            let uij = bounds[&(node_j, node_i)];
             // println!("pair: {:3}-{:3}, lij = {:-4.1}, uij = {:-4.1}", node_i.index() + 1, node_j.index() + 1, lij, uij);
         }
     }
 
     bounds
-}
-
-/// find some pair of atoms belonging to rigid groups
-fn find_rigid_pairs(mol: &Molecule, bounds: &mut Bounds) {
-    for a in mol.atoms() {
-        for b in mol.atoms() {
-            if a.index < b.index {
-                let dij = a.distance(b);
-                let lij = bounds[&(a.index, b.index)];
-                let uij = bounds[&(b.index, a.index)];
-                if let Some(nb) = mol.nbonds_between(a.index, b.index) {
-                    if nb == 1 {
-                        if dij >= lij && dij < uij {
-                            bounds.insert((a.index, b.index), dij);
-                            bounds.insert((b.index, a.index), dij);
-                        } else {
-                            let dij = 0.5*(lij + uij);
-                            bounds.insert((a.index, b.index), dij);
-                            bounds.insert((b.index, a.index), dij);
-                        }
-                    } else if nb == 2 {
-                        if dij >= lij && dij < uij {
-                            bounds.insert((a.index, b.index), dij);
-                            bounds.insert((b.index, a.index), dij);
-                        } else {
-                            bounds.insert((a.index, b.index), lij);
-                            bounds.insert((b.index, a.index), lij);
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 // 82294367-1b69-4638-a70b-fd8daf02ff3e ends here
 
@@ -1692,6 +1666,9 @@ impl Molecule {
     /// Clean up molecule geometry using stress majorization algorithm
     pub fn clean(&mut self) -> Result<()> {
         let bounds = get_distance_bounds_v1(&self);
+        // fix_13_distance(&mut bounds, &self);
+        // let bounds = get_bounds();
+        // print_bounds(&bounds, self.natoms());
         let node_indices: Vec<_> = self.graph.node_indices().collect();
         let nnodes = node_indices.len();
 
