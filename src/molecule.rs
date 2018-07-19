@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-07-19 Thu 10:59>
+//       UPDATED:  <2018-07-19 Thu 11:48>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1679,6 +1679,7 @@ impl Molecule {
         let mut old_stress = 0.0;
         loop {
             let mut stress = 0.0;
+            let mut positions_new = vec![];
             for i in 0..nnodes {
                 let node_i = node_indices[i];
                 let mut pi = self.get_atom(node_i).expect("atom i from node_i").position();
@@ -1721,18 +1722,22 @@ impl Molecule {
                 // weight sum
                 let swij: f64 = wijs.iter().sum();
 
-                // skip updating node_i if all pair weights are zero
-                if swij.abs() >= 1e-4 {
-                    for v in 0..3 {
-                        pi_new[v] /= swij;
-                    }
-                    self.set_position(node_i, pi_new);
+                // FIXME: if all pair weights are zero
+                debug_assert!(swij.abs() >= 1e-4);
+                for v in 0..3 {
+                    pi_new[v] /= swij;
                 }
+                positions_new.push((node_i, pi_new));
                 stress += stress_i;
             }
 
-            debug!("cycle: {} energy = {:?}", icycle, stress);
-            // println!("cycle: {} energy = {:?}", icycle, stress);
+            // debug!("cycle: {} energy = {:?}", icycle, stress);
+            println!("cycle: {} energy = {:?}", icycle, stress);
+
+            // update positions
+            for (node, position) in positions_new {
+                self.set_position(node, position);
+            }
 
             if stress.is_nan() {
                 bail!("found invalid number: {:?}", stress);
