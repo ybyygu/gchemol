@@ -7,13 +7,40 @@ use nalgebra::{
     Rotation3,
 };
 
+pub trait VectorMath {
+    /// Return the norm of 1D vector
+    fn norm(&self) -> f64;
+}
+
+impl VectorMath for [f64] {
+    fn norm(&self) -> f64 {
+        let mut s = 0.0;
+        for &x in self {
+            s += x.powi(2);
+        }
+
+        s.sqrt()
+    }
+}
+
+#[test]
+fn test_vector_math() {
+    let x = vec![0.1, 0.1, 0.1];
+    let x = x.norm();
+    assert_relative_eq!(0.1732, x, epsilon=1e-4);
+}
+
 pub trait PointMath {
+    /// Return 3D vector norm.
     fn norm(&self) -> f64;
 
+    /// Return the distance between two 3D points
     fn distance(&self, other: Point3D) -> f64;
 
+    /// Return the dot product of two 3D vectors.
     fn vdot(&self, other: Point3D) -> f64;
 
+    /// Return the length of vector.
     fn length(&self) -> f64 {
         self.norm()
     }
@@ -61,6 +88,16 @@ impl PointMath for Point3D {
 
 pub trait PointsMath {
     fn vdot(&self, other: &Points) -> f64;
+
+    /// Return the Frobenius norm (matrix norm) defined as the square root of
+    /// the sum of the absolute squares of its elements.
+    fn norm(&self) -> f64;
+
+    /// return the norms of a list of 3D vectors
+    fn norms(&self) -> Vec<f64>;
+
+    /// Return the scaled positions by a constant
+    fn scaled(&self, f: f64) -> Vec<Point3D>;
 }
 
 impl PointsMath for Points {
@@ -78,6 +115,46 @@ impl PointsMath for Points {
         }
 
         vret
+    }
+
+    fn scaled(&self, f: f64) -> Vec<Point3D> {
+        let n = self.len();
+        let mut pts = Vec::with_capacity(n);
+        for i in 0..n {
+            let mut p = [0.0; 3];
+            for j in 0..3 {
+                p[j] = self[i][j] * f;
+            }
+            pts.push(p);
+        }
+        pts
+    }
+
+    fn norm(&self) -> f64 {
+        let mut d2: f64 = 0.0;
+        for i in 0..self.len() {
+            for j in 0..3 {
+                d2 += self[i][j].powi(2);
+            }
+        }
+        d2.sqrt()
+    }
+
+    fn norms(&self) -> Vec<f64> {
+        let n = self.len();
+        let mut norms = Vec::with_capacity(n);
+
+        for i in 0..n {
+            let mut l = 0.0;
+            for j in 0..3 {
+                let vij = self[i][j];
+                l += vij.powi(2);
+            }
+
+            norms.push(l.sqrt());
+        }
+
+        norms
     }
 }
 
@@ -102,6 +179,9 @@ fn test_geometry_trait() {
     let pts2 = vec![[3.0, 4.0, 5.0], [1.0, 1.0, 1.0]];
     let d = pts1.vdot(&pts2);
     assert_relative_eq!(29.0, d, epsilon=1e-4);
+
+    let n = pts1.norm();
+    assert_relative_eq!(4.123126, n, epsilon=1e-4);
 }
 
 #[inline]
