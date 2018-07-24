@@ -8,11 +8,13 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-07-03 Tue 14:07>
+//       UPDATED:  <2018-07-24 Tue 09:56>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::53cbd3c0-e164-4bad-b535-6fd6df916650][53cbd3c0-e164-4bad-b535-6fd6df916650]]
+#![feature(test)]
+extern crate test;
 extern crate petgraph;
 #[macro_use] extern crate nom;
 #[macro_use] extern crate indexmap;
