@@ -1,4 +1,6 @@
 // [[file:~/Workspace/Programming/gchemol/geometry.note::30c89b1c-a482-40a2-9d1e-02731f6b006b][30c89b1c-a482-40a2-9d1e-02731f6b006b]]
+use quicli::prelude::*;
+
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
 pub use test::stats::Stats;
 extern crate nalgebra;
@@ -56,6 +58,12 @@ pub trait VecFloat3Math {
 
     /// Convert to 3xN dynamic matrix
     fn to_dmatrix(&self) -> Vector3fVec;
+
+    /// Return the center of geometry (COG)
+    fn center_of_geometry(&self) -> Position;
+
+    /// Return weighted center of geometry (COM)
+    fn center_of_mass(&self, masses: &[f64]) -> Result<Position>;
 }
 
 // impl VecFloat3Math for Vec<[f64; 3]> {
@@ -105,6 +113,16 @@ impl VecFloat3Math for [[f64; 3]] {
         let r = self.ravel();
         Vector3fVec::from_column_slice(self.len(), &r)
     }
+
+    fn center_of_mass(&self, masses: &[f64]) -> Result<Position> {
+        weighted_center_of_geometry(&self, &masses)
+    }
+
+    fn center_of_geometry(&self) -> Position {
+        let n = self.len();
+        let weights: Vec<_> = (0..n).map(|_ |1.0).collect();
+        weighted_center_of_geometry(&self, &weights).expect("center of geometry")
+    }
 }
 
 #[test]
@@ -130,5 +148,57 @@ fn test_vec_math() {
 
     let x = positions.norms().max();
     assert_relative_eq!(1.8704, x, epsilon=1e-4);
+}
+
+/// Return the geometric center
+pub fn weighted_center_of_geometry(positions: &[[f64; 3]], weights: &[f64]) -> Result<Vector3f> {
+    let npts = positions.len();
+    let mut pc = [0.0; 3];
+
+    // sanity check
+    if npts != weights.len() {
+        bail!("size inconsistent!");
+    }
+
+    // deviding by zero?
+    let mut wsum = weights.sum();
+    if wsum < 1e-6 {
+        warn!("weird weight sum: {:?}", wsum);
+    }
+
+    for i in 0..npts {
+        for j in 0..3 {
+            pc[j] += weights[i] * positions[i][j];
+        }
+    }
+
+    for i in 0..3 {
+        pc[i] /= wsum;
+    }
+
+    Ok(Vector3f::from(pc))
+}
+
+#[test]
+fn test_weighted_center_of_geometry() {
+    // points
+    let frag = vec![
+        [ -2.803, -15.373, 24.556],
+        [  0.893, -16.062, 25.147],
+        [  1.368, -12.371, 25.885],
+        [ -1.651, -12.153, 28.177],
+        [ -0.440, -15.218, 30.068],
+        [  2.551, -13.273, 31.372],
+        [  0.105, -11.330, 33.567],
+    ];
+
+    // weights
+    let natoms = frag.len();
+    let masses: Vec<_> = (0..natoms).map(|v| v as f64 + 1.0).collect();
+
+    // expected results
+    let expected = Vector3f::new(0.3687142857142857, -13.15214285714286, 29.955499999999997);
+    let pc = frag.center_of_mass(&masses).expect("geometry: com");
+    assert_relative_eq!(pc, expected, epsilon=1e-6);
 }
 // 30c89b1c-a482-40a2-9d1e-02731f6b006b ends here
