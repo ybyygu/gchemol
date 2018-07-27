@@ -8,6 +8,7 @@ use nalgebra as na;
 
 /// Vector in 3D space
 pub type Vector3f = na::Vector3<f64>;
+pub type Matrix3f = na::Matrix3<f64>;
 
 /// 3xN matrix storing a list of 3D vectors
 pub type Vector3fVec = na::Matrix<f64, na::U3, na::Dynamic, na::MatrixVec<f64, na::U3, na::Dynamic>>;

@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/geometry.note::1871ed71-da12-49da-967c-5e2ecca97b05][1871ed71-da12-49da-967c-5e2ecca97b05]]
+// [[file:~/Workspace/Programming/gchemol/geometry.note::b4b0578c-28cb-4e62-8037-b715c427ec31][b4b0578c-28cb-4e62-8037-b715c427ec31]]
 // Author of Rust Port:
 //                 Wenping Guo
 //                 Synefuels China Technology Co.Ltd.
@@ -89,32 +89,36 @@
 //    2012/07/26      Minor changes to comments and main.c, more info (v.1.4)
 //    2016/07/13      Fixed normalization of RMSD in FastCalcRMSDAndRotation(), should divide by
 //                    sum of weights (thanks to Geoff Skillman)
+// b4b0578c-28cb-4e62-8037-b715c427ec31 ends here
 
+// [[file:~/Workspace/Programming/gchemol/geometry.note::1871ed71-da12-49da-967c-5e2ecca97b05][1871ed71-da12-49da-967c-5e2ecca97b05]]
 use super::*;
-use quicli::prelude::*;
 
 /// Calculate the inner product of two structures.
 ///
 /// Parameters
 /// ----------
 /// coords1: reference structure
+/// center1: weighted center of reference structure
 /// coords2: candidate structure
+/// center2: weighted center of candidate structure
 /// weight : the weight array
 ///
 /// Notes
 /// -----
-/// 1. You MUST center the structures, coords1 and coords2, before calling this function.
-/// 2. Coordinates are stored as Nx3 arrays instead of 3xN as in original implementation
-/// 3. Will *panic* if the length of weights is smaller than the coordinates
+/// 1. Coordinates are stored as Nx3 arrays instead of 3xN as in original implementation
+/// 2. Will *panic* if the length of weights is smaller than the coordinates
 ///
 /// Return
 /// ------
 /// (arr_a, E0): inner product array and E0 (inputs for fast_calc_rmsd_and_rotation)
 ///
-pub fn inner_product
+fn inner_product
     (
         coords1: &[[f64; 3]],
+        center1: &[f64; 3],
         coords2: &[[f64; 3]],
+        center2: &[f64; 3],
         weights: Option<&[f64]>,
     ) -> ([f64; 9], f64)
 {
@@ -129,15 +133,20 @@ pub fn inner_product
     for i in 0..natoms {
         // take the weight if any, or set it to 1.0
         let wi = weights.map_or_else(|| 1.0, |v| v[i]);
-        let x1 = wi * coords1[i][0];
-        let y1 = wi * coords1[i][1];
-        let z1 = wi * coords1[i][2];
 
-        g1 += x1 * coords1[i][0] + y1 * coords1[i][1] + z1 * coords1[i][2];
+        let cx1 = coords1[i][0] - center1[0];
+        let cy1 = coords1[i][1] - center1[1];
+        let cz1 = coords1[i][2] - center1[2];
 
-        let x2 = coords2[i][0];
-        let y2 = coords2[i][1];
-        let z2 = coords2[i][2];
+        let x1 = wi * cx1;
+        let y1 = wi * cy1;
+        let z1 = wi * cz1;
+
+        g1 += x1 * cx1 + y1 * cy1 + z1 * cz1;
+
+        let x2 = coords2[i][0] - center2[0];
+        let y2 = coords2[i][1] - center2[1];
+        let z2 = coords2[i][2] - center2[2];
 
         g2 += wi * (x2.powi(2) + y2.powi(2) + z2.powi(2));
 
@@ -174,7 +183,7 @@ pub fn inner_product
 //        Return:
 //                only the rmsd was calculated if < 0
 //                both the RMSD & rotational matrix calculated if > 0
-pub fn fast_calc_rmsd_and_rotation
+fn fast_calc_rmsd_and_rotation
     (
         mat_a: &[f64; 9],
         E0: f64,
@@ -295,11 +304,11 @@ pub fn fast_calc_rmsd_and_rotation
     let a43 = a34;
     let a44 = szz - sxxpsyy - mx_eigenv;
     let a3344_4334 = a33 * a44 - a43 * a34;
-    let a3244_4234 = a32 * a44 - a42*a34;
+    let a3244_4234 = a32 * a44 - a42 * a34;
     let a3243_4233 = a32 * a43 - a42 * a33;
-    let a3143_4133 = a31 * a43 - a41*a33;
+    let a3143_4133 = a31 * a43 - a41 * a33;
     let a3144_4134 = a31 * a44 - a41 * a34;
-    let a3142_4132 = a31 * a42 - a41*a32;
+    let a3142_4132 = a31 * a42 - a41 * a32;
     let mut q1 =  a22 * a3344_4334 - a23 * a3244_4234 + a24 * a3243_4233;
     let mut q2 = -a21 * a3344_4334 + a23 * a3144_4134 - a24 * a3143_4133;
     let mut q3 =  a21 * a3244_4234 - a22 * a3144_4134 + a24 * a3142_4132;
@@ -393,7 +402,7 @@ pub fn fast_calc_rmsd_and_rotation
     )
 }
 
-pub fn center_coords(coords: &mut Vec<[f64; 3]>, weights: Option<&[f64]>) {
+fn get_center_of_coords(coords: &[[f64; 3]], weights: Option<&[f64]>) -> [f64; 3] {
     let mut xsum = 0.0;
     let mut ysum = 0.0;
     let mut zsum = 0.0;
@@ -413,11 +422,17 @@ pub fn center_coords(coords: &mut Vec<[f64; 3]>, weights: Option<&[f64]>) {
     ysum /= wsum;
     zsum /= wsum;
 
-    for i in 0..coords.len() {
-        coords[i][0] -= xsum;
-        coords[i][1] -= ysum;
-        coords[i][2] -= zsum;
-    }
+
+    [
+        xsum,
+        ysum,
+        zsum
+    ]
+    // for i in 0..coords.len() {
+    //     coords[i][0] -= xsum;
+    //     coords[i][1] -= ysum;
+    //     coords[i][2] -= zsum;
+    // }
 }
 
 // Calculate the RMSD & rotational matrix.
@@ -433,27 +448,38 @@ pub fn center_coords(coords: &mut Vec<[f64; 3]>, weights: Option<&[f64]>) {
 // RMSD value
 // Superposition coords2 onto coords1 -- in other words, coords2 is rotated, coords1 is held fixed
 pub fn calc_rmsd_rotational_matrix(
-    coords1: &mut Vec<[f64; 3]>,
-    coords2: &mut Vec<[f64; 3]>,
-    weights: Option<&[f64]>) -> Result<(f64, Option<[f64; 9]>)>
+    coords1: &[[f64; 3]],
+    coords2: &[[f64; 3]],
+    weights: Option<&[f64]>) -> (f64, [f64; 3], Option<[f64; 9]>)
 {
-    // center the structures -- if precentered you can omit this step
-    center_coords(coords1, weights);
-    center_coords(coords2, weights);
+    // calculate the centers of the structures
+    let center1 = get_center_of_coords(coords1, weights);
+    let center2 = get_center_of_coords(coords2, weights);
+    let translation = [
+        center1[0] - center2[0],
+        center1[1] - center2[1],
+        center1[2] - center2[2]
+    ];
 
     // the sum of weights
     let n = coords1.len();
     let wsum = weights.map_or_else(|| n as f64, |v| v.iter().sum());
 
     // calculate the (weighted) inner product of two structures
-    let (mat_a, E0) = inner_product(&coords1, &coords2, weights);
+    let (mat_a, E0) = inner_product(&coords1, &center1, &coords2, &center2, weights);
 
     // calculate the RMSD & rotational matrix
-    let x = fast_calc_rmsd_and_rotation(&mat_a, E0, wsum, -1.0);
+    let (rmsd, rot) = fast_calc_rmsd_and_rotation(&mat_a, E0, wsum, -1.0);
 
-    Ok(x)
+    (
+        rmsd,
+        translation,
+        rot,
+    )
 }
+// 1871ed71-da12-49da-967c-5e2ecca97b05 ends here
 
+// [[file:~/Workspace/Programming/gchemol/geometry.note::338e385d-377d-4fe0-906b-a369025015f5][338e385d-377d-4fe0-906b-a369025015f5]]
 /// test data provided in main.c
 pub fn prepare_test_data() -> (Vec<[f64; 3]>, Vec<[f64; 3]>, Vec<f64>) {
     let mut frag_a = vec![
@@ -482,30 +508,9 @@ pub fn prepare_test_data() -> (Vec<[f64; 3]>, Vec<[f64; 3]>, Vec<f64>) {
 }
 
 #[test]
-fn test_center_coords() {
-    let (mut frag, _, weights) = prepare_test_data();
-
-    let frag_expected = vec![
-        [-3.172,  -2.221,  -5.400],
-        [ 0.524,  -2.910,  -4.809],
-        [ 0.999,   0.781,  -4.071],
-        [-2.020,   0.999,  -1.779],
-        [-0.809,  -2.066,   0.112],
-        [ 2.182,  -0.121,   1.416],
-        [-0.264,   1.822,   3.611],
-    ];
-    center_coords(&mut frag, Some(&weights));
-    for i in 0..frag.len() {
-        for j in 0..3 {
-            assert_relative_eq!(frag_expected[i][j], frag[i][j], epsilon=1e-3);
-        }
-    }
-}
-
-#[test]
 fn test_qcprot() {
     let (mut frag_a, mut frag_b, weights) = prepare_test_data();
-    let (rmsd, rot) = calc_rmsd_rotational_matrix(&mut frag_a, &mut frag_b, Some(&weights)).expect("qcprot rot");
+    let (rmsd, trans, rot) = calc_rmsd_rotational_matrix(&mut frag_a, &mut frag_b, Some(&weights));
     assert_relative_eq!(0.745016, rmsd, epsilon=1e-3);
 
     let rot_expected = [
@@ -519,4 +524,4 @@ fn test_qcprot() {
         assert_relative_eq!(rot_expected[i], rot[i], epsilon=1e-4);
     }
 }
-// 1871ed71-da12-49da-967c-5e2ecca97b05 ends here
+// 338e385d-377d-4fe0-906b-a369025015f5 ends here
