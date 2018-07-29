@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-07-19 Thu 11:48>
+//       UPDATED:  <2018-07-29 Sun 16:22>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -1553,16 +1553,6 @@ impl Molecule {
 }
 // 5916eec2-ec7e-4525-bc6c-fade1d250a16 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::e2130a32-e39f-4b7b-9014-515f18ff5f48][e2130a32-e39f-4b7b-9014-515f18ff5f48]]
-impl Molecule {
-    /// Interpolate between this structure and end_structure. Useful for
-    /// construction of NEB inputs.
-    fn interpolate(&self, end_mol: &Molecule, nimages: usize) -> Vec<Molecule> {
-        unimplemented!()
-    }
-}
-// e2130a32-e39f-4b7b-9014-515f18ff5f48 ends here
-
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::82294367-1b69-4638-a70b-fd8daf02ff3e][82294367-1b69-4638-a70b-fd8daf02ff3e]]
 type Bounds = HashMap<(AtomIndex, AtomIndex), f64>;
 
@@ -1731,8 +1721,8 @@ impl Molecule {
                 stress += stress_i;
             }
 
-            // debug!("cycle: {} energy = {:?}", icycle, stress);
-            println!("cycle: {} energy = {:?}", icycle, stress);
+            debug!("cycle: {} energy = {:?}", icycle, stress);
+            // println!("cycle: {} energy = {:?}", icycle, stress);
 
             // update positions
             for (node, position) in positions_new {

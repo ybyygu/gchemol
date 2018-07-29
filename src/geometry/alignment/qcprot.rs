@@ -455,11 +455,6 @@ pub fn calc_rmsd_rotational_matrix(
     // calculate the centers of the structures
     let center1 = get_center_of_coords(coords1, weights);
     let center2 = get_center_of_coords(coords2, weights);
-    let translation = [
-        center1[0] - center2[0],
-        center1[1] - center2[1],
-        center1[2] - center2[2]
-    ];
 
     // the sum of weights
     let n = coords1.len();
@@ -470,6 +465,24 @@ pub fn calc_rmsd_rotational_matrix(
 
     // calculate the RMSD & rotational matrix
     let (rmsd, rot) = fast_calc_rmsd_and_rotation(&mat_a, E0, wsum, -1.0);
+
+    // rotated center2
+    let mut rotc = [0.0; 3];
+    let rotc = if let Some(r) = rot {
+        [
+            r[0] * center2[0] + r[1] * center2[1] + r[2] * center2[2],
+            r[3] * center2[0] + r[4] * center2[1] + r[5] * center2[2],
+            r[6] * center2[0] + r[7] * center2[1] + r[8] * center2[2],
+        ]
+    } else {
+        center2.clone()
+    };
+
+    let translation = [
+        center1[0] - rotc[0],
+        center1[1] - rotc[1],
+        center1[2] - rotc[2]
+    ];
 
     (
         rmsd,
