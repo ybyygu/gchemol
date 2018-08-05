@@ -1,7 +1,7 @@
 # [[file:~/Workspace/Programming/gchemol/gchemol.note::c45d1413-12b8-471e-b060-da682339ad4b][c45d1413-12b8-471e-b060-da682339ad4b]]
 [package]
 name = "gchemol"
-version = "0.0.16"
+version = "0.0.17"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]

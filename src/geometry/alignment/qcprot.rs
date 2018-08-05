@@ -92,7 +92,7 @@
 // b4b0578c-28cb-4e62-8037-b715c427ec31 ends here
 
 // [[file:~/Workspace/Programming/gchemol/geometry.note::1871ed71-da12-49da-967c-5e2ecca97b05][1871ed71-da12-49da-967c-5e2ecca97b05]]
-use super::*;
+use quicli::prelude::Result;
 
 /// Calculate the inner product of two structures.
 ///
@@ -273,7 +273,7 @@ fn fast_calc_rmsd_and_rotation
         }
     }
     if icycle >= 50 {
-        warn!("More than {} iterations needed!", icycle);
+        eprintln!("More than {} iterations needed!", icycle);
     }
 
     // the fabs() is to guard against extremely small, but *negative* numbers

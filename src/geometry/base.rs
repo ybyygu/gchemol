@@ -1,5 +1,5 @@
 // [[file:~/Workspace/Programming/gchemol/geometry.note::30c89b1c-a482-40a2-9d1e-02731f6b006b][30c89b1c-a482-40a2-9d1e-02731f6b006b]]
-use quicli::prelude::*;
+pub use quicli::prelude::*;
 
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
 pub use test::stats::Stats;
@@ -164,7 +164,7 @@ pub fn weighted_center_of_geometry(positions: &[[f64; 3]], weights: &[f64]) -> R
     // deviding by zero?
     let mut wsum = weights.sum();
     if wsum < 1e-6 {
-        warn!("weird weight sum: {:?}", wsum);
+        eprintln!("weird weight sum: {:?}", wsum);
     }
 
     for i in 0..npts {

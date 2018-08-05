@@ -1,8 +1,7 @@
 // [[file:~/Workspace/Programming/gchemol/geometry.note::0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777][0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777]]
-use quicli::prelude::*;
+use super::*;
 
 use nalgebra as na;
-use super::*;
 
 type Rotation3f = na::Rotation3<f64>;
 
