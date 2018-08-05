@@ -14,7 +14,7 @@ indexmap = {version=">=1.0.0", features=["serde-1"]}
 serde = "*"
 serde_json = "*"
 serde_derive = "1.0"
-handlebars = "0.32.3"
+handlebars = ">=1.0.0"
 itertools = "*"
 quicli = "*"
 rand = ">=0.5"

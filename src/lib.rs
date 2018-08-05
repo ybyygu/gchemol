@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-07-29 Sun 16:21>
+//       UPDATED:  <2018-08-05 Sun 17:07>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -26,7 +26,7 @@ extern crate serde;
 #[macro_use] extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 extern crate itertools;
-extern crate handlebars;
+#[macro_use] extern crate handlebars;
 #[macro_use] extern crate quicli;
 
 pub type Point3D = [f64; 3];

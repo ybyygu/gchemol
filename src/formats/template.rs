@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::6b59958f-7e56-4b16-b02a-cc01e5de3da8][6b59958f-7e56-4b16-b02a-cc01e5de3da8]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::6b59958f-7e56-4b16-b02a-cc01e5de3da8][6b59958f-7e56-4b16-b02a-cc01e5de3da8]]
 use serde_json;
 use serde_derive;
 use indexmap::IndexMap;
@@ -15,12 +15,15 @@ use handlebars::{
     Handlebars,
     Helper,
     HelperResult,
+    Context,
+    Output,
     RenderContext,
     RenderError
 };
 
+// https://docs.rs/handlebars/1.0.0/handlebars/trait.HelperDef.html
 // define a helper for formatting string or number
-fn format(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
+fn format(h: &Helper, _: &Handlebars, _: &Context, rc: &mut RenderContext, out: &mut Output) -> HelperResult {
     // get positional parameter from helper or throw an error
     let param = h.param(0).ok_or(RenderError::new("Param 0 is required for format helper."))?;
 
@@ -48,7 +51,7 @@ fn format(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
         } else {
             format!("{:width$}", v, width=width)
         };
-        rc.writer.write(rendered.into_bytes().as_ref())?;
+        out.write(rendered.as_ref())?;
 
     // format number
     } else if param.value().is_number() || param.value().is_f64() {
@@ -68,7 +71,7 @@ fn format(h: &Helper, _: &Handlebars, rc: &mut RenderContext) -> HelperResult {
         } else {
             format!("{:-width$.prec$}", num, width=width, prec=prec)
         };
-        rc.writer.write(rendered.into_bytes().as_ref())?;
+        out.write(rendered.as_ref())?;
     } else {
         return Err(RenderError::new("Possible type for param 0: string or number"));
     }
@@ -237,6 +240,6 @@ fn test_template_render() {
     let mol = &mols[0];
 
     let template = io::read_file("tests/files/templates/xyz.hbs").expect("template xyz.hbs");
-    let x = render_molecule_with(&mol, &template);
+    let x = render_molecule_with(&mol, &template).unwrap();
 }
 // 6b59958f-7e56-4b16-b02a-cc01e5de3da8 ends here
