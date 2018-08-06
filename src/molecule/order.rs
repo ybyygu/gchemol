@@ -1,5 +1,20 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a762197d-df95-433c-8499-8148d0241a9f][a762197d-df95-433c-8499-8148d0241a9f]]
 use super::*;
+use std::cmp::Reverse;
+
+/// reversely sort atoms by atom numbers, but preserves their insertion order
+/// for atoms with the same element type
+fn rev_sort_atoms_by_element(mol: &Molecule) -> Vec<(usize, AtomIndex)> {
+    let numbers = mol.numbers();
+    let sites = mol.sites();
+
+    let mut pairs: Vec<_> = numbers.into_iter().zip(sites.into_iter()).collect();
+    pairs.sort_by_key(|&ns| (ns.0, Reverse(ns.1)));
+    // hydrogen last
+    pairs.reverse();
+
+    pairs
+}
 
 impl Molecule {
     // FIXME: keep or remove?
@@ -14,22 +29,13 @@ impl Molecule {
 
     /// Return a new molecule with all atoms sorted by element number (hydrogen last)
     pub fn sorted(&self) -> Molecule {
-        use std::cmp::Reverse;
-
         let title = format!("sorted {}", self.title());
         let mut mol = Molecule::new(&title);
 
-        // sort atoms by atom numbers, but preserves their insertion order for
-        // atoms with the same element type
-        let numbers = self.numbers();
-        let sites = self.sites();
-        let mut pairs: Vec<_> = numbers.iter().zip(sites.iter()).collect();
-        pairs.sort_by_key(|&ns| (ns.0, Reverse(ns.1)));
-        // hydrogen last
-        pairs.reverse();
+        let pairs = rev_sort_atoms_by_element(&self);
 
         let mut mapping = HashMap::with_capacity(pairs.len());
-        for (_, &n) in pairs {
+        for (_, n) in pairs {
             let a = self.get_atom(n).expect("sorted: pairs");
             let new_n = mol.add_atom(a.clone());
             mapping.insert(n, new_n);
@@ -67,3 +73,27 @@ fn test_molecule_sorted() {
     assert_eq!(6, numbers[3]);
 }
 // a762197d-df95-433c-8499-8148d0241a9f ends here
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::e06ad932-0eef-4d99-beac-c43c4e83bc63][e06ad932-0eef-4d99-beac-c43c4e83bc63]]
+impl Molecule {
+    /// Test if other molecule suitable for matching.
+    pub fn matchable(&self, other: &Molecule) -> bool {
+        // The two molecules must contain the same numbers of atoms of each
+        // element type.
+        if self.natoms() == other.natoms() {
+            let reduced_symbols1 = self.reduced_symbols();
+            let reduced_symbols2 = other.reduced_symbols();
+            reduced_symbols1 == reduced_symbols2
+        } else {
+            false
+        }
+    }
+}
+
+#[test]
+fn test_molecule_match() {
+    let mol = Molecule::from_file("tests/files/mol2/alanine-gv.mol2").expect("mol2 for reorder");
+    let mol_sorted = mol.sorted();
+    assert!(mol.matchable(&mol_sorted));
+}
+// e06ad932-0eef-4d99-beac-c43c4e83bc63 ends here
