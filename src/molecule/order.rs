@@ -14,13 +14,18 @@ impl Molecule {
 
     /// Return a new molecule with all atoms sorted by element number (hydrogen last)
     pub fn sorted(&self) -> Molecule {
+        use std::cmp::Reverse;
+
         let title = format!("sorted {}", self.title());
         let mut mol = Molecule::new(&title);
 
+        // sort atoms by atom numbers, but preserves their insertion order for
+        // atoms with the same element type
         let numbers = self.numbers();
         let sites = self.sites();
         let mut pairs: Vec<_> = numbers.iter().zip(sites.iter()).collect();
-        pairs.sort();
+        pairs.sort_by_key(|&ns| (ns.0, Reverse(ns.1)));
+        // hydrogen last
         pairs.reverse();
 
         let mut mapping = HashMap::with_capacity(pairs.len());

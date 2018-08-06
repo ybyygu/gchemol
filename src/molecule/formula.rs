@@ -1,3 +1,11 @@
+// formula.rs
+// :PROPERTIES:
+// :header-args: :tangle src/molecule/formula.rs
+// :END:
+
+// Molecule to chemical formula
+// #+name: ddf54b1b-6bda-496a-8444-b9762645cc94
+
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::ddf54b1b-6bda-496a-8444-b9762645cc94][ddf54b1b-6bda-496a-8444-b9762645cc94]]
 use super::*;
 use std::iter::IntoIterator;

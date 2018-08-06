@@ -2,6 +2,8 @@
 // :PROPERTIES:
 // :header-args: :tangle src/molecule/fragment.rs
 // :END:
+
+// Split molecule into fragments based on bonding connectivity.
 // #+name: f0258648-03f4-41c9-949e-f3677c3b44bc
 
 use super::*;

@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-08-06 Mon 11:03>
+//       UPDATED:  <2018-08-06 Mon 11:35>
 //===============================================================================#
 
 use nalgebra::{
@@ -271,40 +271,6 @@ impl Lattice {
 }
 // b17e625d-352f-419e-9d10-a84fcdb9ff07 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::ab071843-5a26-4f16-9068-17da002d5a10][ab071843-5a26-4f16-9068-17da002d5a10]]
-impl Molecule {
-    /// Return fractional coordinates relative to unit cell.
-    pub fn scaled_positions(&self) -> Option<Vec<[f64; 3]>> {
-        if let Some(mut lat) = self.lattice {
-            let mut fxyzs = vec![];
-            for a in self.atoms() {
-                let xyz = a.position();
-                let fxyz = lat.to_frac(xyz);
-                fxyzs.push(fxyz)
-            }
-            Some(fxyzs)
-        } else {
-            None
-        }
-    }
-
-    /// Set positions relative to unit cell.
-    pub fn set_scaled_positions(&mut self, scaled: &[[f64; 3]]) -> Result<()> {
-        if let Some(mut lat) = self.lattice {
-            let mut positions = vec![];
-            for &p in scaled {
-                let xyz = lat.to_cart(p);
-                positions.push(p);
-            }
-
-            self.set_positions(positions)
-        } else {
-            bail!("cannot set scaled positions for aperiodic structure")
-        }
-    }
-}
-// ab071843-5a26-4f16-9068-17da002d5a10 ends here
-
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::83cff231-cc63-4077-b07e-a26a2c2b906d][83cff231-cc63-4077-b07e-a26a2c2b906d]]
 use std::f64;
 
@@ -420,6 +386,36 @@ impl Molecule {
     /// Unbuild current crystal structure leaving a nonperiodic structure
     pub fn unbuild_crystal(&mut self) {
         self.lattice = None
+    }
+
+    /// Return fractional coordinates relative to unit cell.
+    pub fn scaled_positions(&self) -> Option<Vec<[f64; 3]>> {
+        if let Some(mut lat) = self.lattice {
+            let mut fxyzs = vec![];
+            for a in self.atoms() {
+                let xyz = a.position();
+                let fxyz = lat.to_frac(xyz);
+                fxyzs.push(fxyz)
+            }
+            Some(fxyzs)
+        } else {
+            None
+        }
+    }
+
+    /// Set positions relative to unit cell.
+    pub fn set_scaled_positions(&mut self, scaled: &[[f64; 3]]) -> Result<()> {
+        if let Some(mut lat) = self.lattice {
+            let mut positions = vec![];
+            for &p in scaled {
+                let xyz = lat.to_cart(p);
+                positions.push(p);
+            }
+
+            self.set_positions(positions)
+        } else {
+            bail!("cannot set scaled positions for aperiodic structure")
+        }
     }
 }
 // 5754ca07-a93d-47e5-8256-c7236777b2ee ends here
