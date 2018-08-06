@@ -6,7 +6,9 @@ use nalgebra as na;
 type Rotation3f = na::Rotation3<f64>;
 
 mod qcprot;
+// 0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777 ends here
 
+// [[file:~/Workspace/Programming/gchemol/geometry.note::ec9ee4ce-4967-4c41-bb0c-a823981b7631][ec9ee4ce-4967-4c41-bb0c-a823981b7631]]
 /// The result of alignment defining how to superimpose.
 #[derive(Clone, Debug)]
 pub struct Superposition {
@@ -75,7 +77,9 @@ impl<'a> Alignment<'a> {
         Ok(sp)
     }
 }
+// ec9ee4ce-4967-4c41-bb0c-a823981b7631 ends here
 
+// [[file:~/Workspace/Programming/gchemol/geometry.note::128fc758-e836-41df-a94e-e90580bb73e3][128fc758-e836-41df-a94e-e90580bb73e3]]
 #[test]
 fn test_alignment() {
     // fragment a
@@ -117,4 +121,4 @@ fn test_alignment2() {
     let new = sp.apply(&candidate);
     assert_relative_eq!(reference.to_dmatrix(), new.to_dmatrix(), epsilon=1e-3);
 }
-// 0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777 ends here
+// 128fc758-e836-41df-a94e-e90580bb73e3 ends here
