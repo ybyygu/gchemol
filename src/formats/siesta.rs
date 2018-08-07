@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::cb1bceac-b835-44db-b09b-2944a6a31b32][cb1bceac-b835-44db-b09b-2944a6a31b32]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::cb1bceac-b835-44db-b09b-2944a6a31b32][cb1bceac-b835-44db-b09b-2944a6a31b32]]
 use super::*;
 use indexmap;
 
@@ -85,6 +85,6 @@ impl ChemFileLike for FdfFile {
 #[ignore]
 fn test_formats_fdf() {
     let mols = io::read("tests/files/mol2/arginyl-ds.mol2").unwrap();
-    io::write("/tmp/a.fdf", &mols);
+    io::write("/tmp/a.fdf", &mols).unwrap();
 }
 // cb1bceac-b835-44db-b09b-2944a6a31b32 ends here

@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::b42aeb90-44d6-4404-b19c-2c33bc0e18ff][b42aeb90-44d6-4404-b19c-2c33bc0e18ff]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::b42aeb90-44d6-4404-b19c-2c33bc0e18ff][b42aeb90-44d6-4404-b19c-2c33bc0e18ff]]
 use indexmap;
 use super::*;
 
@@ -134,6 +134,6 @@ impl ChemFileLike for GulpInputFile {
 #[ignore]
 fn test_formats_gin() {
     let mols = io::read("tests/files/mol2/arginyl-ds.mol2").unwrap();
-    io::write("/tmp/a.gin", &mols);
+    io::write("/tmp/a.gin", &mols).unwrap();
 }
 // b42aeb90-44d6-4404-b19c-2c33bc0e18ff ends here

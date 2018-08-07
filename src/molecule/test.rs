@@ -77,7 +77,7 @@ fn test_molecule_scaled_position() {
                  [ 0.38461882,  0.68391421,  0.22795131],
                  [ 0.37458942,  0.74128686,  0.24842385]].to_vec();
 
-    mol.set_scaled_positions(&fxyzs);
+    mol.set_scaled_positions(&fxyzs).unwrap();
     let fxyzs2 = mol.scaled_positions().unwrap();
     assert_eq!(fxyzs, fxyzs2);
 }
@@ -94,7 +94,7 @@ fn test_molecule_other() {
                      [-0.54538244, -0.38325741,  0.0081889 ],
                      [-0.54536403,  1.12995078, -0.8654626 ],
                      [-1.97203687,  0.62556577,  0.0081889 ]];
-    mol.set_positions(positions.to_vec());
+    mol.set_positions(positions.to_vec()).unwrap();
     let a = mol.get_atom(0).expect("failed to get atom with index 0");
     assert_eq!(a.position()[0], -0.90203687);
 

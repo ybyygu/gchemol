@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::a05dc011-24db-4b5c-8ae8-502d39007444][a05dc011-24db-4b5c-8ae8-502d39007444]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::a05dc011-24db-4b5c-8ae8-502d39007444][a05dc011-24db-4b5c-8ae8-502d39007444]]
 use super::*;
 
 /// Accelrys/MSI Biosym/Insight II CAR format
@@ -50,16 +50,16 @@ impl ChemFileLike for CarFile {
 #[ignore]
 fn test_formats_car() {
     let mols = io::read("tests/files/mol2/arginyl-ds.mol2").unwrap();
-    io::write("/tmp/a.car", &mols);
+    io::write("/tmp/a.car", &mols).unwrap();
 }
 // a05dc011-24db-4b5c-8ae8-502d39007444 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::78da2e68-530b-4b61-9fc8-6b0b08c2bc6e][78da2e68-530b-4b61-9fc8-6b0b08c2bc6e]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::78da2e68-530b-4b61-9fc8-6b0b08c2bc6e][78da2e68-530b-4b61-9fc8-6b0b08c2bc6e]]
 /// Accelrys/XSD input format
 pub struct XsdFile();
 // 78da2e68-530b-4b61-9fc8-6b0b08c2bc6e ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::a2072561-bbcd-4fef-97f6-8fc67a23846a][a2072561-bbcd-4fef-97f6-8fc67a23846a]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::a2072561-bbcd-4fef-97f6-8fc67a23846a][a2072561-bbcd-4fef-97f6-8fc67a23846a]]
 /// Accelrys XTL format
 /// -------------------
 /// The XTL file format provides a means of exchanging crystallographic
@@ -134,6 +134,6 @@ impl ChemFileLike for XtlFile {
 #[ignore]
 fn test_formats_xtl() {
     let mols = io::read("tests/files/mol2/LTL-crysin-ds.mol2").unwrap();
-    io::write("/tmp/a.xtl", &mols);
+    io::write("/tmp/a.xtl", &mols).unwrap();
 }
 // a2072561-bbcd-4fef-97f6-8fc67a23846a ends here

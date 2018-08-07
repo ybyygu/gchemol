@@ -1,9 +1,9 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::580d4de7-5923-4885-87d5-20b24d8a703b][580d4de7-5923-4885-87d5-20b24d8a703b]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::580d4de7-5923-4885-87d5-20b24d8a703b][580d4de7-5923-4885-87d5-20b24d8a703b]]
 // VASP POSCAR file format:
 // http://cms.mpi.univie.ac.at/vasp/guide/node59.html
 // 580d4de7-5923-4885-87d5-20b24d8a703b ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::70e8dd41-45af-4712-b095-802079ac6eb4][70e8dd41-45af-4712-b095-802079ac6eb4]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::70e8dd41-45af-4712-b095-802079ac6eb4][70e8dd41-45af-4712-b095-802079ac6eb4]]
 use super::*;
 
 named!(poscar_lattice_constant<&str, f64>, terminated!(
@@ -12,7 +12,7 @@ named!(poscar_lattice_constant<&str, f64>, terminated!(
 ));
 
 #[test]
-fn test__poscar_lattice_constant() {
+fn test_poscar_lattice_constant() {
     let (_, x) = poscar_lattice_constant(" 1.0000 \n")
         .expect("POSCAR lattice constant");
     assert_eq!(1.000, x);
@@ -291,7 +291,7 @@ fn format_molecule(mol: &Molecule) -> String {
 }
 // 70e8dd41-45af-4712-b095-802079ac6eb4 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::e71c5ee4-27e3-4c03-b626-e7ae375b4510][e71c5ee4-27e3-4c03-b626-e7ae375b4510]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::e71c5ee4-27e3-4c03-b626-e7ae375b4510][e71c5ee4-27e3-4c03-b626-e7ae375b4510]]
 use io;
 
 pub struct PoscarFile();

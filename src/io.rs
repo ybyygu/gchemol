@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-07-03 Tue 14:09>
+//       UPDATED:  <2018-08-07 Tue 14:35>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -58,9 +58,9 @@ pub fn write_file<P: AsRef<Path>>(content: String, filename: P) -> Result<()> {
 }
 
 /// write a list of string without line ending characters to an external file
-pub fn write_lines(lines: Vec<String>, filename: &str) -> Result<()> {
+pub fn write_lines(lines: &[String], filename: &str) -> Result<()> {
     let content = lines.join("\n");
-    write_file(content, filename);
+    write_file(content, filename)?;
 
     Ok(())
 }
