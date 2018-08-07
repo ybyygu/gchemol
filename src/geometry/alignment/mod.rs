@@ -106,14 +106,14 @@ fn test_alignment2() {
     use molecule::Molecule;
 
     // load test molecules
-    let mol1 = Molecule::from_file("tests/files/alignment/reference.mol2").expect("alignment ref");
-    let mol2 = Molecule::from_file("tests/files/alignment/candidate.mol2").expect("alignment can");
+    let mol1 = Molecule::from_file("tests/files/alignment/reference.mol2").expect("alignment reference");
+    let mol2 = Molecule::from_file("tests/files/alignment/candidate.mol2").expect("alignment candidate");
 
     // take the first 5 atoms for superposition
     let reference = &mol1.positions()[0..5];
     let candidate = &mol2.positions()[0..5];
 
-    // align candidate onto reference
+    // align the candidate onto the reference
     let mut align = Alignment::new(&candidate);
     let sp = align.superpose(&reference, None).unwrap();
 

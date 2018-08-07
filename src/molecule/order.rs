@@ -16,6 +16,20 @@ fn rev_sort_atoms_by_element(mol: &Molecule) -> Vec<(usize, AtomIndex)> {
     pairs
 }
 
+use indexmap::IndexMap;
+// map structure: element => [atom_index1, atom_index2, ...]
+fn pairs_to_hashmap(pairs: &Vec<(usize, AtomIndex)>) -> IndexMap<&usize, Vec<&AtomIndex>> {
+
+    let mut m = IndexMap::new();
+
+    for (num, node) in pairs.iter() {
+        let mut nodes = m.entry(num).or_insert(vec![]);
+        nodes.push(node);
+    }
+
+    m
+}
+
 impl Molecule {
     // FIXME: keep or remove?
     /// Update atom indices
@@ -80,6 +94,7 @@ pub fn permutations(size: usize) -> Permutations {
     Permutations { idxs: (0..size).collect(), swaps: vec![0; size], i: 0 }
 }
 
+#[derive(Debug, Clone)]
 pub struct Permutations {
     idxs: Vec<usize>,
     swaps: Vec<usize>,
@@ -120,6 +135,81 @@ fn test_permutation() {
 // b5512aff-1510-42cf-9b1d-7487485a282d ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::e06ad932-0eef-4d99-beac-c43c4e83bc63][e06ad932-0eef-4d99-beac-c43c4e83bc63]]
+/// pairing atoms in two molecules using the brute force way
+fn matching_atoms_brute_force(mol_can: &Molecule, mol_ref: &Molecule) -> Vec<(AtomIndex, AtomIndex)> {
+    use std::f64;
+    use geometry::Alignment;
+    use itertools::Itertools;
+
+    assert!(mol_ref.matchable(&mol_can));
+    let pairs_ref = rev_sort_atoms_by_element(&mol_ref);
+    let pairs_can = rev_sort_atoms_by_element(&mol_can);
+
+    let map_can = pairs_to_hashmap(&pairs_can);
+
+    // let mut reference = vec![];
+    let mut candidate = vec![];
+    for (_, nodes) in map_can.iter() {
+        let it = permutations(nodes.len());
+        candidate.push(it);
+    }
+
+    // reference positions
+    let mut reference = vec![];
+    for (_, n) in pairs_ref.iter() {
+        let a = mol_ref.get_atom(*n).unwrap();
+        reference.push(a.position());
+    }
+
+    let mut perms = vec![];
+    let mut rmsd_min = f64::MAX;
+    for indices in candidate.into_iter().multi_cartesian_product() {
+        // collect possible positions after permutation
+        // let indices = indices.concat();
+        // println!("{:?}", indices);
+        // let values: Vec<_> = map_can.values().collect();
+        // println!("{:?}", values);
+        let mut all_nodes = vec![];
+        for (items, (_, nodes)) in indices.iter().zip(&map_can) {
+            // println!("items {:?}", items);
+            // println!("nodes {:?}", nodes);
+            for i in items {
+                all_nodes.push(nodes[*i]);
+            }
+        }
+        // println!("{:?}", all_nodes);
+
+        let mut positions = Vec::with_capacity(mol_can.natoms());
+        for &ix in all_nodes.iter() {
+            let a = mol_can.get_atom(*ix).unwrap();
+            positions.push(a.position());
+        }
+
+        // calculate superimposition rmsd
+        let mut align = Alignment::new(&positions);
+        let sp = align.superpose(&reference, None).unwrap();
+
+        // update perms
+        if sp.rmsd < rmsd_min {
+            rmsd_min = sp.rmsd;
+            perms = all_nodes;
+        }
+    }
+
+    // output result
+    println!("final rmsd = {:?}", rmsd_min);
+    println!("possible permutation:");
+    let mut matched_pairs: Vec<_> = perms.iter().zip(pairs_ref).collect();
+    matched_pairs.sort_by_key(|k| (k.1).1);
+
+    let mut pairs = vec![];
+    for (&nc, (_, nr)) in matched_pairs {
+        pairs.push((*nc, nr));
+    }
+
+    pairs
+}
+
 impl Molecule {
     /// Test if other molecule suitable for matching.
     pub fn matchable(&self, other: &Molecule) -> bool {
@@ -135,10 +225,15 @@ impl Molecule {
     }
 }
 
+
 #[test]
 fn test_molecule_match() {
     let mol_ref = Molecule::from_file("tests/files/alignment/reference.mol2").expect("mol2 reference");
     let mol_can = Molecule::from_file("tests/files/alignment/candidate-ro.mol2").expect("mol2 candidate");
-    assert!(mol_ref.matchable(&mol_can));
+
+    let pairs = matching_atoms_brute_force(&mol_can, &mol_ref);
+    for p in pairs {
+        println!("{:?}", p);
+    }
 }
 // e06ad932-0eef-4d99-beac-c43c4e83bc63 ends here
