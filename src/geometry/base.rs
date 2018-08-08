@@ -164,7 +164,7 @@ pub fn weighted_center_of_geometry(positions: &[[f64; 3]], weights: &[f64]) -> R
     // deviding by zero?
     let mut wsum = weights.sum();
     if wsum < 1e-6 {
-        eprintln!("weird weight sum: {:?}", wsum);
+        error!("weird weight sum: {:?}", wsum);
     }
 
     for i in 0..npts {

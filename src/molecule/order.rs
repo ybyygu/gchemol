@@ -19,7 +19,6 @@ fn rev_sort_atoms_by_element(mol: &Molecule) -> Vec<(usize, AtomIndex)> {
 use indexmap::IndexMap;
 // map structure: element => [atom_index1, atom_index2, ...]
 fn pairs_to_hashmap(pairs: &Vec<(usize, AtomIndex)>) -> IndexMap<&usize, Vec<&AtomIndex>> {
-
     let mut m = IndexMap::new();
 
     for (num, node) in pairs.iter() {
@@ -89,7 +88,7 @@ fn test_molecule_sorted() {
 // a762197d-df95-433c-8499-8148d0241a9f ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::b5512aff-1510-42cf-9b1d-7487485a282d][b5512aff-1510-42cf-9b1d-7487485a282d]]
-// take from: https://rosettacode.org/wiki/Permutations#Rust
+// adopted from: https://rosettacode.org/wiki/Permutations#Rust
 pub fn permutations(size: usize) -> Permutations {
     Permutations { idxs: (0..size).collect(), swaps: vec![0; size], i: 0 }
 }
