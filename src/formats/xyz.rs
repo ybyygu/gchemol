@@ -1,12 +1,12 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::8842a219-a252-4367-bb8a-7a28b6bb8c2f][8842a219-a252-4367-bb8a-7a28b6bb8c2f]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::8842a219-a252-4367-bb8a-7a28b6bb8c2f][8842a219-a252-4367-bb8a-7a28b6bb8c2f]]
 use super::*;
 
 named!(get_atom_from<&str, Atom>, do_parse!(
     // element symbol, "1" or "H"
-    sym      : sp!(alt!(alpha|digit))      >>
+    sym      : sp!(alt!(alpha|digit)) >>
     position : sp!(xyz_array)         >>
     // ignore the remaining characters
-               read_until_eol >>
+               read_until_eol         >>
     (
         Atom::new(sym, position)
     )
@@ -59,7 +59,7 @@ H -13.7062  1.5395  0.0000
 }
 // 8842a219-a252-4367-bb8a-7a28b6bb8c2f ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::c6258370-89a6-4eda-866c-41d60ef03e44][c6258370-89a6-4eda-866c-41d60ef03e44]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::c6258370-89a6-4eda-866c-41d60ef03e44][c6258370-89a6-4eda-866c-41d60ef03e44]]
 use std::str;
 use std::fs::File;
 use std::io::prelude::*;

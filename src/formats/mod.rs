@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::7faf1529-aae1-4bc5-be68-02d8ccdb9267][7faf1529-aae1-4bc5-be68-02d8ccdb9267]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::7faf1529-aae1-4bc5-be68-02d8ccdb9267][7faf1529-aae1-4bc5-be68-02d8ccdb9267]]
 use io;
 use std::str;
 use std::fs::File;
@@ -29,6 +29,7 @@ pub mod dftb;
 
 const BUF_SIZE: usize = 20 * 1024;
 pub const MAGIC_EOF: &str = "$THIS_IS_THE=MAGIC_END_OF_FILE$";
+// pub const MAGIC_EOF: &str = "\n\n";
 
 use nom;
 
@@ -142,10 +143,6 @@ pub trait ChemFileLike {
                 match self.parse_molecule(&chunk) {
                     // 1.1 successfully parsed into one molecule
                     Ok((r, mol)) => {
-                        // println!("ooooooooooooooooo {}", filename);
-                        // println!("{:#}", &chunk);
-                        // println!("--ooooooooooooooo {}", filename);
-                        // println!("{:#}", r);
                         remained.clear();
                         remained.push_str(r);
                         mols.push(mol);
@@ -154,12 +151,13 @@ pub trait ChemFileLike {
                     // `Incomplete` means the nom parser does not have enough data to decide,
                     // so we wait for the next refill and then retry parsing
                     Err(nom::Err::Incomplete(i)) => {
-                        // println!("xxxxxxxxinnnnnnnnnnnnn {}", filename);
-                        // println!("{:#}", &chunk);
-                        // // should not happen
-                        // if final_stream {
-                        //     println!("nom parser warning: fixmefixmefixme");
-                        // }
+                        // FIXME
+                        if final_stream {
+                            // println!("filename {}", filename);
+                            // println!("{:#}", &chunk);
+                            // println!("nom parser warning: fixmefixmefixme");
+                            break 'out;
+                        }
                         remained.clear();
                         remained.push_str(&chunk);
                         break;
