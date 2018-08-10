@@ -102,8 +102,17 @@ impl ChemFileLike for XYZFile {
 #[test]
 fn test_formats_xyz() {
     let file = XYZFile();
+    let mols = file.parse("tests/files/xyz/c2h4.xyz").expect("c2h4 xyz");
+    assert_eq!(1, mols.len());
+    assert_eq!(6, mols[0].natoms());
+
+    // parse multiple molecules
     let mols = file.parse("tests/files/xyz/multi.xyz").expect("multi xyz");
     assert_eq!(6, mols.len());
+
+    let natoms_expected = vec![16, 10, 16, 16, 16, 13];
+    let natoms: Vec<_> = mols.iter().map(|m| m.natoms()).collect();
+    assert_eq!(natoms_expected, natoms);
 }
 
 

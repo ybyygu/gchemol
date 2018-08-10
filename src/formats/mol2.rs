@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::ff90f63c-4f42-4a44-8333-59dac76a029f][ff90f63c-4f42-4a44-8333-59dac76a029f]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::ff90f63c-4f42-4a44-8333-59dac76a029f][ff90f63c-4f42-4a44-8333-59dac76a029f]]
 use super::*;
 
 // parse mol2 atom type. example records:
@@ -153,7 +153,7 @@ fn get_atom_type(atom: &Atom) -> &str {
 }
 // ff90f63c-4f42-4a44-8333-59dac76a029f ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::e6d75d58-cab8-47f3-85ea-e710192a4a82][e6d75d58-cab8-47f3-85ea-e710192a4a82]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::e6d75d58-cab8-47f3-85ea-e710192a4a82][e6d75d58-cab8-47f3-85ea-e710192a4a82]]
 // Sample record
 // -----------
 // 12	6	12	1
@@ -249,7 +249,7 @@ fn format_bond_order(bond: &Bond) -> &str {
 }
 // e6d75d58-cab8-47f3-85ea-e710192a4a82 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::aa5c8cd2-1665-445b-9737-b1c0ab567ffd][aa5c8cd2-1665-445b-9737-b1c0ab567ffd]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::aa5c8cd2-1665-445b-9737-b1c0ab567ffd][aa5c8cd2-1665-445b-9737-b1c0ab567ffd]]
 // Format
 // ------
 // @<TRIPOS>CRYSIN
@@ -280,7 +280,7 @@ fn test_formats_mol2_crystal() {
 }
 // aa5c8cd2-1665-445b-9737-b1c0ab567ffd ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::13916972-0d19-4b09-807f-e1d45ac3ab2b][13916972-0d19-4b09-807f-e1d45ac3ab2b]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::13916972-0d19-4b09-807f-e1d45ac3ab2b][13916972-0d19-4b09-807f-e1d45ac3ab2b]]
 use std::collections::HashMap;
 
 // Format
@@ -426,7 +426,7 @@ USER_CHARGES
 }
 // 13916972-0d19-4b09-807f-e1d45ac3ab2b ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::91746805-686b-489a-b077-2b7182f18e3b][91746805-686b-489a-b077-2b7182f18e3b]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::91746805-686b-489a-b077-2b7182f18e3b][91746805-686b-489a-b077-2b7182f18e3b]]
 use std::str;
 use std::fs::File;
 use std::io::prelude::*;
@@ -541,6 +541,18 @@ fn test_formats_mol2() {
     // molecule trajectory
     // openbabel converted .mol2 file
     let mols = file.parse("tests/files/mol2/multi-obabel.mol2").expect("mol2 multi");
+
+    let natoms_expected = vec![16, 10, 16, 16, 16, 13];
+    let natoms: Vec<_> = mols.iter().map(|m| m.natoms()).collect();
+    assert_eq!(natoms_expected, natoms);
+
+    let nbonds_expected = vec![14, 10, 14, 14, 14, 12];
+    let nbonds: Vec<_> = mols.iter().map(|m| m.nbonds()).collect();
+    assert_eq!(nbonds_expected, nbonds);
+    // for m in mols.iter() {
+    //     println!("title: {:}", m.title());
+    //     println!("nbonds: {:}", m.nbonds());
+    // }
     assert_eq!(6, mols.len());
 }
 // 91746805-686b-489a-b077-2b7182f18e3b ends here

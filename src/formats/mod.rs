@@ -139,6 +139,9 @@ pub trait ChemFileLike {
             chunk.push_str(&new);
 
             loop {
+                if chunk == MAGIC_EOF {
+                    break 'out;
+                }
                 // 1. process molecular file parsing
                 match self.parse_molecule(&chunk) {
                     // 1.1 successfully parsed into one molecule
@@ -151,11 +154,7 @@ pub trait ChemFileLike {
                     // `Incomplete` means the nom parser does not have enough data to decide,
                     // so we wait for the next refill and then retry parsing
                     Err(nom::Err::Incomplete(i)) => {
-                        // FIXME
                         if final_stream {
-                            // println!("filename {}", filename);
-                            // println!("{:#}", &chunk);
-                            // println!("nom parser warning: fixmefixmefixme");
                             break 'out;
                         }
                         remained.clear();
@@ -164,7 +163,7 @@ pub trait ChemFileLike {
                     },
                     // 1.3 found parse errors
                     Err(nom::Err::Error(err)) => {
-                        eprintln!("found error in {}: {:?}", filename, err);
+                        eprintln!("found error when parsing {}: {:?}", filename, err);
                         break 'out;
                     },
                     // 1.4 found serious errors
