@@ -1,4 +1,4 @@
-# [[file:~/Workspace/Programming/gchemol/scratch/combine.note::c45d1413-12b8-471e-b060-da682339ad4b][c45d1413-12b8-471e-b060-da682339ad4b]]
+# [[file:~/Workspace/Programming/gchemol/parser/combine.note::c45d1413-12b8-471e-b060-da682339ad4b][c45d1413-12b8-471e-b060-da682339ad4b]]
 [package]
 name = "scratch"
 version = "0.0.1"
@@ -6,4 +6,5 @@ authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
 combine = "*"
+gchemol = { git = "https://github.com/ybyygu/gchemol.git" }
 # c45d1413-12b8-471e-b060-da682339ad4b ends here
