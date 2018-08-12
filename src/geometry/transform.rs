@@ -2,6 +2,8 @@
 type Point3D = [f64; 3];
 type Points = Vec<Point3D>;
 
+use super::euclidean_distance;
+
 pub use nalgebra::{
     Vector3,
     Rotation3,
@@ -14,17 +16,6 @@ pub fn translate(points: &mut Points, loc: Point3D) {
             points[i][v] += loc[v];
         }
     }
-}
-
-#[inline]
-pub fn euclidean_distance(p1: Point3D, p2: Point3D) -> f64 {
-    let mut d2 = 0.0;
-    for v in 0..3 {
-        let dv = p2[v] - p1[v];
-        d2 += dv*dv;
-    }
-
-    d2.sqrt()
 }
 
 /// check if any pair of points come too close

@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/geometry.note::30c89b1c-a482-40a2-9d1e-02731f6b006b][30c89b1c-a482-40a2-9d1e-02731f6b006b]]
+// [[file:~/Workspace/Programming/gchemol/geometry.note::76dd5ca4-c907-4263-9c12-e59c9cbaed2f][76dd5ca4-c907-4263-9c12-e59c9cbaed2f]]
 pub use quicli::prelude::*;
 
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
@@ -9,6 +9,7 @@ use nalgebra as na;
 /// Vector in 3D space
 pub type Vector3f = na::Vector3<f64>;
 pub type Matrix3f = na::Matrix3<f64>;
+pub type DMatrixf = na::DMatrix<f64>;
 
 /// 3xN matrix storing a list of 3D vectors
 pub type Vector3fVec = na::Matrix<f64, na::U3, na::Dynamic, na::MatrixVec<f64, na::U3, na::Dynamic>>;
@@ -20,7 +21,9 @@ pub type Positions = Vector3fVec;
 
 /// Dynamic array containing float numbers
 pub type FloatVec = na::DVector<f64>;
+// 76dd5ca4-c907-4263-9c12-e59c9cbaed2f ends here
 
+// [[file:~/Workspace/Programming/gchemol/geometry.note::bb4e49dd-5b03-4632-a0f4-9338a8e581d5][bb4e49dd-5b03-4632-a0f4-9338a8e581d5]]
 /// A trait provides useful tools for Vec<f64> type.
 pub trait VecFloatMath {
     /// Convert to nalgebra dynamic 1xN vector
@@ -65,6 +68,15 @@ pub trait VecFloat3Math {
 
     /// Return weighted center of geometry (COM)
     fn center_of_mass(&self, masses: &[f64]) -> Result<Position>;
+
+    /// Return mirror inverted structure
+    fn mirror_inverted(&self) -> Positions;
+
+    /// Return point inverted structure
+    fn point_inverted(&self) -> Positions;
+
+    /// Return distance matrix
+    fn distance_matrix(&self) -> DMatrixf;
 }
 
 // impl VecFloat3Math for Vec<[f64; 3]> {
@@ -124,6 +136,33 @@ impl VecFloat3Math for [[f64; 3]] {
         let weights: Vec<_> = (0..n).map(|_ |1.0).collect();
         weighted_center_of_geometry(&self, &weights).expect("center of geometry")
     }
+
+    fn mirror_inverted(&self) -> Positions {
+        let m = self.to_dmatrix();
+        let r = na::Matrix3::from_diagonal(&[1.0, 1.0, -1.0].into());
+        r * m
+    }
+
+    fn point_inverted(&self) -> Positions {
+        let m = self.to_dmatrix();
+        let r = na::Matrix3::from_diagonal(&[-1.0, -1.0, -1.0].into());
+        r * m
+    }
+
+    fn distance_matrix(&self) -> DMatrixf {
+        let n = self.len();
+
+        let mut distances = DMatrixf::zeros(n, n);
+        for i in 0..n {
+            for j in 0..i{
+                let d = euclidean_distance(self[i], self[j]);
+                distances[(i, j)] = d;
+                distances[(j, i)] = d;
+            }
+        }
+
+        distances
+    }
 }
 
 #[test]
@@ -149,6 +188,19 @@ fn test_vec_math() {
 
     let x = positions.norms().max();
     assert_relative_eq!(1.8704, x, epsilon=1e-4);
+}
+// bb4e49dd-5b03-4632-a0f4-9338a8e581d5 ends here
+
+// [[file:~/Workspace/Programming/gchemol/geometry.note::9b14f11f-505a-4799-b78f-7896627a4432][9b14f11f-505a-4799-b78f-7896627a4432]]
+#[inline]
+pub fn euclidean_distance(p1: [f64; 3], p2: [f64; 3]) -> f64 {
+    let mut d2 = 0.0;
+    for v in 0..3 {
+        let dv = p2[v] - p1[v];
+        d2 += dv*dv;
+    }
+
+    d2.sqrt()
 }
 
 /// Return the geometric center
@@ -202,4 +254,4 @@ fn test_weighted_center_of_geometry() {
     let pc = frag.center_of_mass(&masses).expect("geometry: com");
     assert_relative_eq!(pc, expected, epsilon=1e-6);
 }
-// 30c89b1c-a482-40a2-9d1e-02731f6b006b ends here
+// 9b14f11f-505a-4799-b78f-7896627a4432 ends here

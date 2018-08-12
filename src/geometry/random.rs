@@ -3,6 +3,7 @@ use rand::{self, Rng};
 use rand::distributions::{Range, Normal};
 
 use super::transform::*;
+use super::euclidean_distance;
 
 type Point3D = [f64; 3];
 type Points = Vec<Point3D>;
