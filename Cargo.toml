@@ -20,4 +20,5 @@ rand = ">=0.5"
 
 [dev-dependencies]
 approx = "*"
+tempfile = "3"
 # c45d1413-12b8-471e-b060-da682339ad4b ends here
