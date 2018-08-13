@@ -5,6 +5,9 @@ mod random;
 mod alignment;
 mod interpolate;
 
+// important traits such as to_file, from_file ...
+use io::prelude::*;
+
 pub use self::base::*;
 pub use self::transform::*;
 pub use self::random::*;

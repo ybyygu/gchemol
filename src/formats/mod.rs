@@ -7,6 +7,7 @@ use std::io::{BufRead, BufReader};
 
 pub use parser::*;
 use quicli::prelude::*;
+use io::prelude::*;
 
 pub use Atom;
 pub use Molecule;
@@ -74,7 +75,7 @@ pub trait ChemFileLike {
     /// Save multiple molecules into a file
     fn write(&self, filename: &str, mols: &[Molecule]) -> Result<()> {
         let lines = self.format(mols)?;
-        io::write_file(lines, filename)?;
+        &lines.to_file(filename)?;
         Ok(())
     }
 
@@ -229,7 +230,6 @@ pub fn guess_chemfile(filename: &str, fmt: Option<&str>) -> Option<Box<ChemFileL
     // 3. return None if no suitable backend
     None
 }
-
 
 /// description of all backends
 // FIXME:

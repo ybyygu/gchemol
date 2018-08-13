@@ -8,69 +8,60 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-08-07 Tue 14:35>
+//       UPDATED:  <2018-08-13 Mon 11:55>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::0f52a1ef-c664-45a9-ab96-6d31741ae8c0][0f52a1ef-c664-45a9-ab96-6d31741ae8c0]]
-use std::io::prelude::*;
-use std::io::{BufWriter, BufReader};
-use std::fs::File;
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::4a0ea759-222c-42b7-ab82-8eb969751781][4a0ea759-222c-42b7-ab82-8eb969751781]]
 use std::path::Path;
 
-// use errors::*;
+use quicli;
 use quicli::prelude::*;
-use Point3D;
-use Points;
 
-/// Return content of text file in string
-/// don't use this if file is very large
-pub fn read_file<P: AsRef<Path>>(path: P) -> Result<String> {
-    let path = path.as_ref();
-    ensure!(
-        path.exists() && path.is_file(),
-        "Path {:?} is not a file!",
-        path
-    );
+pub mod prelude {
+    use super::*;
 
-    let file = File::open(path).with_context(|_| format!("Could not open file {:?}", path))?;
-    let mut file = BufReader::new(file);
+    pub trait FromFile: Sized {
+        /// Return content of text file in string
+        ///
+        /// don't use this if file is very large
+        ///
+        fn from_file<P: AsRef<Path>>(path: P) -> Result<Self>;
+    }
 
-    let mut result = String::new();
-    file.read_to_string(&mut result)
-        .with_context(|_| format!("Could not read file {:?}", path))?;
-
-    Ok(result)
-}
-// 0f52a1ef-c664-45a9-ab96-6d31741ae8c0 ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::4c8cdcee-a364-4ea9-a8b6-eca053456493][4c8cdcee-a364-4ea9-a8b6-eca053456493]]
-/// write string content to an external file
-pub fn write_file<P: AsRef<Path>>(content: String, filename: P) -> Result<()> {
-    let path = filename.as_ref();
-    // let msg = format!("failed to create output file: {}", path.display());
-    let f = File::create(path)?;
-    let mut writer = BufWriter::new(&f);
-
-    writer.write_all(&content.as_bytes())?;
-
-    Ok(())
+    pub trait ToFile {
+        /// write string content to an external file
+        ///
+        /// _Note:_ Replaces the current file content if the file already exists.
+        ///
+        fn to_file<P: AsRef<Path>>(&self, path: P) -> Result<()>;
+    }
 }
 
-/// write a list of string without line ending characters to an external file
-pub fn write_lines(lines: &[String], filename: &str) -> Result<()> {
-    let content = lines.join("\n");
-    write_file(content, filename)?;
+// reexport
+pub use quicli::fs::read_file;
 
-    Ok(())
+impl FromFile for String {
+    fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+        quicli::fs::read_file(path)
+    }
 }
-// 4c8cdcee-a364-4ea9-a8b6-eca053456493 ends here
+
+impl ToFile for str {
+    fn to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        quicli::fs::write_to_file(path, &self)
+    }
+}
+// 4a0ea759-222c-42b7-ab82-8eb969751781 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::00093c10-2247-4242-a287-e5640c00cadb][00093c10-2247-4242-a287-e5640c00cadb]]
 use {
     Atom,
     Molecule,
 };
+
+// import important traits
+use io::prelude::*;
 
 // fn file_extension_lower(path: &Path) -> Result<String> {
 //     let ext = path.extension().ok_or(format_err!("cannot find file extension"))?;
@@ -80,33 +71,33 @@ use {
 //     Ok(ext.to_string())
 // }
 
-impl Molecule {
-    // FIXME: use formats module
+impl FromFile for Molecule {
     /// Construct molecule from external text file
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
+    fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
         let cf = guess_chemfile_from_filename(path)?;
         let filename = format!("{}", path.display());
         // FIXME: Path or &str?
         let mut mols = cf.parse(&filename)?;
-        mols
-            .pop()
-            .ok_or(format_err!("no molecule: {:?}", path.display()))
+        mols.pop().ok_or(format_err!("no molecule: {:?}", path.display()))
     }
+}
 
-    // FIXME: use formats module
+impl ToFile for Molecule {
     /// Save molecule to an external file
-    pub fn to_file<T: AsRef<str>>(&self, filename: T) -> Result<()> {
+    fn to_file<T: AsRef<Path>>(&self, filename: T) -> Result<()> {
         let filename = filename.as_ref();
-        let cf = guess_chemfile(filename, None)
+        let cf = guess_chemfile(&filename.display().to_string(), None)
             .ok_or(format_err!("not supported file format: {:?}", filename))?;
         let t = cf.format_molecule(&self)?;
 
-        write_file(t, filename)?;
+        t.to_file(filename)?;
 
         Ok(())
     }
+}
 
+impl Molecule {
     /// format molecule as string in specific type
     pub fn format_as<S: AsRef<str>>(&self, fmt: S) -> Result<String> {
         let fmt = fmt.as_ref();
