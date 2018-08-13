@@ -86,6 +86,7 @@ set more attributes using the builder pattern
 
         use gchemol::io;
         use gchemol::Molecule;
+        use gchemol::prelude::*;
         
         // Read an xyz file and write to a Gaussian Input file.
         let mol = Molecule::from_file("path/to/file").unwrap();
@@ -158,6 +159,22 @@ build a periodic structure
     
     // remove periodic boundary conditions
     mol.unbuild_crystal();
+
+
+# Alignment
+
+    use geoemtry::Alignment;
+    
+    // superpose using a subset of structures
+    let reference = positions1[0..5];
+    let candidate = positions1[0..5];
+    
+    // align candidate onto reference
+    let mut align = Alignment::new(&candidate);
+    let sp = align.superpose(&reference, None).unwrap();
+    
+    // apply superposition to all atoms
+    let new = sp.apply(&candidate);
 
 
 # Templating
