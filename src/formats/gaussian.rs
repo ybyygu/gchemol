@@ -1,8 +1,8 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::4138ba02-140e-4bdb-8083-74424610b600][4138ba02-140e-4bdb-8083-74424610b600]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::4138ba02-140e-4bdb-8083-74424610b600][4138ba02-140e-4bdb-8083-74424610b600]]
 use super::*;
 // 4138ba02-140e-4bdb-8083-74424610b600 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::c8f2f29e-b23a-4de3-a888-e6cbfee64760][c8f2f29e-b23a-4de3-a888-e6cbfee64760]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::c8f2f29e-b23a-4de3-a888-e6cbfee64760][c8f2f29e-b23a-4de3-a888-e6cbfee64760]]
 // Gaussian input file
 //
 // Reference
@@ -10,7 +10,7 @@ use super::*;
 // http://gaussian.com/input/?tabid=0
 // c8f2f29e-b23a-4de3-a888-e6cbfee64760 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc][c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc][c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc]]
 // sections are separated by a blank line
 named!(blank_line<&str, &str>, sp!(line_ending));
 
@@ -82,7 +82,7 @@ named!(title_section<&str, String>, do_parse!(
 ));
 // c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::dac5abf9-43a6-40a7-bf33-8338e106f738][dac5abf9-43a6-40a7-bf33-8338e106f738]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::dac5abf9-43a6-40a7-bf33-8338e106f738][dac5abf9-43a6-40a7-bf33-8338e106f738]]
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
@@ -285,7 +285,7 @@ fn test_gjf_atom_line() {
 }
 // dac5abf9-43a6-40a7-bf33-8338e106f738 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2][d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2][d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2]]
 // Connectivity lines like this:
 // 1 2 1.0 3 1.0 4 1.0 5 1.0
 //     2
@@ -326,7 +326,7 @@ fn test_gjf_connectivity() {
 }
 // d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2 ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::2357368c-ab7e-4eb3-96a8-a8e4aba19bac][2357368c-ab7e-4eb3-96a8-a8e4aba19bac]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::2357368c-ab7e-4eb3-96a8-a8e4aba19bac][2357368c-ab7e-4eb3-96a8-a8e4aba19bac]]
 named!(get_molecule_from<&str, Molecule>, do_parse!(
     link0: opt!(complete!(link0_section)) >>
     // route card
@@ -492,7 +492,7 @@ fn format_molecule(mol: &Molecule) -> String {
 }
 // 2357368c-ab7e-4eb3-96a8-a8e4aba19bac ends here
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::ac025fea-3d20-45f4-97eb-2969138a4716][ac025fea-3d20-45f4-97eb-2969138a4716]]
+// [[file:~/Workspace/Programming/gchemol/formats.note::ac025fea-3d20-45f4-97eb-2969138a4716][ac025fea-3d20-45f4-97eb-2969138a4716]]
 /// plain xyz coordinates with atom symbols
 pub struct GaussInputFile();
 
@@ -516,7 +516,7 @@ impl ChemFileLike for GaussInputFile {
     }
 
     // Present multiple molecules by separating sections with the Link1 comand.
-    fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
+    fn format(&self, mols: &[Molecule]) -> Result<String> {
         let mut ms = vec![];
         for mol in mols {
             let m = format_molecule(mol);

@@ -61,7 +61,7 @@ pub trait ChemFileLike {
 
     /// format molecules in certain format
     /// file will be read-only if not implemented
-    fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
+    fn format(&self, mols: &[Molecule]) -> Result<String> {
         let mut ms = String::new();
         for mol in mols {
             let m = self.format_molecule(mol)?;
@@ -72,7 +72,7 @@ pub trait ChemFileLike {
     }
 
     /// Save multiple molecules into a file
-    fn write(&self, filename: &str, mols: &Vec<Molecule>) -> Result<()> {
+    fn write(&self, filename: &str, mols: &[Molecule]) -> Result<()> {
         let lines = self.format(mols)?;
         io::write_file(lines, filename)?;
         Ok(())
@@ -139,9 +139,8 @@ pub trait ChemFileLike {
             chunk.push_str(&new);
 
             loop {
-                if chunk == MAGIC_EOF {
-                    break 'out;
-                }
+                if chunk == MAGIC_EOF {break 'out;}
+
                 // 1. process molecular file parsing
                 match self.parse_molecule(&chunk) {
                     // 1.1 successfully parsed into one molecule

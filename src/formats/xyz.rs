@@ -148,7 +148,7 @@ impl ChemFileLike for PlainXYZFile {
 
     /// Return a string representation of the last molecule in the list
     /// Return empty string if no molecule found
-    fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
+    fn format(&self, mols: &[Molecule]) -> Result<String> {
         let mut lines = String::new();
 
         if let Some(mol) = mols.last() {

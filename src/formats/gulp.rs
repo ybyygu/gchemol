@@ -42,7 +42,7 @@ impl ChemFileLike for GulpInputFile {
         unimplemented!()
     }
 
-    fn format(&self, mols: &Vec<Molecule>) -> Result<String> {
+    fn format(&self, mols: &[Molecule]) -> Result<String> {
         if mols.len() > 1 {
             eprintln!("WARNING: only the last molecule will be used.");
         }
