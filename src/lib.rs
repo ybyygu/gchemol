@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-08-13 Mon 11:54>
+//       UPDATED:  <2018-08-13 Mon 13:47>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -19,8 +19,6 @@ extern crate petgraph;
 #[macro_use] extern crate nom;
 #[macro_use] extern crate indexmap;
 extern crate nalgebra;
-// extern crate cgmath;
-#[macro_use] extern crate approx;
 extern crate rand;
 extern crate serde;
 #[macro_use] extern crate serde_json;
@@ -28,6 +26,10 @@ extern crate serde;
 extern crate itertools;
 #[macro_use] extern crate handlebars;
 #[macro_use] extern crate quicli;
+
+// for test-only use
+#[cfg(test)]
+#[macro_use] extern crate approx;
 
 pub type Point3D = [f64; 3];
 pub type Points = Vec<Point3D>;

@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-08-13 Mon 11:55>
+//       UPDATED:  <2018-08-13 Mon 12:10>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -38,6 +38,7 @@ pub mod prelude {
     }
 }
 
+// FIXME: to be removed.
 // reexport
 pub use quicli::fs::read_file;
 
@@ -62,14 +63,6 @@ use {
 
 // import important traits
 use io::prelude::*;
-
-// fn file_extension_lower(path: &Path) -> Result<String> {
-//     let ext = path.extension().ok_or(format_err!("cannot find file extension"))?;
-//     let ext = ext.to_str().ok_or(format_err!("cannot handle wield file extention"))?;
-//     let ext = ext.to_lowercase();
-
-//     Ok(ext.to_string())
-// }
 
 impl FromFile for Molecule {
     /// Construct molecule from external text file
