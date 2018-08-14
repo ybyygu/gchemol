@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-08-13 Mon 11:57>
+//       UPDATED:  <2018-08-14 Tue 10:56>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -797,41 +797,6 @@ impl Molecule {
     /// Return element numbers of all atoms in the molecule.
     pub fn numbers(&self) -> Vec<usize> {
         self.atoms().map(|ref a| a.number()).collect()
-    }
-
-    // FIXME: opt performance
-    /// Set positions of atoms
-    pub fn set_positions(&mut self, positions: Points) -> Result<()>
-    {
-        let indices = self.sites();
-        if indices.len() != positions.len() {
-            bail!("the number of cartesian coordinates is different from the number of atoms in molecule.")
-        }
-
-        for (&index, position) in indices.iter().zip(positions) {
-            let mut atom = &mut self.graph[index];
-            atom.set_position(position);
-        }
-
-        Ok(())
-    }
-
-    // FIXME: add a test
-    /// Set element symbols
-    pub fn set_symbols<'a, I>(&mut self, symbols: I) -> Result<()>
-    where
-        I: IntoIterator,
-        I::Item: Into<String>,
-    {
-        let indices = self.sites();
-        let symbols = symbols.into_iter();
-
-        for (&index, symbol) in indices.iter().zip(symbols) {
-            let mut atom = &mut self.graph[index];
-            atom.set_symbol(symbol);
-        }
-
-        Ok(())
     }
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here

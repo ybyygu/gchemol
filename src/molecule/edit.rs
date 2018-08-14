@@ -1,5 +1,42 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::548b6f53-eb69-42e5-bc84-d4e52cc17888][548b6f53-eb69-42e5-bc84-d4e52cc17888]]
 use super::*;
+
+impl Molecule {
+    // FIXME: opt performance
+    /// Set positions of atoms
+    pub fn set_positions(&mut self, positions: Points) -> Result<()>
+    {
+        let indices = self.sites();
+        if indices.len() != positions.len() {
+            bail!("the number of cartesian coordinates is different from the number of atoms in molecule.")
+        }
+
+        for (&index, position) in indices.iter().zip(positions) {
+            let mut atom = &mut self.graph[index];
+            atom.set_position(position);
+        }
+
+        Ok(())
+    }
+
+    // FIXME: add a test
+    /// Set element symbols
+    pub fn set_symbols<'a, I>(&mut self, symbols: I) -> Result<()>
+    where
+        I: IntoIterator,
+        I::Item: Into<String>,
+    {
+        let indices = self.sites();
+        let symbols = symbols.into_iter();
+
+        for (&index, symbol) in indices.iter().zip(symbols) {
+            let mut atom = &mut self.graph[index];
+            atom.set_symbol(symbol);
+        }
+
+        Ok(())
+    }
+}
 // 548b6f53-eb69-42e5-bc84-d4e52cc17888 ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::9924e323-dd02-49d0-ab07-41208114546f][9924e323-dd02-49d0-ab07-41208114546f]]
@@ -119,42 +156,6 @@ impl Molecule {
     }
 }
 // 9924e323-dd02-49d0-ab07-41208114546f ends here
-
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::be29e151-18c6-43cb-9586-aba0e708d38c][be29e151-18c6-43cb-9586-aba0e708d38c]]
-pub trait IntoAtomIndex {
-    fn into_atom_index(&self) -> AtomIndex;
-}
-
-impl IntoAtomIndex for usize {
-    fn into_atom_index(&self) -> AtomIndex {
-        // atom index counting from zero
-        AtomIndex::new(*self)
-    }
-}
-
-impl IntoAtomIndex for AtomIndex {
-    fn into_atom_index(&self) -> AtomIndex {
-        *self
-    }
-}
-
-pub trait IntoBondIndex {
-    fn into_bond_index(&self) -> BondIndex;
-}
-
-impl IntoBondIndex for usize {
-    fn into_bond_index(&self) -> BondIndex {
-        // atom index counting from zero
-        BondIndex::new(*self)
-    }
-}
-
-impl IntoBondIndex for BondIndex {
-    fn into_bond_index(&self) -> BondIndex {
-        *self
-    }
-}
-// be29e151-18c6-43cb-9586-aba0e708d38c ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::72dd0c31-26e5-430b-9f67-1c5bd5220a84][72dd0c31-26e5-430b-9f67-1c5bd5220a84]]
 impl Molecule {
