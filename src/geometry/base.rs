@@ -63,8 +63,18 @@ pub trait VecFloat3Math {
     /// Convert to 3xN dynamic matrix
     fn to_dmatrix(&self) -> Vector3fVec;
 
+    /// Convert to Vec of Vector3f
+    fn to_vectors(&self) -> Vec<Vector3f>;
+
     /// Return the center of geometry (COG)
     fn center_of_geometry(&self) -> Position;
+
+    /// Return the center of geometry
+    ///
+    /// https://en.wikipedia.org/wiki/Centroid
+    fn centroid(&self) -> Position {
+        self.center_of_geometry()
+    }
 
     /// Return weighted center of geometry (COM)
     fn center_of_mass(&self, masses: &[f64]) -> Result<Position>;
@@ -119,6 +129,10 @@ impl VecFloat3Math for [[f64; 3]] {
         }
 
         norms
+    }
+
+    fn to_vectors(&self) -> Vec<Vector3f> {
+        self.iter().map(|&a| Vector3f::from(a)).collect()
     }
 
     fn to_dmatrix(&self) -> Vector3fVec {

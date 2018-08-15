@@ -6,6 +6,7 @@ use nalgebra as na;
 type Rotation3f = na::Rotation3<f64>;
 
 mod qcprot;
+mod quaternion;
 // 0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777 ends here
 
 // [[file:~/Workspace/Programming/gchemol/geometry.note::ec9ee4ce-4967-4c41-bb0c-a823981b7631][ec9ee4ce-4967-4c41-bb0c-a823981b7631]]
