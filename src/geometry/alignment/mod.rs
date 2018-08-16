@@ -50,6 +50,39 @@ impl<'a> Alignment<'a> {
         }
     }
 
+    /// Calculate Root-mean-square deviation of self with the reference coordinates
+    ///
+    /// Parameters
+    /// ----------
+    /// * reference: reference coordinates
+    /// * weights  : weight of each point
+    pub fn rmsd(&self, reference: &[[f64; 3]], weights: Option<&[f64]>) -> Result<f64> {
+        // sanity check
+        let npts = self.positions.len();
+        if reference.len() != npts {
+            bail!("points size mismatch!");
+        }
+        if weights.is_some() && weights.unwrap().len() != npts {
+            bail!("weights size mismatch!");
+        }
+
+        // calculate rmsd
+        // take the weight if any, or set it to 1.0
+        let weights = weights.map_or_else(|| vec![1.0; npts].as_slice(), |ws| ws);
+        let mut ws = 0.0f64;
+        for i in 0..npts {
+            let wi = weights[i];
+            let dx = wi * (self.positions[i][0] - reference[i][0]);
+            let dy = wi * (self.positions[i][1] - reference[i][1]);
+            let dz = wi * (self.positions[i][2] - reference[i][2]);
+
+            ws += dx.powi(2) + dy.powi(2) + dz.powi(2);
+        }
+        let ws = ws.sqrt();
+
+        Ok(ws)
+    }
+
     /// Superpose candidate structure onto reference structure which will be held fixed
     /// Return superposition struct
     ///
