@@ -69,6 +69,21 @@ fn quaternion_rotate(positions_ref: &[[f64; 3]], positions_can: &[[f64; 3]]) {
         let p = (v.transpose() * mat_r).transpose() + cog_ref;
         positions_new.push(p);
     }
+
     println!("{:#?}", positions_new);
+
+    // calculate rmsd
+    let emax = se.eigenvalues.max();
+
+    let mut rmsd = 0.0f64;
+    for i in 0..npts {
+        let vcan = vectors_can[i];
+        let vref = vectors_ref[i];
+        rmsd += vcan.norm_squared() + vref.norm_squared() - 2.0 * emax;
+    }
+
+    rmsd /= npts as f64;
+    let rmsd = rmsd.sqrt();
+    println!("rmsd = {:6.3}", rmsd);
 }
 // d5604dc1-f9b1-4dca-a3c0-199cdd4ec28f ends here
