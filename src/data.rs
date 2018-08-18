@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-08-13 Mon 11:57>
+//       UPDATED:  <2018-08-18 Sat 16:41>
 //===============================================================================#
 
 use {
@@ -17,7 +17,7 @@ use {
     Molecule,
     molecule::AtomIndex,
     BondKind,
-    geometry::euclidean_distance,
+    geometry::prelude::euclidean_distance,
     quicli::prelude::*,
 };
 

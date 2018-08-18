@@ -1,6 +1,6 @@
 // [[file:~/Workspace/Programming/gchemol/geometry.note::8a489c41-809c-46c9-8a23-5d926db1c5ca][8a489c41-809c-46c9-8a23-5d926db1c5ca]]
-use super::*;
-// use quicli::prelude::*:
+use super::prelude::*;
+use quicli::prelude::*;
 
 // direct linear interpolation
 // # Parameters

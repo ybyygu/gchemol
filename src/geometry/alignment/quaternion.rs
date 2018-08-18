@@ -1,5 +1,6 @@
 // [[file:~/Workspace/Programming/gchemol/geometry.note::d5604dc1-f9b1-4dca-a3c0-199cdd4ec28f][d5604dc1-f9b1-4dca-a3c0-199cdd4ec28f]]
-use super::*;
+use geometry::prelude::*;
+use nalgebra as na;
 
 fn quaternion_rotate(positions_ref: &[[f64; 3]], positions_can: &[[f64; 3]]) {
     let npts = positions_ref.len();

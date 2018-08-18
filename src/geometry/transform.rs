@@ -2,7 +2,7 @@
 type Point3D = [f64; 3];
 type Points = Vec<Point3D>;
 
-use super::euclidean_distance;
+use super::prelude::euclidean_distance;
 
 pub use nalgebra::{
     Vector3,

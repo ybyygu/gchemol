@@ -5,12 +5,11 @@ mod random;
 mod alignment;
 mod interpolate;
 
-// important traits such as to_file, from_file ...
-use io::prelude::*;
-
-pub use self::base::*;
-pub use self::transform::*;
-pub use self::random::*;
-pub use self::alignment::*;
-pub use self::interpolate::*;
+pub mod prelude {
+    pub use super::base::*;
+    pub use super::transform::*;
+    pub use super::random::*;
+    pub use super::alignment::*;
+    pub use super::interpolate::*;
+}
 // 7b453b81-a6a7-41b2-b3d7-51cecd5babac ends here

@@ -1,6 +1,6 @@
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3][a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3]]
 use super::*;
-use geometry::get_distance_matrix;
+use geometry::prelude::get_distance_matrix;
 use data::guess_bond_kind;
 
 impl Molecule {

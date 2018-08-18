@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-08-14 Tue 10:56>
+//       UPDATED:  <2018-08-18 Sat 16:41>
 //===============================================================================#
 
 use std::collections::HashMap;
@@ -363,7 +363,7 @@ impl Atom {
 // 150189fd-57d9-4e19-a888-d64497f5ba7e ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::b6d1e417-27da-4384-879a-db28960ed161][b6d1e417-27da-4384-879a-db28960ed161]]
-use geometry::euclidean_distance;
+use geometry::prelude::euclidean_distance;
 
 impl Atom {
     /// Return the distance to other atom

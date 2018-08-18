@@ -137,7 +137,7 @@ fn test_permutation() {
 /// pairing atoms in two molecules using the brute force way
 fn matching_atoms_brute_force(mol_can: &Molecule, mol_ref: &Molecule) -> Vec<(AtomIndex, AtomIndex)> {
     use std::f64;
-    use geometry::Alignment;
+    use geometry::prelude::Alignment;
     use itertools::Itertools;
 
     assert!(mol_ref.matchable(&mol_can));
