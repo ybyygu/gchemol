@@ -180,7 +180,6 @@ impl Molecule {
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::2a27ca30-0a99-4d5d-b544-5f5900304bbb][2a27ca30-0a99-4d5d-b544-5f5900304bbb]]
 use petgraph::algo;
-use rand::{thread_rng, Rng};
 
 const EPSILON: f64 = 1.0E-6;
 

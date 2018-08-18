@@ -1,5 +1,5 @@
-// [[file:~/Workspace/Programming/gchemol/geometry.note::d5604dc1-f9b1-4dca-a3c0-199cdd4ec28f][d5604dc1-f9b1-4dca-a3c0-199cdd4ec28f]]
-use geometry::prelude::*;
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::d5604dc1-f9b1-4dca-a3c0-199cdd4ec28f][d5604dc1-f9b1-4dca-a3c0-199cdd4ec28f]]
+use super::super::base::*;
 use nalgebra as na;
 
 fn quaternion_rotate(positions_ref: &[[f64; 3]], positions_can: &[[f64; 3]]) {
@@ -18,8 +18,8 @@ fn quaternion_rotate(positions_ref: &[[f64; 3]], positions_can: &[[f64; 3]]) {
         *v -= cog_can;
     }
 
-    let pm1 = Positions::from_columns(&vectors_ref);
-    let pm2 = Positions::from_columns(&vectors_can);
+    let pm1 = Vector3fVec::from_columns(&vectors_ref);
+    let pm2 = Vector3fVec::from_columns(&vectors_can);
 
     // Computation of the covariance matrix
     let mat_cov = &pm2 * &pm1.transpose();
@@ -74,7 +74,7 @@ fn quaternion_rotate(positions_ref: &[[f64; 3]], positions_can: &[[f64; 3]]) {
     println!("{:#?}", positions_new);
 
     // calculate rmsd
-    let emax = se.eigenvalues.max();
+    let emax = se.eigenvalues.as_slice().max();
 
     let mut rmsd = 0.0f64;
     for i in 0..npts {

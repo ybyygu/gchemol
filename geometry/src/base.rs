@@ -1,14 +1,14 @@
-// [[file:~/Workspace/Programming/gchemol/geometry.note::76dd5ca4-c907-4263-9c12-e59c9cbaed2f][76dd5ca4-c907-4263-9c12-e59c9cbaed2f]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::76dd5ca4-c907-4263-9c12-e59c9cbaed2f][76dd5ca4-c907-4263-9c12-e59c9cbaed2f]]
 use quicli::prelude::*;
 
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
 pub use test::stats::Stats;
-extern crate nalgebra;
 use nalgebra as na;
 
 /// Vector in 3D space
 pub type Vector3f = na::Vector3<f64>;
 pub type Matrix3f = na::Matrix3<f64>;
+pub type Matrix4f = na::Matrix4<f64>;
 pub type DMatrixf = na::DMatrix<f64>;
 
 /// 3xN matrix storing a list of 3D vectors
@@ -23,7 +23,7 @@ pub type Positions = Vector3fVec;
 pub type FloatVec = na::DVector<f64>;
 // 76dd5ca4-c907-4263-9c12-e59c9cbaed2f ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry.note::bb4e49dd-5b03-4632-a0f4-9338a8e581d5][bb4e49dd-5b03-4632-a0f4-9338a8e581d5]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::bb4e49dd-5b03-4632-a0f4-9338a8e581d5][bb4e49dd-5b03-4632-a0f4-9338a8e581d5]]
 /// A trait provides useful tools for Vec<f64> type.
 pub trait VecFloatMath {
     /// Convert to nalgebra dynamic 1xN vector
@@ -205,7 +205,7 @@ fn test_vec_math() {
 }
 // bb4e49dd-5b03-4632-a0f4-9338a8e581d5 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry.note::9b14f11f-505a-4799-b78f-7896627a4432][9b14f11f-505a-4799-b78f-7896627a4432]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::9b14f11f-505a-4799-b78f-7896627a4432][9b14f11f-505a-4799-b78f-7896627a4432]]
 #[inline]
 pub fn euclidean_distance(p1: [f64; 3], p2: [f64; 3]) -> f64 {
     let mut d2 = 0.0;
@@ -266,6 +266,6 @@ fn test_weighted_center_of_geometry() {
     // expected results
     let expected = Vector3f::new(0.3687142857142857, -13.15214285714286, 29.955499999999997);
     let pc = frag.center_of_mass(&masses).expect("geometry: com");
-    assert_relative_eq!(pc, expected, epsilon=1e-6);
+    relative_eq!(pc, expected, epsilon=1e-6);
 }
 // 9b14f11f-505a-4799-b78f-7896627a4432 ends here

@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/geometry.note::b4b0578c-28cb-4e62-8037-b715c427ec31][b4b0578c-28cb-4e62-8037-b715c427ec31]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::b4b0578c-28cb-4e62-8037-b715c427ec31][b4b0578c-28cb-4e62-8037-b715c427ec31]]
 // Author of Rust Port:
 //                 Wenping Guo
 //                 Synefuels China Technology Co.Ltd.
@@ -91,7 +91,7 @@
 //                    sum of weights (thanks to Geoff Skillman)
 // b4b0578c-28cb-4e62-8037-b715c427ec31 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry.note::1871ed71-da12-49da-967c-5e2ecca97b05][1871ed71-da12-49da-967c-5e2ecca97b05]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::1871ed71-da12-49da-967c-5e2ecca97b05][1871ed71-da12-49da-967c-5e2ecca97b05]]
 use quicli::prelude::*;
 
 /// Calculate the inner product of two structures.
@@ -422,7 +422,6 @@ fn get_center_of_coords(coords: &[[f64; 3]], weights: Option<&[f64]>) -> [f64; 3
     ysum /= wsum;
     zsum /= wsum;
 
-
     [
         xsum,
         ysum,
@@ -492,7 +491,7 @@ pub fn calc_rmsd_rotational_matrix(
 }
 // 1871ed71-da12-49da-967c-5e2ecca97b05 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry.note::338e385d-377d-4fe0-906b-a369025015f5][338e385d-377d-4fe0-906b-a369025015f5]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::338e385d-377d-4fe0-906b-a369025015f5][338e385d-377d-4fe0-906b-a369025015f5]]
 /// test data provided in main.c
 pub fn prepare_test_data() -> (Vec<[f64; 3]>, Vec<[f64; 3]>, Vec<f64>) {
     let mut frag_a = vec![

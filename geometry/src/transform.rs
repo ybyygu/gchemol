@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/geometry.note::26f9be7f-1dbd-4ac0-9cdf-4759ede5d338][26f9be7f-1dbd-4ac0-9cdf-4759ede5d338]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::26f9be7f-1dbd-4ac0-9cdf-4759ede5d338][26f9be7f-1dbd-4ac0-9cdf-4759ede5d338]]
 type Point3D = [f64; 3];
 type Points = Vec<Point3D>;
 
@@ -59,7 +59,7 @@ pub fn get_distance_matrix(points: Points) -> Vec<Vec<f64>>{
 }
 // 26f9be7f-1dbd-4ac0-9cdf-4759ede5d338 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry.note::c7248d32-74e1-47a8-8a78-56fef9ca529c][c7248d32-74e1-47a8-8a78-56fef9ca529c]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::c7248d32-74e1-47a8-8a78-56fef9ca529c][c7248d32-74e1-47a8-8a78-56fef9ca529c]]
 /// rotate coordinates about x axis in radian
 pub fn rotate_about_x_axis(points: &Points, angle: f64, center: Point3D) -> Points {
     let axis = Vector3::x_axis();

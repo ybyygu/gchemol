@@ -1,0 +1,16 @@
+# [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::9cff0073-29d3-4088-8eec-a0e80397436d][9cff0073-29d3-4088-8eec-a0e80397436d]]
+[package]
+name = "gchemol-geometry"
+version = "0.0.1"
+authors = ["Wenping Guo <ybyygu@gmail.com>"]
+
+[dependencies]
+nalgebra = "0.16.0"
+quicli = "0.3"
+rand = ">=0.5"
+
+[dev-dependencies]
+approx = "0.3"
+tempfile = "3"
+gchemol = { path = "../" }
+# 9cff0073-29d3-4088-8eec-a0e80397436d ends here

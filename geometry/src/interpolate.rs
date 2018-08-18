@@ -1,5 +1,5 @@
-// [[file:~/Workspace/Programming/gchemol/geometry.note::8a489c41-809c-46c9-8a23-5d926db1c5ca][8a489c41-809c-46c9-8a23-5d926db1c5ca]]
-use super::prelude::*;
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::8a489c41-809c-46c9-8a23-5d926db1c5ca][8a489c41-809c-46c9-8a23-5d926db1c5ca]]
+use super::base::*;
 use quicli::prelude::*;
 
 // direct linear interpolation

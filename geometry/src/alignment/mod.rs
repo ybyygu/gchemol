@@ -1,5 +1,5 @@
-// [[file:~/Workspace/Programming/gchemol/geometry.note::0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777][0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777]]
-use super::prelude::*;
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777][0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777]]
+use super::base::*;
 use quicli::prelude::*;
 
 use nalgebra as na;
@@ -10,7 +10,7 @@ mod qcprot;
 mod quaternion;
 // 0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry.note::ec9ee4ce-4967-4c41-bb0c-a823981b7631][ec9ee4ce-4967-4c41-bb0c-a823981b7631]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::ec9ee4ce-4967-4c41-bb0c-a823981b7631][ec9ee4ce-4967-4c41-bb0c-a823981b7631]]
 /// The result of alignment defining how to superimpose.
 #[derive(Clone, Debug)]
 pub struct Superposition {
@@ -68,11 +68,10 @@ impl<'a> Alignment<'a> {
         }
 
         // calculate rmsd
-        // take the weight if any, or set it to 1.0
-        let weights = weights.map_or_else(|| vec![1.0; npts].as_slice(), |ws| ws);
         let mut ws = 0.0f64;
         for i in 0..npts {
-            let wi = weights[i];
+            // take the weight if any, or set it to 1.0
+            let wi = weights.map_or_else(|| 1.0, |w| w[i]);
             let dx = wi * (self.positions[i][0] - reference[i][0]);
             let dy = wi * (self.positions[i][1] - reference[i][1]);
             let dz = wi * (self.positions[i][2] - reference[i][2]);
@@ -114,7 +113,7 @@ impl<'a> Alignment<'a> {
 }
 // ec9ee4ce-4967-4c41-bb0c-a823981b7631 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry.note::128fc758-e836-41df-a94e-e90580bb73e3][128fc758-e836-41df-a94e-e90580bb73e3]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::128fc758-e836-41df-a94e-e90580bb73e3][128fc758-e836-41df-a94e-e90580bb73e3]]
 #[test]
 fn test_alignment() {
     // fragment a
@@ -138,7 +137,8 @@ fn test_alignment() {
 
 #[test]
 fn test_alignment2() {
-    use molecule::Molecule;
+    use gchemol::io::prelude::*;
+    use gchemol::molecule::Molecule;
 
     // load test molecules
     let mol1 = Molecule::from_file("tests/files/alignment/reference.mol2").expect("alignment reference");

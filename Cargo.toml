@@ -4,9 +4,11 @@ name = "gchemol"
 version = "0.0.18"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
+[workspace]
+members = ["geometry",]
+
 [dependencies]
-nalgebra = "*"
-#cgmath = "*"
+nalgebra = "0.16.0"
 nom = ">=4.0.0"
 petgraph = "*"
 indexmap = {version=">=1.0.0", features=["serde-1"]}
@@ -15,10 +17,10 @@ serde_json = "*"
 serde_derive = "1.0"
 handlebars = ">=1.0.0"
 itertools = "*"
-quicli = "*"
-rand = ">=0.5"
+quicli = "0.3"
+gchemol-geometry = {path = "geometry"}
 
 [dev-dependencies]
-approx = "*"
+approx = "0.3"
 tempfile = "3"
 # c45d1413-12b8-471e-b060-da682339ad4b ends here

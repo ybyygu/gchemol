@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-08-13 Mon 13:47>
+//       UPDATED:  <2018-08-19 Sun 16:21>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -19,7 +19,6 @@ extern crate petgraph;
 #[macro_use] extern crate nom;
 #[macro_use] extern crate indexmap;
 extern crate nalgebra;
-extern crate rand;
 extern crate serde;
 #[macro_use] extern crate serde_json;
 #[macro_use] extern crate serde_derive;
@@ -34,7 +33,6 @@ extern crate itertools;
 pub type Point3D = [f64; 3];
 pub type Points = Vec<Point3D>;
 
-pub mod geometry;
 pub mod molecule;
 pub use molecule::{
     AtomKind,
@@ -45,11 +43,15 @@ pub use molecule::{
     BondKind,
     Molecule};
 
+extern crate gchemol_geometry;
+pub mod geometry {
+    pub use gchemol_geometry::*;
+}
+
 pub mod topology;
 pub mod io;
 pub mod data;
-#[macro_use]
-pub mod parser;
+#[macro_use] pub mod parser;
 pub mod lattice;
 pub mod trajectory;
 pub mod formats;

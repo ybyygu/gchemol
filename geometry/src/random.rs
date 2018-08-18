@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/geometry.note::9413e1bc-8f8f-4b07-b305-9d2911afabc6][9413e1bc-8f8f-4b07-b305-9d2911afabc6]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::9413e1bc-8f8f-4b07-b305-9d2911afabc6][9413e1bc-8f8f-4b07-b305-9d2911afabc6]]
 use rand::{self, Rng};
 use rand::distributions::{Range, Normal};
 
@@ -84,7 +84,7 @@ pub fn rand_points_within_sphere(radius: f64, npts: usize) -> Points {
 }
 // 9413e1bc-8f8f-4b07-b305-9d2911afabc6 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry.note::976ea5bc-07b5-40f3-bfc8-42e2980d6f31][976ea5bc-07b5-40f3-bfc8-42e2980d6f31]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::976ea5bc-07b5-40f3-bfc8-42e2980d6f31][976ea5bc-07b5-40f3-bfc8-42e2980d6f31]]
 pub fn rand_rotate(points: &Points) -> Points {
     let p = rand_point_on_sphere(1.0);
     let v = Vector3::from(p);
@@ -93,7 +93,7 @@ pub fn rand_rotate(points: &Points) -> Points {
 }
 // 976ea5bc-07b5-40f3-bfc8-42e2980d6f31 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry.note::4c7139a2-6745-461f-ad04-ea4355283d60][4c7139a2-6745-461f-ad04-ea4355283d60]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::4c7139a2-6745-461f-ad04-ea4355283d60][4c7139a2-6745-461f-ad04-ea4355283d60]]
 #[test]
 fn test_rand_rotate() {
     use std::f64;
