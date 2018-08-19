@@ -2,7 +2,11 @@
 use super::super::base::*;
 use nalgebra as na;
 
-fn quaternion_rotate(positions_ref: &[[f64; 3]], positions_can: &[[f64; 3]]) {
+pub fn calc_rmsd_rotational_matrix(
+    positions_ref: &[[f64; 3]],
+    positions_can: &[[f64; 3]],
+    weights: Option<&[f64]>) -> (f64, [f64; 3], Option<[f64; 9]>)
+{
     let npts = positions_ref.len();
     let cog_ref = positions_ref.center_of_geometry();
     let cog_can = positions_can.center_of_geometry();
@@ -35,7 +39,6 @@ fn quaternion_rotate(positions_ref: &[[f64; 3]], positions_can: &[[f64; 3]]) {
     let r33 = mat_cov[(2, 2)];
 
     // compute the rotation quaternion
-    println!("{}", mat_cov);
     let f = [
         r11 + r22 + r33, r23 - r32, r31 - r13, r12 - r21,
         r23 - r32, r11 - r22 - r33, r12 + r21, r13 + r31,
@@ -63,28 +66,68 @@ fn quaternion_rotate(positions_ref: &[[f64; 3]], positions_can: &[[f64; 3]]) {
         2.0 * (q2 * q3 + q0 * q1),
         q0.powi(2) - q1.powi(2) - q2.powi(2) + q3.powi(2)];
 
-    let mat_r = na::Matrix3::<f64>::from_column_slice(&r_q);
+    let rotation = Some(r_q);
 
-    let mut positions_new = vec![];
-    for mut v in vectors_can.iter() {
-        let p = (v.transpose() * mat_r).transpose() + cog_ref;
-        positions_new.push(p);
-    }
+    // apply rotation
+    // let mat_r = na::Matrix3::<f64>::from_column_slice(&r_q);
+    // let mut positions_new = vec![];
+    // for mut v in vectors_can.iter() {
+    //     let p = (v.transpose() * mat_r).transpose() + cog_ref;
+    //     positions_new.push(p);
+    // }
 
-    println!("{:#?}", positions_new);
-
-    // calculate rmsd
-    let emax = se.eigenvalues.as_slice().max();
-
+    // calculate superposition rmsd
     let mut rmsd = 0.0f64;
     for i in 0..npts {
         let vcan = vectors_can[i];
         let vref = vectors_ref[i];
-        rmsd += vcan.norm_squared() + vref.norm_squared() - 2.0 * emax;
+        rmsd += vcan.norm_squared() + vref.norm_squared();
     }
 
-    rmsd /= npts as f64;
-    let rmsd = rmsd.sqrt();
-    println!("rmsd = {:6.3}", rmsd);
+    let emax = se.eigenvalues.as_slice().max();
+    let rmsd = ((rmsd - 2.0 * emax) / (npts as f64)).sqrt();
+
+
+    // calculate translation
+    // rotated cog_can
+    let mut rotc = [0.0; 3];
+    let rotc = if let Some(r) = rotation {
+        vec![
+            r[0] * cog_can[0] + r[1] * cog_can[1] + r[2] * cog_can[2],
+            r[3] * cog_can[0] + r[4] * cog_can[1] + r[5] * cog_can[2],
+            r[6] * cog_can[0] + r[7] * cog_can[1] + r[8] * cog_can[2],
+        ]
+    } else {
+        cog_can.as_slice().to_vec()
+    };
+
+    let trans = [
+        cog_ref[0] - rotc[0],
+        cog_ref[1] - rotc[1],
+        cog_ref[2] - rotc[2]
+    ];
+
+    return (rmsd, trans, rotation)
 }
 // d5604dc1-f9b1-4dca-a3c0-199cdd4ec28f ends here
+
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::fd38cec0-8b02-4f9a-82d8-80ab6a2c22d4][fd38cec0-8b02-4f9a-82d8-80ab6a2c22d4]]
+#[test]
+fn test_quaterion() {
+    use super::Alignment;
+    use gchemol::Molecule;
+    use gchemol::io::prelude::*;
+
+    let mol_ref = Molecule::from_file("/home/ybyygu/Workspace/Paperwork/reaction-preview/examples/Birkholz2015JCC/SN2/reactant.mol2").unwrap();
+    let mol_can = Molecule::from_file("/home/ybyygu/Workspace/Paperwork/reaction-preview/examples/Birkholz2015JCC/SN2/product.mol2").unwrap();
+
+    let positions_ref = mol_ref.positions();
+    let positions_can = mol_can.positions();
+    let x = calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
+    println!("{:#?}", x);
+
+    let mut align = Alignment::new(&positions_can);
+    let sp = align.superpose(&positions_ref, None).unwrap();
+    println!("{:#?}", sp);
+}
+// fd38cec0-8b02-4f9a-82d8-80ab6a2c22d4 ends here

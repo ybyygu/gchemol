@@ -232,7 +232,6 @@ fn fast_calc_rmsd_and_rotation
     arr_c[2] = -2.0 * (sxx2 + syy2 + szz2 + sxy2 + syx2 + sxz2 + szx2 + syz2 + szy2);
     arr_c[1] = 8.0 * (sxx*syz*szy + syy*szx*sxz + szz*sxy*syx - sxx*syy*szz - syz*szx*sxy - szy*syx*sxz);
 
-
     let sxzpszx = sxz + szx;
     let syzpszy = syz + szy;
     let sxypsyx = sxy + syx;
@@ -427,11 +426,6 @@ fn get_center_of_coords(coords: &[[f64; 3]], weights: Option<&[f64]>) -> [f64; 3
         ysum,
         zsum
     ]
-    // for i in 0..coords.len() {
-    //     coords[i][0] -= xsum;
-    //     coords[i][1] -= ysum;
-    //     coords[i][2] -= zsum;
-    // }
 }
 
 // Calculate the RMSD & rotational matrix.
