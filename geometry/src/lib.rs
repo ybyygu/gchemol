@@ -2,7 +2,7 @@
 #![feature(test)]
 extern crate test;
 
-// for test-only use
+// for test-only uses
 #[cfg(test)]
 #[macro_use] extern crate approx;
 #[macro_use] extern crate quicli;
