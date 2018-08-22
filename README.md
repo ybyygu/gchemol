@@ -58,7 +58,7 @@ set more attributes using the builder pattern
 
     let a = Atom::build()
         .symbol("Fe")
-        .position([1.2, 1.0, 0.3])
+        .position(1.2, 1.0, 0.3)
         .finish();
 
 

@@ -29,6 +29,8 @@ pub use molecule::{
     Bond,
     BondKind,
     Molecule,
+    AtomIndex,
+    BondIndex,
 };
 
 pub use lattice::{
