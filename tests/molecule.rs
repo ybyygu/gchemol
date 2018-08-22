@@ -80,27 +80,6 @@ fn test_molecule_neighbors() {
     let (p1, p2) = b35.partners(&mol).unwrap();
 }
 
-// distance using mic
-
-#[test]
-fn test_molecule_pbc_distance() {
-    use gchemol::AtomIndex;
-    use gchemol::io;
-
-    let mut mols = io::read("tests/files/cif/MS-MOR.cif")
-        .expect("structure from cif file");
-    let mut mol = &mut mols[0];
-    let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12))
-        .expect("distance between 0 and 12");
-    assert_relative_eq!(12.6753, d, epsilon=1e-4);
-
-    // remove periodic bound
-    mol.unbuild_crystal();
-    let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12))
-        .expect("distance between 0 and 12");
-    assert_relative_eq!(16.203993, d, epsilon=1e-4);
-}
-
 // molecule center
 
 #[test]
