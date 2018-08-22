@@ -87,7 +87,6 @@ pub fn calc_rmsd_rotational_matrix(
     let emax = se.eigenvalues.as_slice().max();
     let rmsd = ((rmsd - 2.0 * emax) / (npts as f64)).sqrt();
 
-
     // calculate translation
     // rotated cog_can
     let mut rotc = [0.0; 3];
@@ -110,24 +109,3 @@ pub fn calc_rmsd_rotational_matrix(
     return (rmsd, trans, rotation)
 }
 // d5604dc1-f9b1-4dca-a3c0-199cdd4ec28f ends here
-
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::fd38cec0-8b02-4f9a-82d8-80ab6a2c22d4][fd38cec0-8b02-4f9a-82d8-80ab6a2c22d4]]
-#[test]
-fn test_quaterion() {
-    use super::Alignment;
-    use gchemol::Molecule;
-    use gchemol::io::prelude::*;
-
-    let mol_ref = Molecule::from_file("/home/ybyygu/Workspace/Paperwork/reaction-preview/examples/Birkholz2015JCC/SN2/reactant.mol2").unwrap();
-    let mol_can = Molecule::from_file("/home/ybyygu/Workspace/Paperwork/reaction-preview/examples/Birkholz2015JCC/SN2/product.mol2").unwrap();
-
-    let positions_ref = mol_ref.positions();
-    let positions_can = mol_can.positions();
-    let x = calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
-    println!("{:#?}", x);
-
-    let mut align = Alignment::new(&positions_can);
-    let sp = align.superpose(&positions_ref, None).unwrap();
-    println!("{:#?}", sp);
-}
-// fd38cec0-8b02-4f9a-82d8-80ab6a2c22d4 ends here

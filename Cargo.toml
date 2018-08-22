@@ -5,20 +5,12 @@ version = "0.0.19"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [workspace]
-members = ["geometry",]
+members = ["geometry", "core", "readwrite"]
 
 [dependencies]
-nalgebra = "0.16.0"
-nom = ">=4.0.0"
-petgraph = "*"
-indexmap = {version=">=1.0.0", features=["serde-1"]}
-serde = "*"
-serde_json = "*"
-serde_derive = "1.0"
-handlebars = ">=1.0.0"
-itertools = "*"
-quicli = "0.3"
 gchemol-geometry = {path = "geometry"}
+gchemol-core = {path = "core"}
+gchemol-readwrite = {path = "readwrite"}
 
 [dev-dependencies]
 approx = "0.3"

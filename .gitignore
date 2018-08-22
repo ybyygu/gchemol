@@ -2,8 +2,10 @@
 # will have compiled files and executables
 /target/
 
-# org-mode generated tmp files
+# org-mode generated files
+**/data/
 /ltxpng/
+**/.ltximg/
 
 # Remove Cargo.lock from gitignore if creating an executable, leave it for libraries
 # More information here http://doc.crates.io/guide.html#cargotoml-vs-cargolock

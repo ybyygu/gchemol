@@ -11,6 +11,11 @@ mod quaternion;
 // 0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777 ends here
 
 // [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::ec9ee4ce-4967-4c41-bb0c-a823981b7631][ec9ee4ce-4967-4c41-bb0c-a823981b7631]]
+// pub enum SuperpositionAlgo {
+//     QCP,
+//     Quaternion
+// }
+
 /// The result of alignment defining how to superimpose.
 #[derive(Clone, Debug)]
 pub struct Superposition {
@@ -116,6 +121,7 @@ impl<'a> Alignment<'a> {
 
 // [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::128fc758-e836-41df-a94e-e90580bb73e3][128fc758-e836-41df-a94e-e90580bb73e3]]
 #[test]
+#[ignore]
 fn test_alignment() {
     // fragment a
     let (reference, candidate, weights) = qcprot::prepare_test_data();
@@ -137,8 +143,9 @@ fn test_alignment() {
 }
 
 #[test]
+#[ignore]
 fn test_alignment2() {
-    use gchemol::io::prelude::*;
+    use gchemol::prelude::*;
     use gchemol::molecule::Molecule;
 
     // load test molecules

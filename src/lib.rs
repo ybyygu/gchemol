@@ -8,55 +8,26 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-08-19 Sun 16:21>
+//       UPDATED:  <2018-08-22 Wed 14:50>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
 // [[file:~/Workspace/Programming/gchemol/gchemol.note::53cbd3c0-e164-4bad-b535-6fd6df916650][53cbd3c0-e164-4bad-b535-6fd6df916650]]
-#![feature(test)]
-extern crate test;
-extern crate petgraph;
-#[macro_use] extern crate nom;
-#[macro_use] extern crate indexmap;
-extern crate nalgebra;
-extern crate serde;
-#[macro_use] extern crate serde_json;
-#[macro_use] extern crate serde_derive;
-extern crate itertools;
-#[macro_use] extern crate handlebars;
-#[macro_use] extern crate quicli;
-
-// for test-only use
-#[cfg(test)]
-#[macro_use] extern crate approx;
-
-pub type Point3D = [f64; 3];
-pub type Points = Vec<Point3D>;
-
-pub mod molecule;
-pub use molecule::{
-    AtomKind,
-    AtomKind::Element,
-    AtomKind::Dummy,
-    Atom,
-    Bond,
-    BondKind,
-    Molecule};
-
 extern crate gchemol_geometry;
 pub mod geometry {
     pub use gchemol_geometry::*;
 }
 
-pub mod topology;
-pub mod io;
-pub mod data;
-#[macro_use] pub mod parser;
-pub mod lattice;
-pub mod trajectory;
-pub mod formats;
+extern crate gchemol_core;
+pub use gchemol_core::*;
+
+extern crate gchemol_readwrite;
+pub mod io {
+    pub use gchemol_readwrite::io::*;
+}
 
 pub mod prelude {
-    pub use io::prelude::*;
+    pub use gchemol_readwrite::io::prelude::*;
+    pub use gchemol_geometry::*;
 }
 // 53cbd3c0-e164-4bad-b535-6fd6df916650 ends here

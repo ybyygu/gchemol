@@ -5,7 +5,7 @@ extern crate tempfile;
 #[test]
 fn io_from_file_to_file() {
     use gchemol::Molecule;
-    use gchemol::io::prelude::*;
+    use gchemol::prelude::*;
 
     // 1. string io
     let txt1 = String::from_file("tests/files/mol2/alanine-gv.mol2").expect("txt1 from file");

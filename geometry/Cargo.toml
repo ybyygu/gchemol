@@ -12,5 +12,5 @@ rand = ">=0.5"
 [dev-dependencies]
 approx = "0.3"
 tempfile = "3"
-gchemol = { path = "../" }
+gchemol = { path = ".." }
 # 9cff0073-29d3-4088-8eec-a0e80397436d ends here
