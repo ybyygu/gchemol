@@ -4,6 +4,7 @@
 // - D. L. Theobald, Acta Crystallogr. A, 2005, DOI:10.1107/S0108767305015266.
 // - P. Liu, D. K. Agrafiotis, D. L. Theobald, J. Comput. Chem., 2010, DOI:10.1002/jcc.21439.
 
+
 use super::super::base::*;
 use nalgebra as na;
 
@@ -32,9 +33,6 @@ pub fn calc_rmsd_rotational_matrix(
     }
 
     // 2. computation of the F matrix
-    // let mat_ref = Vector3fVec::from_columns(&vectors_ref);
-    // let mat_can = Vector3fVec::from_columns(&vectors_can);
-    // let mat_f = &mat_can * &mat_ref.transpose();
     let mut mat_f = na::Matrix3::zeros();
     for i in 0..npts {
         let wi = weights[i];
@@ -49,7 +47,6 @@ pub fn calc_rmsd_rotational_matrix(
     let szx = mat_f[(2, 0)];
     let szy = mat_f[(2, 1)];
     let szz = mat_f[(2, 2)];
-    println!("{:}", mat_f);
 
     // 3. construct the key matrix K
     let mat_k = na::Matrix4::from_column_slice(
@@ -117,4 +114,35 @@ pub fn calc_rmsd_rotational_matrix(
     ];
 
     return (rmsd, trans, rotation)
+}
+
+// test
+// This is an example where the original QCP program gives the incorrect result.
+
+#[test]
+fn test_quaterion() {
+    use super::qcprot;
+    use gchemol::Molecule;
+    use gchemol::prelude::*;
+
+    let positions_ref = vec![[ 0.     ,  0.     ,  0.50222],
+                             [ 0.     ,  0.     ,  1.57133],
+                             [ 0.     ,  0.     , -0.65495]];
+
+    let positions_can = vec![[-0.35846,  0.02588,  0.47287],
+                             [ 0.28996,  1.02611,  0.47287],
+                             [ 0.0685 , -1.05199,  0.47287]];
+
+    let r1 = calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
+    let r2 = qcprot::calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
+    relative_eq!(r1.0, r2.0, epsilon=1e-3);
+
+    for i in 0..3 {
+        relative_eq!(r1.1[i], r2.1[i], epsilon=1e-3);
+    }
+    let rot1 = r1.2.unwrap();
+    let rot2 = r2.2.unwrap();
+    for i in 0..9 {
+        relative_eq!(rot1[i], rot2[i], epsilon=1e-3);
+    }
 }

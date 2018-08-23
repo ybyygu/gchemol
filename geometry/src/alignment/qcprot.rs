@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::b4b0578c-28cb-4e62-8037-b715c427ec31][b4b0578c-28cb-4e62-8037-b715c427ec31]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*header][header:1]]
 // Author of Rust Port:
 //                 Wenping Guo
 //                 Synefuels China Technology Co.Ltd.
@@ -89,9 +89,9 @@
 //    2012/07/26      Minor changes to comments and main.c, more info (v.1.4)
 //    2016/07/13      Fixed normalization of RMSD in FastCalcRMSDAndRotation(), should divide by
 //                    sum of weights (thanks to Geoff Skillman)
-// b4b0578c-28cb-4e62-8037-b715c427ec31 ends here
+// header:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::1871ed71-da12-49da-967c-5e2ecca97b05][1871ed71-da12-49da-967c-5e2ecca97b05]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*core][core:1]]
 use quicli::prelude::*;
 
 /// Calculate the inner product of two structures.
@@ -111,7 +111,7 @@ use quicli::prelude::*;
 ///
 /// Return
 /// ------
-/// (arr_a, E0): inner product array and E0 (inputs for fast_calc_rmsd_and_rotation)
+/// (arr_a, e0): inner product array and e0 (inputs for fast_calc_rmsd_and_rotation)
 ///
 fn inner_product
     (
@@ -173,7 +173,7 @@ fn inner_product
 //
 //        Input:
 //                A[9]    -- the inner product of two structures
-//                E0      -- (g1 + g2) * 0.5
+//                e0      -- (g1 + g2) * 0.5
 //                len     -- the size of the system
 //                min_score-- if( min_score > 0 && rmsd < min_score) then calculate only the rmsd;
 //                           otherwise, calculate both the RMSD & the rotation matrix
@@ -186,7 +186,7 @@ fn inner_product
 fn fast_calc_rmsd_and_rotation
     (
         mat_a: &[f64; 9],
-        E0: f64,
+        e0: f64,
         wsum: f64,
         min_score: f64
     ) -> (f64, Option<[f64; 9]>)
@@ -250,7 +250,7 @@ fn fast_calc_rmsd_and_rotation
         + ((sxypsyx)*(syzmszy)+(sxzmszx)*(sxxmsyy-szz)) * (-(sxymsyx)*(syzpszy)+(sxzmszx)*(sxxpsyy-szz));
 
     // Newton-Raphson
-    let mut mx_eigenv = E0;
+    let mut mx_eigenv = e0;
     let mut icycle = 0;
 
     let evecprec: f64 = 1e-6;
@@ -277,7 +277,7 @@ fn fast_calc_rmsd_and_rotation
 
     // the fabs() is to guard against extremely small, but *negative* numbers
     // due to floating point error
-    let rms = ((2.0 * (E0 - mx_eigenv) / wsum).abs()).sqrt();
+    let rms = ((2.0 * (e0 - mx_eigenv) / wsum).abs()).sqrt();
 
     if min_score.is_sign_positive() {
         if rms < min_score {
@@ -315,18 +315,18 @@ fn fast_calc_rmsd_and_rotation
 
     let mut qsqr = q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4;
 
-
     let mut rot = [0.0; 9];
     // The following code tries to calculate another column in the adjoint
     // matrix when the norm of the current column is too small. Usually this
     // block will never be activated. To be absolutely safe this should be
     // uncommented, but it is most likely unnecessary.
     if qsqr < evecprec {
+        error!("rare case: the norm of column vector is too small!");
         q1 =  a12*a3344_4334 - a13*a3244_4234 + a14*a3243_4233;
         q2 = -a11*a3344_4334 + a13*a3144_4134 - a14*a3143_4133;
         q3 =  a11*a3244_4234 - a12*a3144_4134 + a14*a3142_4132;
         q4 = -a11*a3243_4233 + a12*a3143_4133 - a13*a3142_4132;
-        qsqr = q1*q1 + q2 *q2 + q3*q3+q4*q4;
+        qsqr = q1*q1 + q2*q2 + q3*q3 + q4*q4;
 
         if qsqr < evecprec {
             let a1324_1423 = a13 * a24 - a14 * a23;
@@ -340,28 +340,31 @@ fn fast_calc_rmsd_and_rotation
             q2 = -a41 * a1324_1423 + a43 * a1124_1421 - a44 * a1123_1321;
             q3 =  a41 * a1224_1422 - a42 * a1124_1421 + a44 * a1122_1221;
             q4 = -a41 * a1223_1322 + a42 * a1123_1321 - a43 * a1122_1221;
-            qsqr = q1*q1 + q2 *q2 + q3*q3+q4*q4;
+            qsqr = q1*q1 + q2*q2 + q3*q3 + q4*q4;
 
             if qsqr < evecprec {
                 q1 =  a32 * a1324_1423 - a33 * a1224_1422 + a34 * a1223_1322;
                 q2 = -a31 * a1324_1423 + a33 * a1124_1421 - a34 * a1123_1321;
                 q3 =  a31 * a1224_1422 - a32 * a1124_1421 + a34 * a1122_1221;
                 q4 = -a31 * a1223_1322 + a32 * a1123_1321 - a33 * a1122_1221;
-                qsqr = q1*q1 + q2 *q2 + q3*q3 + q4*q4;
+                qsqr = q1*q1 + q2*q2 + q3*q3 + q4*q4;
 
                 if qsqr < evecprec {
                     /* if qsqr is still too small, return the identity matrix. */
-                    rot[0] = 1.0;
-                    rot[4] = 1.0;
-                    rot[8] = 1.0;
-                    rot[1] = 0.0;
-                    rot[2] = 0.0;
-                    rot[3] = 0.0;
-                    rot[5] = 0.0;
-                    rot[6] = 0.0;
-                    rot[7] = 0.0;
+                    // GWP: returning identity matrix is a surprise, I think it should
+                    // be avoided.
+                    error!("special treat failed.");
+                    // rot[0] = 1.0;
+                    // rot[4] = 1.0;
+                    // rot[8] = 1.0;
+                    // rot[1] = 0.0;
+                    // rot[2] = 0.0;
+                    // rot[3] = 0.0;
+                    // rot[5] = 0.0;
+                    // rot[6] = 0.0;
+                    // rot[7] = 0.0;
 
-                    return (rms, Some(rot));
+                    // return (rms, Some(rot));
                 }
             }
         }
@@ -454,10 +457,10 @@ pub fn calc_rmsd_rotational_matrix(
     let wsum = weights.map_or_else(|| n as f64, |v| v.iter().sum());
 
     // calculate the (weighted) inner product of two structures
-    let (mat_a, E0) = inner_product(&coords1, &center1, &coords2, &center2, weights);
+    let (mat_a, e0) = inner_product(&coords1, &center1, &coords2, &center2, weights);
 
     // calculate the RMSD & rotational matrix
-    let (rmsd, rot) = fast_calc_rmsd_and_rotation(&mat_a, E0, wsum, -1.0);
+    let (rmsd, rot) = fast_calc_rmsd_and_rotation(&mat_a, e0, wsum, -1.0);
 
     // rotated center2
     let mut rotc = [0.0; 3];
@@ -483,9 +486,9 @@ pub fn calc_rmsd_rotational_matrix(
         rot,
     )
 }
-// 1871ed71-da12-49da-967c-5e2ecca97b05 ends here
+// core:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::338e385d-377d-4fe0-906b-a369025015f5][338e385d-377d-4fe0-906b-a369025015f5]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*test][test:1]]
 /// test data provided in main.c
 pub fn prepare_test_data() -> (Vec<[f64; 3]>, Vec<[f64; 3]>, Vec<f64>) {
     let mut frag_a = vec![
@@ -530,4 +533,4 @@ fn test_qcprot() {
         assert_relative_eq!(rot_expected[i], rot[i], epsilon=1e-4);
     }
 }
-// 338e385d-377d-4fe0-906b-a369025015f5 ends here
+// test:1 ends here

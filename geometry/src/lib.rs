@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::7b453b81-a6a7-41b2-b3d7-51cecd5babac][7b453b81-a6a7-41b2-b3d7-51cecd5babac]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*lib.rs][lib.rs:1]]
 #![feature(test)]
 extern crate test;
 
@@ -13,6 +13,9 @@ extern crate rand;
 #[cfg(test)]
 extern crate gchemol;
 
+#[cfg(test)]
+#[macro_use] extern crate timeit;
+
 mod base;
 mod transform;
 mod random;
@@ -26,4 +29,4 @@ pub mod prelude {
     pub use super::alignment::*;
     pub use super::interpolate::*;
 }
-// 7b453b81-a6a7-41b2-b3d7-51cecd5babac ends here
+// lib.rs:1 ends here

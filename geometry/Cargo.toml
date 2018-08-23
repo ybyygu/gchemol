@@ -12,5 +12,6 @@ rand = ">=0.5"
 [dev-dependencies]
 approx = "0.3"
 tempfile = "3"
+timeit = "*"
 gchemol = { path = ".." }
 # cargo:1 ends here

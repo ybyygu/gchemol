@@ -99,8 +99,8 @@ impl<'a> Alignment<'a> {
     /// * weights  : weight of each point
     pub fn superpose(&mut self, reference: &[[f64; 3]], weights: Option<&[f64]>) -> Result<Superposition> {
         // calculate the RMSD & rotational matrix
-        // let (rmsd, trans, rot) = qcprot::calc_rmsd_rotational_matrix(&reference, &self.positions, weights);
-        let (rmsd, trans, rot) = quaternion::calc_rmsd_rotational_matrix(&reference, &self.positions, weights);
+        let (rmsd, trans, rot) = qcprot::calc_rmsd_rotational_matrix(&reference, &self.positions, weights);
+        // let (rmsd, trans, rot) = quaternion::calc_rmsd_rotational_matrix(&reference, &self.positions, weights);
 
         // return unit matrix if two structures are already close enough
         let rotation_matrix = if let Some(rot) = rot {
@@ -121,7 +121,7 @@ impl<'a> Alignment<'a> {
 }
 
 // test
-// tests constructed from: https://theobald.brandeis.edu/QCP/
+// these tests are ported from: https://theobald.brandeis.edu/QCP/
 
 #[test]
 fn test_alignment() {
