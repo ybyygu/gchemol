@@ -1,4 +1,6 @@
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777][0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777]]
+// base
+// Alignment for 3D points
+
 use super::base::*;
 use quicli::prelude::*;
 
@@ -8,9 +10,9 @@ type Rotation3f = na::Rotation3<f64>;
 
 mod qcprot;
 mod quaternion;
-// 0e107ad6-6c63-45b9-9a8f-cb7cdd3e0777 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::ec9ee4ce-4967-4c41-bb0c-a823981b7631][ec9ee4ce-4967-4c41-bb0c-a823981b7631]]
+// superpose
+
 // pub enum SuperpositionAlgo {
 //     QCP,
 //     Quaternion
@@ -117,11 +119,11 @@ impl<'a> Alignment<'a> {
         Ok(sp)
     }
 }
-// ec9ee4ce-4967-4c41-bb0c-a823981b7631 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::128fc758-e836-41df-a94e-e90580bb73e3][128fc758-e836-41df-a94e-e90580bb73e3]]
+// test
+// tests constructed from: https://theobald.brandeis.edu/QCP/
+
 #[test]
-#[ignore]
 fn test_alignment() {
     // fragment a
     let (reference, candidate, weights) = qcprot::prepare_test_data();
@@ -143,7 +145,6 @@ fn test_alignment() {
 }
 
 #[test]
-#[ignore]
 fn test_alignment2() {
     use gchemol::prelude::*;
     use gchemol::molecule::Molecule;
@@ -164,4 +165,3 @@ fn test_alignment2() {
     let new = sp.apply(&candidate);
     assert_relative_eq!(reference.to_dmatrix(), new.to_dmatrix(), epsilon=1e-3);
 }
-// 128fc758-e836-41df-a94e-e90580bb73e3 ends here

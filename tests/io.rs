@@ -1,4 +1,10 @@
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::a2b5c0b6-021c-48ac-a4e9-1082c9ce7063][a2b5c0b6-021c-48ac-a4e9-1082c9ce7063]]
+// io.rs
+// :PROPERTIES:
+// :header-args: :tangle tests/io.rs :comments org
+// :ID:       75afbab7-abee-46f6-ae31-1232b81842ce
+// :END:
+// demonstrate how to read/write molecules
+
 extern crate gchemol;
 extern crate tempfile;
 
@@ -32,4 +38,3 @@ fn io_from_file_to_file() {
     let mol2 = Molecule::from_file(tfile).expect("mol2 from file");
     assert_eq!(mol1.natoms(), mol2.natoms());
 }
-// a2b5c0b6-021c-48ac-a4e9-1082c9ce7063 ends here
