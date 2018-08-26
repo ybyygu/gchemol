@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-08-22 Wed 14:59>
+//       UPDATED:  <2018-08-26 Sun 19:34>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -29,7 +29,7 @@ mod view;
 mod formula;
 mod fragment;
 mod clean;
-mod rebond;
+mod connect;
 mod order;
 
 #[cfg(test)]
@@ -390,7 +390,6 @@ pub struct AtomData {
     momentum: Point3D,
     /// Atomic partial charge
     partial_charge: f64,
-
 }
 
 impl Default for AtomData {
