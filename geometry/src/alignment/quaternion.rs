@@ -63,7 +63,7 @@ pub fn calc_rmsd_rotational_matrix(
     let ci = se.eigenvalues.imax();
     let q = se.eigenvectors.column(ci);
 
-    // 5. construct rotation matrix from the quaternion q
+    // // 5. construct rotation matrix from the quaternion q
     let rot = [
         q[0].powi(2) + q[1].powi(2) - q[2].powi(2) - q[3].powi(2),
         2.0 * (q[1] * q[2] - q[0] * q[3]),
@@ -113,7 +113,7 @@ pub fn calc_rmsd_rotational_matrix(
         com_ref[2] - rotc[2]
     ];
 
-    return (rmsd, trans, rotation)
+    return (rmsd, trans, rotation);
 }
 
 // test

@@ -321,7 +321,7 @@ fn fast_calc_rmsd_and_rotation
     // block will never be activated. To be absolutely safe this should be
     // uncommented, but it is most likely unnecessary.
     if qsqr < evecprec {
-        error!("rare case: the norm of column vector is too small!");
+        info!("rare case: the norm of column vector is too small!");
         q1 =  a12*a3344_4334 - a13*a3244_4234 + a14*a3243_4233;
         q2 = -a11*a3344_4334 + a13*a3144_4134 - a14*a3143_4133;
         q3 =  a11*a3244_4234 - a12*a3144_4134 + a14*a3142_4132;
@@ -353,7 +353,7 @@ fn fast_calc_rmsd_and_rotation
                     /* if qsqr is still too small, return the identity matrix. */
                     // GWP: returning identity matrix is a surprise, I think it should
                     // be avoided.
-                    error!("special treat failed.");
+                    info!("special treat failed.");
                     // rot[0] = 1.0;
                     // rot[4] = 1.0;
                     // rot[8] = 1.0;

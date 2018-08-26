@@ -1,6 +1,5 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3][a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*rebond.rs][rebond.rs:1]]
 use super::*;
-use geometry::prelude::get_distance_matrix;
 use data::guess_bond_kind;
 
 impl Molecule {
@@ -44,23 +43,33 @@ impl Molecule {
         }
     }
 }
-// a1ee57e8-ac54-4e78-9e8a-a5b5bf11f0e3 ends here
+// rebond.rs:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::ec7b11d2-6f13-49fd-b253-af4b213b49a3][ec7b11d2-6f13-49fd-b253-af4b213b49a3]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*rebond.rs][rebond.rs:2]]
 impl Molecule {
     /// Return an iterator of all atoms connected to a.
     fn connected() {
         unimplemented!()
     }
 }
-// ec7b11d2-6f13-49fd-b253-af4b213b49a3 ends here
+// rebond.rs:2 ends here
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::1f8f3a9a-dc8d-4a1e-816b-c5228ddf0607][1f8f3a9a-dc8d-4a1e-816b-c5228ddf0607]]
+use geometry::prelude::*;
+
 impl Molecule {
-    // FIXME: if PBC
-    pub fn distance_matrix(&self) -> Vec<Vec<f64>>{
+    /// Return the distance matrix (nalgebra dmatrix). Will apply mic if
+    /// possible.
+    pub fn distance_matrix(&self) -> DMatrixf {
+
+        // TODO: for periodic structure
+        if self.lattice.is_some() {
+            unimplemented!()
+        }
+
+        // FIXME: mic
         let positions = self.positions();
-        get_distance_matrix(positions)
+        positions.distance_matrix()
     }
 
     // TODO: improve performance
