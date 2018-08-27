@@ -4,14 +4,14 @@ use super::*;
 impl Molecule {
     // FIXME: opt performance
     /// Set positions of atoms
-    pub fn set_positions(&mut self, positions: Points) -> Result<()>
+    pub fn set_positions(&mut self, positions: &[[f64; 3]]) -> Result<()>
     {
         let indices = self.sites();
         if indices.len() != positions.len() {
             bail!("the number of cartesian coordinates is different from the number of atoms in molecule.")
         }
 
-        for (&index, position) in indices.iter().zip(positions) {
+        for (&index, &position) in indices.iter().zip(positions) {
             let mut atom = &mut self.graph[index];
             atom.set_position(position);
         }
@@ -19,15 +19,9 @@ impl Molecule {
         Ok(())
     }
 
-    // FIXME: add a test
     /// Set element symbols
-    pub fn set_symbols<'a, I>(&mut self, symbols: I) -> Result<()>
-    where
-        I: IntoIterator,
-        I::Item: Into<String>,
-    {
+    pub fn set_symbols(&mut self, symbols: &[&str]) -> Result<()> {
         let indices = self.sites();
-        let symbols = symbols.into_iter();
 
         for (&index, symbol) in indices.iter().zip(symbols) {
             let mut atom = &mut self.graph[index];
@@ -155,7 +149,7 @@ impl Molecule {
 }
 // 9924e323-dd02-49d0-ab07-41208114546f ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::72dd0c31-26e5-430b-9f67-1c5bd5220a84][72dd0c31-26e5-430b-9f67-1c5bd5220a84]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*batch%20edit][batch edit:1]]
 impl Molecule {
     /// add many atoms from a hashmap
     pub fn add_atoms_from(&mut self, atoms: HashMap<&str, Atom>) -> Result<()>{
@@ -174,7 +168,7 @@ impl Molecule {
         unimplemented!()
     }
 }
-// 72dd0c31-26e5-430b-9f67-1c5bd5220a84 ends here
+// batch edit:1 ends here
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::2a27ca30-0a99-4d5d-b544-5f5900304bbb][2a27ca30-0a99-4d5d-b544-5f5900304bbb]]
 use petgraph::algo;

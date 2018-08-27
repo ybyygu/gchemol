@@ -55,7 +55,26 @@ fn test_new_molecule() {
     for a in atoms {
         mol.add_atom(a);
     }
-    assert_eq!(5, mol.natoms())
+    assert_eq!(5, mol.natoms());
+
+    // update positions
+    let positions = [[-0.90203687,  0.62555259,  0.0081889 ],
+                     [-0.54538244, -0.38325741,  0.0081889 ],
+                     [-0.54536403,  1.12995078,  0.8654626 ],
+                     [-0.54536403,  1.12995078, -0.8654626 ],
+                     [-1.97203687,  0.62556577,  0.0081889 ]];
+    mol.set_positions(&positions).expect("atom positions");
+
+    // udpate symbols
+    let symbols = ["C", "H", "H", "H", "H"];
+    // accept array
+    mol.set_symbols(&symbols);
+    // accept vec
+    let symbols = vec!["C", "H", "H", "H", "H"];
+    mol.set_symbols(&symbols);
+    for (s1, s2) in mol.symbols().into_iter().zip(symbols) {
+        assert_eq!(s1, s2);
+    }
 }
 
 // query bonded atoms

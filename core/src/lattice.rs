@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::891f59cf-3963-4dbe-a7d2-48279723b72e][891f59cf-3963-4dbe-a7d2-48279723b72e]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*header][header:1]]
 //===============================================================================#
 //   DESCRIPTION:  Represents 3D periodic lattice
 //
@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-08-22 Wed 12:55>
+//       UPDATED:  <2018-08-27 Mon 18:39>
 //===============================================================================#
 
 use nalgebra::{
@@ -19,9 +19,9 @@ use nalgebra::{
 type Mat3D = Matrix3<f64>;
 type Vec3D = Vector3<f64>;
 use quicli::prelude::*;
-// 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
+// header:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::b17e625d-352f-419e-9d10-a84fcdb9ff07][b17e625d-352f-419e-9d10-a84fcdb9ff07]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
 /// Periodic 3D lattice
 #[derive(Debug, Clone, Copy)]
 pub struct Lattice {
@@ -269,9 +269,9 @@ impl Lattice {
         m == self.matrix
     }
 }
-// b17e625d-352f-419e-9d10-a84fcdb9ff07 ends here
+// base:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::83cff231-cc63-4077-b07e-a26a2c2b906d][83cff231-cc63-4077-b07e-a26a2c2b906d]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*neighboring%20images][neighboring images:1]]
 use std::f64;
 
 impl Lattice {
@@ -372,9 +372,9 @@ impl Lattice {
         }
     }
 }
-// 83cff231-cc63-4077-b07e-a26a2c2b906d ends here
+// neighboring images:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::5754ca07-a93d-47e5-8256-c7236777b2ee][5754ca07-a93d-47e5-8256-c7236777b2ee]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*molecule][molecule:1]]
 use molecule::Molecule;
 
 impl Molecule {
@@ -412,15 +412,15 @@ impl Molecule {
                 positions.push(p);
             }
 
-            self.set_positions(positions)
+            self.set_positions(&positions)
         } else {
             bail!("cannot set scaled positions for aperiodic structure")
         }
     }
 }
-// 5754ca07-a93d-47e5-8256-c7236777b2ee ends here
+// molecule:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::4bc21235-f285-4976-a32a-b33506381b58][4bc21235-f285-4976-a32a-b33506381b58]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*test][test:1]]
 #[test]
 fn test_lattice_construct() {
     let mut lat = Lattice::default();
@@ -558,4 +558,4 @@ fn test_lattice_mic_distance() {
     let d = lat.distance_brute_force([0.; 3], [-2.46763, 0.57717, 0.08775]);
     assert_relative_eq!(2.53575, d, epsilon=1e-4);
 }
-// 4bc21235-f285-4976-a32a-b33506381b58 ends here
+// test:1 ends here

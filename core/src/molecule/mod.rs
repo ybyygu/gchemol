@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-08-26 Sun 19:34>
+//       UPDATED:  <2018-08-27 Mon 18:48>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -39,7 +39,7 @@ pub type Point3D = [f64; 3];
 pub type Points = Vec<Point3D>;
 // 2a53090d-59f2-4b7e-a485-e6796c2a904d ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::a806642c-37da-4ce1-aa7b-0fb8d00233e3][a806642c-37da-4ce1-aa7b-0fb8d00233e3]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*globals][globals:1]]
 use std::fmt::{self, Debug, Display};
 
 const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
@@ -161,7 +161,7 @@ const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
     ("Uuh", "ununhexium"),
     ("Uus", "ununseptium"),
     ("Uuo", "ununoctium")];
-// a806642c-37da-4ce1-aa7b-0fb8d00233e3 ends here
+// globals:1 ends here
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::731651b9-ebba-4df3-86f7-083f837e4065][731651b9-ebba-4df3-86f7-083f837e4065]]
 #[derive(Debug, Clone, PartialEq)]
@@ -313,7 +313,7 @@ impl Atom {
     }
 
     /// Set atom position in 3D Cartesian coordinates
-    pub fn set_position(&mut self, p: Point3D) {
+    pub fn set_position(&mut self, p: [f64; 3]) {
         self.data.position = p;
     }
 
@@ -448,9 +448,12 @@ impl Atom {
             .finish()
     }
 
-    // FIXME
-    pub fn set_symbol<T: Into<String>>(&mut self, symbol: T) {
-        self.data.kind = atom_kind_from_string(symbol.into());
+    // pub fn set_symbol<T: Into<String>>(&mut self, symbol: T) {
+    //     self.data.kind = atom_kind_from_string(symbol.into());
+    // }
+
+    pub fn set_symbol(&mut self, symbol: &str) {
+        self.data.kind = atom_kind_from_string(symbol);
     }
 
     pub fn build() -> AtomData {

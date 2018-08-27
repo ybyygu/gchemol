@@ -93,7 +93,7 @@ fn test_molecule_other() {
                      [-0.54538244, -0.38325741,  0.0081889 ],
                      [-0.54536403,  1.12995078, -0.8654626 ],
                      [-1.97203687,  0.62556577,  0.0081889 ]];
-    mol.set_positions(positions.to_vec()).unwrap();
+    mol.set_positions(&positions).unwrap();
     let a = mol.get_atom(AtomIndex::new(0)).expect("failed to get atom with index 0");
     assert_eq!(a.position()[0], -0.90203687);
 
