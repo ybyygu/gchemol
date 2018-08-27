@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::548b6f53-eb69-42e5-bc84-d4e52cc17888][548b6f53-eb69-42e5-bc84-d4e52cc17888]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
 use super::*;
 
 impl Molecule {
@@ -37,7 +37,7 @@ impl Molecule {
         Ok(())
     }
 }
-// 548b6f53-eb69-42e5-bc84-d4e52cc17888 ends here
+// base:1 ends here
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::9924e323-dd02-49d0-ab07-41208114546f][9924e323-dd02-49d0-ab07-41208114546f]]
 impl Molecule {
@@ -53,14 +53,12 @@ impl Molecule {
 
     /// Remove an atom from the molecule.
     /// Return the removed atom if it exists, or return None.
-    pub fn remove_atom<T: IntoAtomIndex>(&mut self, index: T) -> Option<Atom> {
-        let n = index.into_atom_index();
+    pub fn remove_atom(&mut self, n: AtomIndex) -> Option<Atom> {
         self.graph.remove_node(n)
     }
 
     /// access atom by atom index
-    pub fn get_atom<T: IntoAtomIndex>(&self, index: T) -> Option<&Atom> {
-        let n = index.into_atom_index();
+    pub fn get_atom(&self, n: AtomIndex) -> Option<&Atom> {
         self.graph.node_weight(n)
     }
 

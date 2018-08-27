@@ -1,12 +1,10 @@
 // formula.rs
 // :PROPERTIES:
-// :header-args: :tangle src/molecule/formula.rs
+// :header-args: :comments org :tangle src/molecule/formula.rs
 // :END:
 
 // Molecule to chemical formula
-// #+name: ddf54b1b-6bda-496a-8444-b9762645cc94
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::ddf54b1b-6bda-496a-8444-b9762645cc94][ddf54b1b-6bda-496a-8444-b9762645cc94]]
 use super::*;
 use std::iter::IntoIterator;
 
@@ -84,4 +82,3 @@ fn test_formula() {
     let formula = get_reduced_formula(&symbols);
     assert_eq!("C2O2H4", formula);
 }
-// ddf54b1b-6bda-496a-8444-b9762645cc94 ends here

@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::5052eafc-f1ab-4612-90d7-0924c3bacb16][5052eafc-f1ab-4612-90d7-0924c3bacb16]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*test.rs][test.rs:1]]
 use super::*;
 
 #[test]
@@ -54,7 +54,7 @@ fn test_molecule_basic() {
     }
 
     // pick a single atom
-    let a = mol.get_atom(0).expect("failed to get atom with index 0");
+    let a = mol.get_atom(AtomIndex::new(0)).expect("failed to get atom with index 0");
     assert_eq!("Fe", a.symbol());
     assert_eq!(1.2, a.position()[0]);
     let a = mol.get_atom(a1).expect("failed to get atom a1");
@@ -94,7 +94,7 @@ fn test_molecule_other() {
                      [-0.54536403,  1.12995078, -0.8654626 ],
                      [-1.97203687,  0.62556577,  0.0081889 ]];
     mol.set_positions(positions.to_vec()).unwrap();
-    let a = mol.get_atom(0).expect("failed to get atom with index 0");
+    let a = mol.get_atom(AtomIndex::new(0)).expect("failed to get atom with index 0");
     assert_eq!(a.position()[0], -0.90203687);
 
     // loop over fragments
@@ -125,4 +125,4 @@ fn test_molecule_rebond() {
     mol.rebond();
     assert_eq!(4, mol.nbonds());
 }
-// 5052eafc-f1ab-4612-90d7-0924c3bacb16 ends here
+// test.rs:1 ends here

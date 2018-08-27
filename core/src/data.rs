@@ -1,6 +1,7 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::891f59cf-3963-4dbe-a7d2-48279723b72e][891f59cf-3963-4dbe-a7d2-48279723b72e]]
+// header
+
 //===============================================================================#
-//   DESCRIPTION:  data access API for atoms and molecules
+//   DESCRIPTION:  provide important chemical data for atoms and molecules
 //
 //       OPTIONS:  ---
 //  REQUIREMENTS:  ---
@@ -8,7 +9,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-08-22 Wed 14:56>
+//       UPDATED:  <2018-08-27 Mon 18:16>
 //===============================================================================#
 
 use molecule::{
@@ -21,12 +22,14 @@ use molecule::{
 
 use geometry::prelude::euclidean_distance;
 use quicli::prelude::*;
-// 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01][fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01]]
+// element radii data
 // Element radii data taking from: https://mendeleev.readthedocs.io/en/stable/data.html
+
 // Data in columns:
 // covalent_radii_single covalent_radii_double, covalent_radii_triple, vdw_radii
+
+
 const RADII_DATA: [[f64; 4]; 118] =
     [[0.32, 0.32, 0.32, 1.1],
      [0.46, 0.46, 0.46, 1.4],
@@ -147,9 +150,9 @@ const RADII_DATA: [[f64; 4]; 118] =
      [1.65, 1.65, 1.65, 2.46],
      [1.57, 1.57, 1.57, 2.46]
     ];
-// fea6623c-f2ad-4d9a-b5d4-8a7c01f7cf01 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::0c32acf0-9391-40d5-9c80-3b4bc74f2020][0c32acf0-9391-40d5-9c80-3b4bc74f2020]]
+// methods for Atom
+
 /// Return covalent radius for single, double, or triple bonds
 fn get_cov_radius(element_number: usize, bond_order: usize) -> Option<f64> {
     if element_number <= RADII_DATA.len() {
@@ -206,9 +209,10 @@ impl Atom {
         get_vdw_radius(self.number())
     }
 }
-// 0c32acf0-9391-40d5-9c80-3b4bc74f2020 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::0cbcebc4-9ccc-457a-a816-8a503d095e60][0cbcebc4-9ccc-457a-a816-8a503d095e60]]
+// src
+// to be removed
+
 impl Molecule {
     /// Deduce the distance bound for given pair of atoms i and j according
     /// their bonding pattern
@@ -287,9 +291,10 @@ impl Molecule {
         Ok(bound)
     }
 }
-// 0cbcebc4-9ccc-457a-a816-8a503d095e60 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::2d6a4ce4-f616-4bea-a5fd-65ed9117e613][2d6a4ce4-f616-4bea-a5fd-65ed9117e613]]
+// test
+// #+name: 2d6a4ce4-f616-4bea-a5fd-65ed9117e613
+
 #[test]
 fn test_guess_bond_kind() {
     // CH4 molecule
@@ -307,4 +312,3 @@ fn test_guess_bond_kind() {
     assert!(atom1.cov_radius().is_some());
     assert!(atom1.vdw_radius().is_some());
 }
-// 2d6a4ce4-f616-4bea-a5fd-65ed9117e613 ends here
