@@ -23,6 +23,10 @@ impl Molecule {
 
     /// Redefine bonds from distances based on predefined bonding lengths
     pub fn rebond(&mut self) {
+        if self.lattice.is_some() {
+            unimplemented!();
+        }
+
         let n = self.natoms();
         let mut pairs = vec![];
         for ni in self.graph.node_indices() {
