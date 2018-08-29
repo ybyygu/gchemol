@@ -1,12 +1,12 @@
 # [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::bbea2460-7294-40dd-8d48-1dba356f3028][bbea2460-7294-40dd-8d48-1dba356f3028]]
 [package]
 name = "gchemol-core"
-version = "0.0.19"
+version = "0.0.20"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
 nalgebra = "0.16.0"
-petgraph = "*"
+petgraph = "0.4.13"
 indexmap = {version=">=1.0.0", features=["serde-1"]}
 serde = "*"
 serde_json = "*"
