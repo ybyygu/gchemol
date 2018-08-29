@@ -1,7 +1,7 @@
 # [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*cargo][cargo:1]]
 [package]
 name = "gchemol-geometry"
-version = "0.0.2"
+version = "0.0.20"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]

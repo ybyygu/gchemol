@@ -63,18 +63,28 @@ impl Molecule {
     /// Return the distance matrix (nalgebra dmatrix). Will apply mic if
     /// possible.
     pub fn distance_matrix(&self) -> DMatrixf {
-        // TODO: for periodic structure
-        if self.lattice.is_some() {
-            unimplemented!()
+        let positions = self.positions();
+        let mut dm = positions.distance_matrix();
+
+        // apply mic for periodic structure
+        let natoms = positions.len();
+        if let Some(mut lat) = self.lattice {
+            for i in 0..natoms {
+                for j in (i+1)..natoms {
+                    let pi = positions[i];
+                    let pj = positions[j];
+                    let dij = lat.distance(pi, pj);
+                    dm[(i, j)] = dij;
+                    dm[(j, i)] = dij;
+                }
+            }
         }
 
-        // FIXME: mic
-        let positions = self.positions();
-        positions.distance_matrix()
+        dm
     }
 
-    // TODO: improve performance
     /// Return the distance between `atom i` and `atom j`.
+    /// Return None if atom index out of range.
     ///
     /// Force periodic structure, this method will return the distance under the
     /// minimum image convention.

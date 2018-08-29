@@ -8,9 +8,11 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-08-27 Mon 18:39>
+//       UPDATED:  <2018-08-29 Wed 14:59>
 //===============================================================================#
+// header:1 ends here
 
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
 use nalgebra::{
     Vector3,               // A stack-allocated, 3-dimensional column vector.
     Matrix3,               // A stack-allocated, column-major, 3x3 square matrix
@@ -19,9 +21,7 @@ use nalgebra::{
 type Mat3D = Matrix3<f64>;
 type Vec3D = Vector3<f64>;
 use quicli::prelude::*;
-// header:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
 /// Periodic 3D lattice
 #[derive(Debug, Clone, Copy)]
 pub struct Lattice {

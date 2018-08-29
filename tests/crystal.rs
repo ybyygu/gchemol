@@ -5,6 +5,7 @@ extern crate gchemol;
 
 use gchemol::Lattice;
 
+#[test]
 fn test_crystal() {
     use gchemol::{
         Molecule,
@@ -43,11 +44,16 @@ fn test_crystal() {
 
 #[test]
 fn test_molecule_pbc_distance() {
-    use gchemol::AtomIndex;
+    use gchemol:: {
+        AtomIndex,
+        Molecule,
+        prelude::*,
+    };
+
     use gchemol::io;
 
     let mut mols = io::read("tests/files/cif/MS-MOR.cif")
-        .expect("structure from cif file");
+        .expect("cif test file");
     let mut mol = &mut mols[0];
     let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12))
         .expect("distance between 0 and 12");
@@ -58,4 +64,17 @@ fn test_molecule_pbc_distance() {
     let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12))
         .expect("distance between 0 and 12");
     assert_relative_eq!(16.203993, d, epsilon=1e-4);
+
+    // distance matrix
+    let mut mol = Molecule::from_file("tests/files/cif/quinone.cif")
+        .expect("mol2 test file");
+
+    let dm = mol.distance_matrix();
+    let expected = [0.        , 1.46623609, 1.46701952, 1.21833857, 4.73857325,
+                    4.76062156, 4.00902774, 4.20621928, 2.82936072, 2.41889587,
+                    2.42331482, 4.04768958, 3.69004223, 3.4732701 , 4.16339654,
+                    3.34305314];
+    for i in 0..expected.len() {
+        assert_relative_eq!(expected[i], dm[i], epsilon=1e-4);
+    }
 }

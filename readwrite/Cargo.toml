@@ -1,7 +1,7 @@
 # [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::86fc103f-aa7d-42fb-9c7f-fb5acbf8cfd3][86fc103f-aa7d-42fb-9c7f-fb5acbf8cfd3]]
 [package]
 name = "gchemol-readwrite"
-version = "0.0.19"
+version = "0.0.20"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
