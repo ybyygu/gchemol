@@ -8,30 +8,31 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-08-29 Wed 14:59>
+//       UPDATED:  <2018-08-30 Thu 10:17>
 //===============================================================================#
 // header:1 ends here
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
+use quicli::prelude::*;
+
 use nalgebra::{
     Vector3,               // A stack-allocated, 3-dimensional column vector.
     Matrix3,               // A stack-allocated, column-major, 3x3 square matrix
 };
 
-type Mat3D = Matrix3<f64>;
-type Vec3D = Vector3<f64>;
-use quicli::prelude::*;
+type Matrix3f = Matrix3<f64>;
+type Vector3f = Vector3<f64>;
 
 /// Periodic 3D lattice
 #[derive(Debug, Clone, Copy)]
 pub struct Lattice {
     /// internal translation matrix
-    matrix: Mat3D,
+    matrix: Matrix3f,
     /// Lattice origin
-    origin: Vec3D,
+    origin: Vector3f,
 
     /// Cached inverse of lattice matrix
-    inv_matrix: Option<Mat3D>,
+    inv_matrix: Option<Matrix3f>,
 
     /// Cached volume of the unit cell.
     volume: Option<f64>,
@@ -47,45 +48,11 @@ pub struct Lattice {
     angles: Option<[f64; 3]>,
 }
 
-// matrix inversion
-fn get_inv_matrix(matrix: Mat3D) -> Mat3D {
-    matrix.try_inverse().expect("bad matrix")
-}
-
-// cell volume
-fn get_cell_volume(mat: Mat3D) -> f64 {
-    let va = mat.column(0);
-    let vb = mat.column(1);
-    let vc = mat.column(2);
-    va.dot(&vb.cross(&vc))
-}
-
-// return cell length parameters
-fn get_cell_lengths(mat: Mat3D) -> [f64; 3] {
-    [
-        mat.column(0).norm(),
-        mat.column(1).norm(),
-        mat.column(2).norm()
-    ]
-}
-
-// return cell angle parameters in degrees
-fn get_cell_angles(mat: Mat3D) -> [f64; 3] {
-    let va = mat.column(0);
-    let vb = mat.column(1);
-    let vc = mat.column(2);
-    [
-        vb.angle(&vc).to_degrees(),
-        va.angle(&vc).to_degrees(),
-        va.angle(&vb).to_degrees(),
-    ]
-}
-
 impl Default for Lattice {
     fn default() -> Self {
         Lattice {
-            matrix: Mat3D::identity(),
-            origin: Vec3D::zeros(),
+            matrix: Matrix3f::identity(),
+            origin: Vector3f::zeros(),
 
             inv_matrix: None,
             volume: None,
@@ -99,13 +66,13 @@ impl Default for Lattice {
 impl Lattice {
     pub fn new<T: Into<[[f64; 3]; 3]>>(tvs: T) -> Self {
         Lattice {
-            matrix: Mat3D::from(tvs.into()),
+            matrix: Matrix3f::from(tvs.into()),
             ..Default::default()
         }
     }
 
     /// using a cache to reduce the expensive matrix inversion calculations
-    fn inv_matrix(&mut self) -> Mat3D {
+    fn inv_matrix(&mut self) -> Matrix3f {
         // make a readonly reference
         let matrix = self.matrix;
         let im = self.inv_matrix.get_or_insert_with(|| matrix.try_inverse().expect("bad matrix"));
@@ -180,7 +147,7 @@ impl Lattice {
 
     /// Set cell origin in Cartesian coordinates
     pub fn set_origin(&mut self, loc: [f64; 3]) {
-        self.origin = Vec3D::from(loc);
+        self.origin = Vector3f::from(loc);
     }
 
     /// Lattice length parameters: a, b, c
@@ -229,14 +196,14 @@ impl Lattice {
     /// Returns the fractional coordinates given cartesian coordinates.
     pub fn to_frac(&mut self, p: [f64; 3]) -> [f64; 3] {
         let im = self.inv_matrix();
-        let v = Vec3D::from(p);
+        let v = Vector3f::from(p);
         let fs = im * (v - self.origin);
         fs.into()
     }
 
     /// Returns the cartesian coordinates given fractional coordinates.
     pub fn to_cart(&self, p: [f64; 3]) -> [f64; 3] {
-        let v = Vec3D::from(p);
+        let v = Vector3f::from(p);
         let fs = self.matrix*v + self.origin;
 
         fs.into()
@@ -271,13 +238,128 @@ impl Lattice {
 }
 // base:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*neighboring%20images][neighboring images:1]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*utils][utils:1]]
+// matrix inversion
+fn get_inv_matrix(matrix: Matrix3f) -> Matrix3f {
+    matrix.try_inverse().expect("bad matrix")
+}
+
+// cell volume
+fn get_cell_volume(mat: Matrix3f) -> f64 {
+    let va = mat.column(0);
+    let vb = mat.column(1);
+    let vc = mat.column(2);
+    va.dot(&vb.cross(&vc))
+}
+
+// return cell length parameters
+fn get_cell_lengths(mat: Matrix3f) -> [f64; 3] {
+    [
+        mat.column(0).norm(),
+        mat.column(1).norm(),
+        mat.column(2).norm()
+    ]
+}
+
+// return cell angle parameters in degrees
+fn get_cell_angles(mat: Matrix3f) -> [f64; 3] {
+    let va = mat.column(0);
+    let vb = mat.column(1);
+    let vc = mat.column(2);
+    [
+        vb.angle(&vc).to_degrees(),
+        va.angle(&vc).to_degrees(),
+        va.angle(&vb).to_degrees(),
+    ]
+}
+// utils:1 ends here
+
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
 use std::f64;
 
+#[derive (Debug, Clone)]
+pub struct PeriodicImage {
+    /// cartesian positions of the particle image
+    pub position: Vector3f,
+    /// scaled displacment vector relative to origin cell
+    pub image   : Vector3f,
+}
+// base:1 ends here
+
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*distance][distance:1]]
 impl Lattice {
+    /// Return the shortest vector by applying the minimum image convention.
+    pub fn apply_mic(&mut self, p: [f64; 3]) -> PeriodicImage {
+        if self.is_orthorhombic() {
+            self.apply_mic_tuckerman(p)
+        } else {
+            self.apply_mic_brute_force(p)
+        }
+    }
+
+    /// Return the mic vector using Tuckerman's algorithm.
+    ///
+    /// Reference
+    /// ---------
+    /// - Tuckerman, M. E. Statistical Mechanics: Theory and Molecular
+    /// Simulation, 1 edition.; Oxford University Press: Oxford ; New York,
+    /// 2010.
+    pub fn apply_mic_tuckerman(&mut self, p: [f64; 3]) -> PeriodicImage {
+        // apply minimum image convention on the scaled coordinates
+        let mut fcoords = self.to_frac(p);
+
+        let mut image = [1.0; 3];
+        for i in 0..3 {
+            image[i] = -1.0 * fcoords[i].round();
+            fcoords[i] += image[i];
+        }
+
+        // transform back to cartesian coordinates
+        let pij = self.to_cart(fcoords);
+
+        PeriodicImage {
+            position: Vector3f::from(pij),
+            image   : image.into(),
+        }
+    }
+
+    // FIXME: remove type conversion
+    /// Return the mic vector. This algorithm will loop over all relevant images
+    pub fn apply_mic_brute_force(&mut self, p: [f64; 3]) -> PeriodicImage {
+        // The cutoff radius for finding relevant images.
+        // Use the value from Tuckerman algorithm as cutoff radius, since it is
+        // always larger than the real distance using minimum image convention
+        let cutoff = self.apply_mic_tuckerman(p).position.norm();
+        let relevant_images = self.relevant_images(cutoff);
+
+        // tuple = (distance, position, image)
+        let mut target = (f64::MAX,
+                          Vector3f::from([0.0; 3]),
+                          Vector3f::from([0.0; 3]));
+        for image in relevant_images {
+            let dd = self.to_cart(image.into());
+            let ip = [
+                p[0] + dd[0],
+                p[1] + dd[1],
+                p[2] + dd[2],
+            ];
+
+            let v = Vector3f::from(ip);
+            let d = v.norm();
+            if d < target.0 {
+                target = (d, v, image);
+            }
+        }
+
+        PeriodicImage {
+            position: target.1,
+            image   : target.2,
+        }
+    }
+
     /// Return the relevant periodic images required for neighborhood search
     /// within cutoff radius
-    pub fn relevant_images(&mut self, radius: f64) -> Vec<Vector3<f64>> {
+    pub fn relevant_images(&mut self, radius: f64) -> Vec<Vector3f> {
         let ns = self.n_min_images(radius);
         let na = ns[0] as isize;
         let nb = ns[1] as isize;
@@ -287,7 +369,7 @@ impl Lattice {
         for i in (-na)..(na+1) {
             for j in (-nb)..(nb+1) {
                 for k in (-nc)..(nc+1) {
-                    let v = Vec3D::from([i as f64, j as f64, k as f64]);
+                    let v = Vector3f::from([i as f64, j as f64, k as f64]);
                     images.push(v);
                 }
             }
@@ -314,7 +396,7 @@ impl Lattice {
     ///
     /// Reference
     /// ---------
-    /// (1) Tuckerman, M. E. Statistical Mechanics: Theory and Molecular
+    /// - Tuckerman, M. E. Statistical Mechanics: Theory and Molecular
     /// Simulation, 1 edition.; Oxford University Press: Oxford ; New York,
     /// 2010.
     fn distance_tuckerman(&mut self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
@@ -322,57 +404,54 @@ impl Lattice {
                    pj[1] - pi[1],
                    pj[2] - pi[2]];
 
-        // apply minimum image convention on the scaled coordinates
-        let mut fij = self.to_frac(pij);
-        for x in 0..3 {
-            fij[x] -= fij[x].round();
-        }
-
-        // transform back to cartesian coordinates
-        let pij = self.to_cart(fij);
-        Vec3D::from(pij).norm()
+        let pmic = self.apply_mic_tuckerman(pij);
+        pmic.position.norm()
     }
 
     /// Return the shortest distance between `pi` (point i) and the periodic
     /// images of `pj` (point j). This algorithm will loop over all relevant
     /// images
     fn distance_brute_force(&mut self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
-        // The cutoff radius for finding relevant images.
-        // Use the value from Tuckerman algorithm as cutoff radius, since it is
-        // always larger than the real distance using minimum image convention
-        let cutoff = self.distance_tuckerman(pi, pj);
-        let relevant_images = self.relevant_images(cutoff);
+        let v = Vector3f::from(pj) - Vector3f::from(pi);
+        let pmic = self.apply_mic_brute_force(v.into());
 
-        let mut distance = f64::MAX;
-        for v in relevant_images {
-            let dd = self.to_cart(v.into());
-            let ipij = [
-                pj[0] + dd[0] - pi[0],
-                pj[1] + dd[1] - pi[1],
-                pj[2] + dd[2] - pi[2],
-            ];
-
-            let d = Vec3D::from(ipij).norm();
-            if d < distance {
-                distance = d;
-            }
-        }
-
-        distance
+        pmic.position.norm()
     }
 
-    // TODO: return the closest periodic image?
+    // TODO: return the nearest periodic image?
     /// Return the shortest distance between `pi` (point i) and the periodic
     /// images of `pj` (point j) under the minimum image convention
     pub fn distance(&mut self, pi: [f64; 3], pj: [f64; 3]) -> f64 {
-        if self.is_orthorhombic() {
-            self.distance_tuckerman(pi, pj)
-        } else {
-            self.distance_brute_force(pi, pj)
-        }
+        let pmic = self.apply_mic([pj[0] - pi[0],
+                                   pj[1] - pi[1],
+                                   pj[2] - pi[2]]);
+        pmic.position.norm()
     }
 }
-// neighboring images:1 ends here
+// distance:1 ends here
+
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*test][test:1]]
+#[test]
+fn test_mic_vector() {
+    let mut lat = Lattice::new([
+        [ 7.055     ,  0.        ,  0.        ],
+        [ 0.        ,  6.795     ,  0.        ],
+        [-1.14679575,  0.        ,  5.65182701]
+    ]);
+
+    // mic vector
+    let expected = Vector3f::from([-0.48651737,  0.184824  , -1.31913642]);
+
+    let pmic = lat.apply_mic_tuckerman([5.42168688, 0.184824  , 4.33269058]);
+    assert_relative_eq!(expected, pmic.position, epsilon=1e-4);
+
+    assert_relative_eq!(pmic.image, Vector3f::from([-1.0, 0.0, -1.0]), epsilon=1e-4);
+
+    let pmic = lat.apply_mic([5.42168688, 0.184824  , 4.33269058]);
+    assert_relative_eq!(expected, pmic.position, epsilon=1e-4);
+    assert_relative_eq!(pmic.image, Vector3f::from([-1.0, 0.0, -1.0]), epsilon=1e-4);
+}
+// test:1 ends here
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*molecule][molecule:1]]
 use molecule::Molecule;
@@ -389,6 +468,7 @@ impl Molecule {
     }
 
     /// Return fractional coordinates relative to unit cell.
+    /// Return None if not a periodic structure
     pub fn scaled_positions(&self) -> Option<Vec<[f64; 3]>> {
         if let Some(mut lat) = self.lattice {
             let mut fxyzs = vec![];
@@ -403,7 +483,7 @@ impl Molecule {
         }
     }
 
-    /// Set positions relative to unit cell.
+    /// Set fractional coordinates relative to unit cell.
     pub fn set_scaled_positions(&mut self, scaled: &[[f64; 3]]) -> Result<()> {
         if let Some(mut lat) = self.lattice {
             let mut positions = vec![];
@@ -464,33 +544,33 @@ fn test_lattice_neighborhood() {
     assert_eq!([2, 2, 2], lat.n_min_images(20.6));
 
     let expected = [
-        Vec3D::new(-1.0, -1.0, -1.0),
-        Vec3D::new(-1.0, -1.0,  0.0),
-        Vec3D::new(-1.0, -1.0,  1.0),
-        Vec3D::new(-1.0,  0.0, -1.0),
-        Vec3D::new(-1.0,  0.0,  0.0),
-        Vec3D::new(-1.0,  0.0,  1.0),
-        Vec3D::new(-1.0,  1.0, -1.0),
-        Vec3D::new(-1.0,  1.0,  0.0),
-        Vec3D::new(-1.0,  1.0,  1.0),
-        Vec3D::new( 0.0, -1.0, -1.0),
-        Vec3D::new( 0.0, -1.0,  0.0),
-        Vec3D::new( 0.0, -1.0,  1.0),
-        Vec3D::new( 0.0,  0.0, -1.0),
-        Vec3D::new( 0.0,  0.0,  0.0),
-        Vec3D::new( 0.0,  0.0,  1.0),
-        Vec3D::new( 0.0,  1.0, -1.0),
-        Vec3D::new( 0.0,  1.0,  0.0),
-        Vec3D::new( 0.0,  1.0,  1.0),
-        Vec3D::new( 1.0, -1.0, -1.0),
-        Vec3D::new( 1.0, -1.0,  0.0),
-        Vec3D::new( 1.0, -1.0,  1.0),
-        Vec3D::new( 1.0,  0.0, -1.0),
-        Vec3D::new( 1.0,  0.0,  0.0),
-        Vec3D::new( 1.0,  0.0,  1.0),
-        Vec3D::new( 1.0,  1.0, -1.0),
-        Vec3D::new( 1.0,  1.0,  0.0),
-        Vec3D::new( 1.0,  1.0,  1.0)];
+        Vector3f::new(-1.0, -1.0, -1.0),
+        Vector3f::new(-1.0, -1.0,  0.0),
+        Vector3f::new(-1.0, -1.0,  1.0),
+        Vector3f::new(-1.0,  0.0, -1.0),
+        Vector3f::new(-1.0,  0.0,  0.0),
+        Vector3f::new(-1.0,  0.0,  1.0),
+        Vector3f::new(-1.0,  1.0, -1.0),
+        Vector3f::new(-1.0,  1.0,  0.0),
+        Vector3f::new(-1.0,  1.0,  1.0),
+        Vector3f::new( 0.0, -1.0, -1.0),
+        Vector3f::new( 0.0, -1.0,  0.0),
+        Vector3f::new( 0.0, -1.0,  1.0),
+        Vector3f::new( 0.0,  0.0, -1.0),
+        Vector3f::new( 0.0,  0.0,  0.0),
+        Vector3f::new( 0.0,  0.0,  1.0),
+        Vector3f::new( 0.0,  1.0, -1.0),
+        Vector3f::new( 0.0,  1.0,  0.0),
+        Vector3f::new( 0.0,  1.0,  1.0),
+        Vector3f::new( 1.0, -1.0, -1.0),
+        Vector3f::new( 1.0, -1.0,  0.0),
+        Vector3f::new( 1.0, -1.0,  1.0),
+        Vector3f::new( 1.0,  0.0, -1.0),
+        Vector3f::new( 1.0,  0.0,  0.0),
+        Vector3f::new( 1.0,  0.0,  1.0),
+        Vector3f::new( 1.0,  1.0, -1.0),
+        Vector3f::new( 1.0,  1.0,  0.0),
+        Vector3f::new( 1.0,  1.0,  1.0)];
 
     let images = lat.relevant_images(3.0);
     assert_eq!(expected.len(), images.len());
