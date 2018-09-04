@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/io/io.note::cb1bceac-b835-44db-b09b-2944a6a31b32][cb1bceac-b835-44db-b09b-2944a6a31b32]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::cb1bceac-b835-44db-b09b-2944a6a31b32][cb1bceac-b835-44db-b09b-2944a6a31b32]]
 use super::*;
 use indexmap;
 
@@ -36,12 +36,14 @@ impl ChemFileLike for FdfFile {
         }
         lines.push_str(&format!("NumberOfSpecies           {}\n", specs.len()));
         lines.push_str("%block ChemicalSpeciesLabel\n");
+
         let mut i = 1;
         for (n, s) in specs.iter() {
             lines.push_str(&format!(" {index:<3}{number:4}   {symbol:5>}\n",
                                     index=i,
                                     number=n,
                                     symbol=s));
+            i += 1;
         }
         lines.push_str("%endblock ChemicalSpeciesLabel\n");
         lines.push_str("AtomicCoordinatesFormat   NotScaledCartesianAng\n");

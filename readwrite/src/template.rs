@@ -211,7 +211,7 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
 
     // convert to indexmap to plain list
     let element_types: Vec<(_, _)> = element_types.into_iter().collect();
-    let mut md = MoleculeData {
+    let md = MoleculeData {
         title: mol.title(),
         number_of_atoms: mol.natoms(),
         number_of_bonds: mol.nbonds(),

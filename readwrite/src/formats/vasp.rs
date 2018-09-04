@@ -1,9 +1,5 @@
-// [[file:~/Workspace/Programming/gchemol/io/io.note::580d4de7-5923-4885-87d5-20b24d8a703b][580d4de7-5923-4885-87d5-20b24d8a703b]]
-// VASP POSCAR file format:
-// http://cms.mpi.univie.ac.at/vasp/guide/node59.html
-// 580d4de7-5923-4885-87d5-20b24d8a703b ends here
+// parsing
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::70e8dd41-45af-4712-b095-802079ac6eb4][70e8dd41-45af-4712-b095-802079ac6eb4]]
 use super::*;
 
 named!(poscar_lattice_constant<&str, f64>, terminated!(
@@ -42,9 +38,9 @@ fn test_poscar_cell_vectors() {
 
 named!(poscar_ion_types<&str, (Vec<&str>, Vec<usize>)>, do_parse!(
     syms: many1!(sp!(alpha))          >>
-    sp!(line_ending)                       >>
+    sp!(line_ending)                  >>
     nums: many1!(sp!(unsigned_digit)) >>
-    sp!(line_ending)                       >>
+    sp!(line_ending)                  >>
     ((syms, nums))
 ));
 
@@ -101,7 +97,25 @@ Direct\n";
     assert_eq!(false, d);
 }
 
-// TODO: selective dynamics labels
+/// Consume three chars in selective dynamics flag (T/F) separated by one or more spaces
+/// Return the frozen flag array
+named!(pub selective_dynamics_flags<&str, [bool; 3]>, do_parse!(
+    x: one_of!("TF") >>
+        space        >>
+    y: one_of!("TF") >>
+        space        >>
+    z: one_of!("TF") >>
+    (
+        [x == 'T', y == 'T', z == 'T']
+    )
+));
+
+#[test]
+fn test_poscar_select_dynamics() {
+    let (_, x) = selective_dynamics_flags("T T F").unwrap();
+    assert_eq!(x, [true, true, false]);
+}
+
 // 0.05185     0.39121     0.29921  T T T # O
 // 0.81339     0.57337     0.68777  T T T # O
 named!(poscar_position<&str, ([f64; 3], &str)>, do_parse!(
@@ -289,9 +303,9 @@ fn format_molecule(mol: &Molecule) -> String {
 
     lines
 }
-// 70e8dd41-45af-4712-b095-802079ac6eb4 ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::e71c5ee4-27e3-4c03-b626-e7ae375b4510][e71c5ee4-27e3-4c03-b626-e7ae375b4510]]
+// chemfile
+
 use io;
 
 pub struct PoscarFile();
@@ -321,4 +335,3 @@ fn test_vasp_poscar_parse() {
     assert_eq!(1, mols.len());
     assert_eq!(365, mols[0].natoms());
 }
-// e71c5ee4-27e3-4c03-b626-e7ae375b4510 ends here
