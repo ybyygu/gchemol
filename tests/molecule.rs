@@ -66,14 +66,45 @@ fn test_new_molecule() {
     mol.set_positions(&positions).expect("atom positions");
 
     // udpate symbols
-    let symbols = ["C", "H", "H", "H", "H"];
     // accept array
+    let symbols = ["C", "H", "H", "H", "H"];
     mol.set_symbols(&symbols);
     // accept vec
     let symbols = vec!["C", "H", "H", "H", "H"];
     mol.set_symbols(&symbols);
     for (s1, s2) in mol.symbols().into_iter().zip(symbols) {
         assert_eq!(s1, s2);
+    }
+}
+
+// properties
+// Set arbitrary properties for atom.
+
+#[test]
+fn test_molecule_properties() {
+    use gchemol::Atom;
+
+    // create Atom object
+    let mut a = Atom::default();
+
+    // store a key with an integer value
+    let value = 12;
+    a.properties.store("secret", value);
+    let unpacked: isize = a.properties.load("secret").expect("secret property");
+    assert_eq!(value, unpacked);
+
+    // store a key with a list of integers
+    let value = [1, 2, 3];
+    a.properties.store("secret", value);
+
+    // test if the property if exists
+    assert!(a.properties.contains_key("secret"));
+    assert!(!a.properties.contains_key("blank"));
+
+    // unpack the property
+    let unpacked: Vec<isize> = a.properties.load("secret").expect("secret property");
+    for i in 0..value.len() {
+        assert_eq!(value[i], unpacked[i]);
     }
 }
 

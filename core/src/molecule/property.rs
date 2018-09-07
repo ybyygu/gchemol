@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08][a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*property.rs][property.rs:1]]
 use std::collections::HashMap;
 
 use serde::{
@@ -22,18 +22,24 @@ impl PropertyStore {
         }
     }
 
-    /// retrieve property associated with the `key`
+    /// Returns true if the map contains a value for the specified key.
+    pub fn contains_key(&self, key: &str) -> bool {
+        self.data.contains_key(key)
+    }
+
+    /// Retrieve property associated with the `key`
     pub fn load<D: DeserializeOwned>(&self, key: &str) -> result::Result<D, serde_json::Error> {
         let serialized = self.data.get(key).unwrap();
         serde_json::from_str(&serialized)
     }
 
-    /// store property associatd with a `key`
+    /// Store property associatd with the `key`
     pub fn store<D: Serialize>(&mut self, key: &str, value: D) {
         let serialized = serde_json::to_string(&value).unwrap();
         self.data.insert(key.into(), serialized);
     }
 
+    /// Discard property associated with the `key`
     pub fn discard(&mut self, key: &str) {
         self.data.remove(key.into());
     }
@@ -47,4 +53,4 @@ fn test_atom_store() {
     let x: [usize; 3] = x.load("k").unwrap();
     assert_eq!(d, x);
 }
-// a2f1dbf4-c41d-4ca4-986e-5e8cfb3d5d08 ends here
+// property.rs:1 ends here
