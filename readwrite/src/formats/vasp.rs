@@ -2,6 +2,8 @@
 
 use super::*;
 
+const POSCAR_SFLAGS_KEY: &str = "vasp/poscar/sflags";
+
 named!(poscar_lattice_constant<&str, f64>, terminated!(
     sp!(double_s),
     sp!(line_ending)
@@ -116,20 +118,28 @@ fn test_poscar_select_dynamics() {
     assert_eq!(x, [true, true, false]);
 }
 
+
 // 0.05185     0.39121     0.29921  T T T # O
 // 0.81339     0.57337     0.68777  T T T # O
-named!(poscar_position<&str, ([f64; 3], &str)>, do_parse!(
-    position: sp!(xyz_array)                    >>
-    remained: read_until_eol                    >>
-    ((position, remained))
+named!(poscar_position<&str, ([f64; 3], Option<[bool; 3]>, &str)>, do_parse!(
+    position: sp!(xyz_array)                      >>
+    frozen  : opt!(sp!(selective_dynamics_flags)) >>
+    remained: read_until_eol                      >>
+    ((position, frozen, remained))
 ));
 
 #[test]
 fn test_poscar_position() {
-    let x = poscar_position("     0.05185     0.39121     0.29921  T T T # O \n")
+    let (_, (position, sflags, _)) = poscar_position("     0.05185     0.39121     0.29921  T T T # O \n")
         .expect("POSCAR position style 1");
-    let x = poscar_position("     0.05185     0.39121     0.29921 \n")
+    assert_relative_eq!(0.05185, position[0]);
+    assert_relative_eq!(0.39121, position[1]);
+    assert_relative_eq!(0.29921, position[2]);
+    assert_eq!(Some([true, true, true]), sflags);
+
+    let (_, (position, sflags, _)) = poscar_position("     0.05185     0.39121     0.29921 \n")
         .expect("POSCAR position style 1");
+    assert_eq!(None, sflags);
 }
 
 // TODO: read velocities
@@ -162,12 +172,17 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
                 eprintln!("Inconsistency: some ions data not correctly parsed.");
             }
 
-            for (&sym, (pos, codes)) in symbols.iter().zip(ion_positions) {
+            for (&sym, (pos, sflags, _)) in symbols.iter().zip(ion_positions) {
                 let mut pos = pos;
                 if direct_coordinates {
                     pos = lat.to_cart(pos);
                 }
-                let a = Atom::new(sym, pos);
+                let mut a = Atom::new(sym, pos);
+                // FIXME: just a temporary workaround
+                if sflags.is_some() {
+                    a.properties.store(POSCAR_SFLAGS_KEY, sflags.unwrap());
+                };
+
                 mol.add_atom(a);
             }
             mol.set_lattice(lat);
@@ -214,11 +229,6 @@ fn count_symbols(symbols: Vec<&str>) -> Vec<(&str, usize)> {
     use indexmap::IndexMap;
 
     let mut lines = String::new();
-
-    // let mut counting_symbols = IndexMap::new();
-    // for sym in mol.symbols() {
-    //     *counting_symbols.entry(sym).or_insert(0) += 1;
-    // }
 
     let mut syms1 = symbols.iter();
     let mut syms2 = symbols.iter().skip(1);
@@ -289,11 +299,24 @@ fn format_molecule(mol: &Molecule) -> String {
     lines.push_str("Selective dynamics\nCatersian\n");
     for a in mol.atoms() {
         let [x, y, z] = a.position();
-        // TODO
-        let line = format!("{x:12.5}{y:12.5}{z:12.5} T T T\n",
-                           x=x,
-                           y=y,
-                           z=z);
+        // FIXME: just a temporary workaround
+        let line = if a.properties.contains_key(POSCAR_SFLAGS_KEY) {
+            let sflags: [bool; 3] = a.properties.load(POSCAR_SFLAGS_KEY).expect("vasp selective_dynamics flags");
+            format!("{x:12.5}{y:12.5}{z:12.5} {fx} {fy} {fz}\n",
+                    x=x,
+                    y=y,
+                    z=z,
+                    fx= if sflags[0] {"T"} else {"F"},
+                    fy= if sflags[1] {"T"} else {"F"},
+                    fz= if sflags[2] {"T"} else {"F"},
+            )
+        } else {
+            format!("{x:12.5}{y:12.5}{z:12.5} T T T\n",
+                    x=x,
+                    y=y,
+                    z=z)
+        };
+
         lines.push_str(&line);
     }
 
