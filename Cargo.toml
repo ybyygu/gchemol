@@ -1,7 +1,7 @@
-# [[file:~/Workspace/Programming/gchemol/gchemol.note::c45d1413-12b8-471e-b060-da682339ad4b][c45d1413-12b8-471e-b060-da682339ad4b]]
+# [[file:~/Workspace/Programming/gchemol/gchemol.note::*cargo][cargo:1]]
 [package]
 name = "gchemol"
-version = "0.0.20"
+version = "0.0.21"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [workspace]
@@ -15,4 +15,4 @@ gchemol-readwrite = {path = "readwrite"}
 [dev-dependencies]
 approx = "0.3"
 tempfile = "3"
-# c45d1413-12b8-471e-b060-da682339ad4b ends here
+# cargo:1 ends here
