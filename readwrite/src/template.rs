@@ -1,4 +1,17 @@
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::6b59958f-7e56-4b16-b02a-cc01e5de3da8][6b59958f-7e56-4b16-b02a-cc01e5de3da8]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*traits][traits:1]]
+pub trait TemplateRendering {
+    /// Render molecule with user defined template
+    fn render_with(&self, template: &str) -> Result<String>;
+}
+
+impl TemplateRendering for Molecule {
+    fn render_with(&self, template: &str) -> Result<String> {
+        render_molecule_with(&self, &template)
+    }
+}
+// traits:1 ends here
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*handlebars][handlebars:1]]
 use serde_json;
 use serde_derive;
 use indexmap::IndexMap;
@@ -242,4 +255,4 @@ fn test_template_render() {
     let template = io::read_file("tests/files/templates/xyz.hbs").expect("template xyz.hbs");
     let x = render_molecule_with(&mol, &template).unwrap();
 }
-// 6b59958f-7e56-4b16-b02a-cc01e5de3da8 ends here
+// handlebars:1 ends here

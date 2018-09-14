@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::abd992a3-0aff-40a9-ab09-7d4956ce57ee][abd992a3-0aff-40a9-ab09-7d4956ce57ee]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*lib.rs][lib.rs:1]]
 #[macro_use] extern crate nom;
 #[macro_use] extern crate quicli;
 #[macro_use] extern crate handlebars;
@@ -19,4 +19,9 @@ pub mod io;
 pub mod formats;
 pub mod template;
 mod parser;
-// abd992a3-0aff-40a9-ab09-7d4956ce57ee ends here
+
+pub mod prelude {
+    pub use io::prelude::*;
+    pub use template::*;
+}
+// lib.rs:1 ends here
