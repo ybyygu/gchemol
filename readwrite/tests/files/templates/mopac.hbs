@@ -1,7 +1,6 @@
-PM6 GRADIENTS RELSCF=0.1 1scf
+PM6 GRADIENTS RELSCF=0.1 1scf NOSYM
 {{molecule.title}}
 
 {{#each molecule.atoms as |a| ~}}
 {{format a.symbol width=3}} {{format a.x}} 1 {{format a.y}} 1 {{format a.z}} 1
 {{/each~}}
-

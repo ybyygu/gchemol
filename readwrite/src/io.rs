@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-08-29 Wed 15:37>
+//       UPDATED:  <2018-09-17 Mon 10:12>
 //===============================================================================#
 // 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
 
@@ -214,10 +214,10 @@ pub fn write<P: AsRef<Path>>(path: P, mols: &Vec<Molecule>) -> Result<()>{
 }
 
 #[test]
-fn test_io_read_coord() {
+fn test_io_read_plain_xyz() {
     let mols = FileOptions::new()
-        .fmt("text/coord")
-        .read("tests/files/plain-coords/test.xyz").unwrap();
+        .fmt("text/pxyz")
+        .read("tests/files/xyz/ele-num.pxyz").unwrap();
 
     assert_eq!(1, mols.len());
     assert_eq!(17, mols[0].natoms());

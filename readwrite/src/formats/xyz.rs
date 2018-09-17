@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::8842a219-a252-4367-bb8a-7a28b6bb8c2f][8842a219-a252-4367-bb8a-7a28b6bb8c2f]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*atom/molecule][atom/molecule:1]]
 use super::*;
 
 named!(get_atom_from<&str, Atom>, do_parse!(
@@ -37,6 +37,21 @@ fn get_molecule(input: &str) -> IResult<&str, Molecule> {
     Ok((rest, mol))
 }
 
+named!(get_molecule_pxyz<&str, Molecule>, do_parse!(
+    atoms: many1!(get_atom_from)              >>
+           // match the molecule record separator
+           alt!(blank_line | tag!(MAGIC_EOF)) >>
+    (
+        {
+            let mut mol = Molecule::new("untitled molecule");
+            for a in atoms {
+                mol.add_atom(a);
+            }
+            mol
+        }
+    )
+));
+
 #[test]
 fn test_formats_xyz_molecule() {
     let txt = "12
@@ -57,9 +72,9 @@ H -13.7062  1.5395  0.0000
     let (_, mol) = get_molecule(txt).unwrap();
     assert_eq!(12, mol.natoms());
 }
-// 8842a219-a252-4367-bb8a-7a28b6bb8c2f ends here
+// atom/molecule:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::c6258370-89a6-4eda-866c-41d60ef03e44][c6258370-89a6-4eda-866c-41d60ef03e44]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
 use std::str;
 use std::fs::File;
 use std::io::prelude::*;
@@ -99,6 +114,60 @@ impl ChemFileLike for XYZFile {
     }
 }
 
+
+/// plain xyz coordinates with atom symbols
+#[derive(Debug, Clone)]
+pub struct PlainXYZFile();
+
+impl ChemFileLike for PlainXYZFile {
+    /// possible file extensions
+    fn extensions(&self) -> Vec<&str> {
+        [".coord", ".pxyz", ".coords"].to_vec()
+    }
+
+    fn ftype(&self) -> &str {
+        "text/pxyz"
+    }
+
+    /// Parse a single molecule from file `filename`
+    fn parse_molecule<'a>(&self, chunk: &'a str) -> IResult<&'a str, Molecule> {
+        get_molecule_pxyz(chunk)
+    }
+
+    /// Return a string representation of molecule
+    /// Multiple molecules will be separated by a blank line
+    fn format_molecule(&self, mol: &Molecule) -> Result<String> {
+        let mut lines = String::new();
+
+        for a in mol.atoms() {
+            lines.push_str(format!("{}\n", a.to_string()).as_ref());
+        }
+
+        // append a blank line as a separator between multiple molecules
+        lines.push_str("\n");
+
+        Ok(lines)
+    }
+}
+
+#[test]
+fn test_formats_plain_xyz() {
+    let filename = "tests/files/xyz/c2h4.pxyz";
+    let file = PlainXYZFile();
+    assert!(file.parsable(filename));
+    let mols = file.parse(filename).unwrap();
+    assert_eq!(1, mols.len());
+    assert_eq!(6, mols[0].natoms());
+
+    // parse multiple molecules
+    let mols = file.parse("tests/files/xyz/multi.pxyz").expect("multi xyz");
+    assert_eq!(6, mols.len());
+
+    let natoms_expected = vec![16, 10, 16, 16, 16, 13];
+    let natoms: Vec<_> = mols.iter().map(|m| m.natoms()).collect();
+    assert_eq!(natoms_expected, natoms);
+}
+
 #[test]
 fn test_formats_xyz() {
     let file = XYZFile();
@@ -114,60 +183,4 @@ fn test_formats_xyz() {
     let natoms: Vec<_> = mols.iter().map(|m| m.natoms()).collect();
     assert_eq!(natoms_expected, natoms);
 }
-
-
-/// plain xyz coordinates with atom symbols
-#[derive(Debug)]
-pub struct PlainXYZFile();
-
-impl ChemFileLike for PlainXYZFile {
-    /// possible file extensions
-    fn extensions(&self) -> Vec<&str> {
-        [".coord"].to_vec()
-    }
-
-    fn ftype(&self) -> &str {
-        "text/coord"
-    }
-
-    /// parse molecules from file `filename`
-    fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
-        let txt = io::read_file(filename)?;
-        let mut mol = Molecule::new("from plain coordinates");
-        for line in txt.lines() {
-            let line = line.trim();
-            if line.is_empty() {
-                break;
-            }
-            let a: Atom = line.parse()?;
-            mol.add_atom(a);
-        }
-
-        Ok(vec![mol])
-    }
-
-    /// Return a string representation of the last molecule in the list
-    /// Return empty string if no molecule found
-    fn format(&self, mols: &[Molecule]) -> Result<String> {
-        let mut lines = String::new();
-
-        if let Some(mol) = mols.last() {
-            for a in mol.atoms() {
-                lines.push_str(format!("{}\n", a.to_string()).as_ref());
-            }
-        }
-
-        Ok(lines)
-    }
-}
-
-#[test]
-fn test_formats_plainxyz() {
-    let filename = "tests/files/plain-coords/test.coord";
-    let file = PlainXYZFile();
-    assert!(file.parsable(filename));
-    let mols = file.parse(filename).unwrap();
-    assert_eq!(1, mols.len());
-    assert_eq!(12, mols[0].natoms());
-}
-// c6258370-89a6-4eda-866c-41d60ef03e44 ends here
+// chemfile:1 ends here

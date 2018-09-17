@@ -1,4 +1,4 @@
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::f03df686-2fe7-44cc-8474-4747c4e60066][f03df686-2fe7-44cc-8474-4747c4e60066]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*src][src:1]]
 use nom;
 
 // line originated parsers
@@ -67,6 +67,9 @@ named!(pub signed_digit<&str, isize>, map_res!(
     str::parse
 ));
 
+// sections are separated by a blank line
+named!(pub blank_line<&str, &str>, sp!(line_ending));
+
 #[test]
 fn test_parser_signed_digit() {
     let (_, x) = signed_digit("12\n")
@@ -133,4 +136,4 @@ fn test_parser_xyz_array() {
     let (_, x) = xyz_array("-11.4286\t1.7E-5  0.0000 \n").unwrap();
     assert_eq!(x[2], 0.0);
 }
-// f03df686-2fe7-44cc-8474-4747c4e60066 ends here
+// src:1 ends here
