@@ -1,7 +1,9 @@
-# [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::86fc103f-aa7d-42fb-9c7f-fb5acbf8cfd3][86fc103f-aa7d-42fb-9c7f-fb5acbf8cfd3]]
+# cargo
+
+# [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*cargo][cargo:1]]
 [package]
 name = "gchemol-readwrite"
-version = "0.0.20"
+version = "0.0.22"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
@@ -18,4 +20,4 @@ serde_derive = "1.0"
 [dev-dependencies]
 approx = "0.3"
 tempfile = "3"
-# 86fc103f-aa7d-42fb-9c7f-fb5acbf8cfd3 ends here
+# cargo:1 ends here

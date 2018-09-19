@@ -1,10 +1,13 @@
 // demonstrate how to build molecule manually
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::*demonstrate%20how%20to%20build%20molecule%20manually][demonstrate how to build molecule manually:1]]
 extern crate gchemol;
 #[macro_use] extern crate approx;
+// demonstrate how to build molecule manually:1 ends here
 
 // construct atom with element and position
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::*construct%20atom%20with%20element%20and%20position][construct atom with element and position:1]]
 #[test]
 fn test_new_atom() {
     use gchemol::Atom;
@@ -32,9 +35,11 @@ fn test_new_atom() {
     assert_eq!(a.position(), [1.2, 1.0, 0.3]);
     assert_eq!([0.0, 5.0, 6.0], a.momentum());
 }
+// construct atom with element and position:1 ends here
 
 // build molecule from atoms
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::*build%20molecule%20from%20atoms][build molecule from atoms:1]]
 #[test]
 fn test_new_molecule() {
     use gchemol::{
@@ -78,10 +83,12 @@ fn test_new_molecule() {
         assert_eq!(s1, s2);
     }
 }
+// build molecule from atoms:1 ends here
 
 // properties
 // Set arbitrary properties for atom.
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::*properties][properties:1]]
 #[test]
 fn test_molecule_properties() {
     use gchemol::Atom;
@@ -109,9 +116,11 @@ fn test_molecule_properties() {
         assert_eq!(value[i], unpacked[i]);
     }
 }
+// properties:1 ends here
 
 // query bonded atoms
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::*query%20bonded%20atoms][query bonded atoms:1]]
 #[test]
 fn test_molecule_neighbors() {
     use gchemol::Molecule;
@@ -131,9 +140,11 @@ fn test_molecule_neighbors() {
 
     let (p1, p2) = b35.partners(&mol).unwrap();
 }
+// query bonded atoms:1 ends here
 
 // molecule center
 
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::*molecule%20center][molecule center:1]]
 #[test]
 fn test_molecule_center() {
     use gchemol::Molecule;
@@ -147,3 +158,4 @@ fn test_molecule_center() {
         assert_relative_eq!(pe[i], pc[i], epsilon=1e-4);
     }
 }
+// molecule center:1 ends here

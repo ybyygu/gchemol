@@ -1,4 +1,8 @@
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*lib.rs][lib.rs:1]]
+// lib.rs
+// :PROPERTIES:
+// :header-args: :tangle src/lib.rs
+// :END:
+
 #[macro_use] extern crate nom;
 #[macro_use] extern crate quicli;
 #[macro_use] extern crate handlebars;
@@ -15,13 +19,13 @@ extern crate itertools;
 
 extern crate gchemol_core;
 
+#[macro_use] pub mod parser;
+
 pub mod io;
 pub mod formats;
 pub mod template;
-pub mod parser;
 
 pub mod prelude {
     pub use io::prelude::*;
     pub use template::*;
 }
-// lib.rs:1 ends here

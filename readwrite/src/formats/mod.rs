@@ -1,4 +1,8 @@
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::7faf1529-aae1-4bc5-be68-02d8ccdb9267][7faf1529-aae1-4bc5-be68-02d8ccdb9267]]
+// mod.rs
+// :PROPERTIES:
+// :header-args: :tangle src/formats/mod.rs
+// :END:
+
 use std::str;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -12,16 +16,17 @@ pub use gchemol_core::{
     Lattice,
 };
 
-/// whitespace including one or more spaces or tabs
-named!(pub space_token<&str, &str>, eat_separator!(&b" \t"[..]));
-macro_rules! sp (
-    ($i:expr, $($args:tt)*) => (
-        {
-            sep!($i, space_token, $($args)*)
-        }
-    )
-);
+// /// whitespace including one or more spaces or tabs
+// named!(pub space_token<&str, &str>, eat_separator!(&b" \t"[..]));
+// macro_rules! sp (
+//     ($i:expr, $($args:tt)*) => (
+//         {
+//             sep!($i, space_token, $($args)*)
+//         }
+//     )
+// );
 
+#[macro_use]
 pub use parser::*;
 pub use io;
 
@@ -271,4 +276,3 @@ pub fn describe_backends() {
 fn test_formats_descrb() {
     describe_backends();
 }
-// 7faf1529-aae1-4bc5-be68-02d8ccdb9267 ends here

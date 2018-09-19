@@ -1,4 +1,5 @@
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*src][src:1]]
+// src
+
 use nom;
 
 // line originated parsers
@@ -32,6 +33,8 @@ pub use nom::IResult;
 
 /// whitespace including one or more spaces or tabs
 named!(pub space_token<&str, &str>, eat_separator!(&b" \t"[..]));
+
+#[macro_export]
 macro_rules! sp (
     ($i:expr, $($args:tt)*) => (
         {
@@ -136,4 +139,7 @@ fn test_parser_xyz_array() {
     let (_, x) = xyz_array("-11.4286\t1.7E-5  0.0000 \n").unwrap();
     assert_eq!(x[2], 0.0);
 }
-// src:1 ends here
+
+// text parser
+
+
