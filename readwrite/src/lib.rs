@@ -18,7 +18,7 @@ extern crate gchemol_core;
 pub mod io;
 pub mod formats;
 pub mod template;
-mod parser;
+pub mod parser;
 
 pub mod prelude {
     pub use io::prelude::*;

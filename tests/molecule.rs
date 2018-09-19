@@ -25,10 +25,12 @@ fn test_new_atom() {
     let a = Atom::build()
         .symbol("Fe")
         .position(1.2, 1.0, 0.3)
+        .momentum(0.0, 5.0, 6.0)
         .finish();
 
     assert_eq!(a.symbol(), "Fe");
     assert_eq!(a.position(), [1.2, 1.0, 0.3]);
+    assert_eq!([0.0, 5.0, 6.0], a.momentum());
 }
 
 // build molecule from atoms

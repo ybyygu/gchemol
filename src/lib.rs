@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-09-14 Fri 18:59>
+//       UPDATED:  <2018-09-19 Wed 11:06>
 //===============================================================================#
 // bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
 
@@ -24,6 +24,10 @@ pub use gchemol_core::*;
 extern crate gchemol_readwrite;
 pub mod io {
     pub use gchemol_readwrite::io::*;
+}
+
+pub mod parser {
+    pub use gchemol_readwrite::parser::*;
 }
 
 pub mod prelude {

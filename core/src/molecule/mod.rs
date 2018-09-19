@@ -8,7 +8,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-08-27 Mon 18:48>
+//       UPDATED:  <2018-09-19 Wed 12:11>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -318,7 +318,7 @@ impl Atom {
     }
 
     /// Vector quantity equal to the product of mass and velocity.
-    pub fn momentum(&mut self) -> Point3D {
+    pub fn momentum(&self) -> Point3D {
         self.data.momentum
     }
 
@@ -361,7 +361,7 @@ impl Atom {
 }
 // 150189fd-57d9-4e19-a888-d64497f5ba7e ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::b6d1e417-27da-4384-879a-db28960ed161][b6d1e417-27da-4384-879a-db28960ed161]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*geometry][geometry:1]]
 use geometry::prelude::euclidean_distance;
 
 impl Atom {
@@ -370,7 +370,7 @@ impl Atom {
         euclidean_distance(self.position(), other.position())
     }
 }
-// b6d1e417-27da-4384-879a-db28960ed161 ends here
+// geometry:1 ends here
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::d333cb1f-e622-462f-a892-4906c85b7da0][d333cb1f-e622-462f-a892-4906c85b7da0]]
 /// Atom specific data independent of the molecule
