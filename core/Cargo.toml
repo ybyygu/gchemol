@@ -1,7 +1,10 @@
-# [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::bbea2460-7294-40dd-8d48-1dba356f3028][bbea2460-7294-40dd-8d48-1dba356f3028]]
+# cargo
+
+# [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*cargo][cargo:1]]
 [package]
 name = "gchemol-core"
-version = "0.0.20"
+version = "0.0.22"
+edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
@@ -17,4 +20,4 @@ gchemol-geometry = {path = "../geometry"}
 
 [dev-dependencies]
 approx = "0.3"
-# bbea2460-7294-40dd-8d48-1dba356f3028 ends here
+# cargo:1 ends here

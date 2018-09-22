@@ -1,3 +1,5 @@
+// traits
+
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*traits][traits:1]]
 pub trait TemplateRendering {
     /// Render molecule with user defined template
@@ -11,6 +13,8 @@ impl TemplateRendering for Molecule {
 }
 // traits:1 ends here
 
+// handlebars
+
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*handlebars][handlebars:1]]
 use serde_json;
 use serde_derive;
@@ -21,7 +25,7 @@ use handlebars;
 
 use quicli::prelude::*;
 use gchemol_core::Molecule;
-use io;
+use crate::io;
 
 use handlebars::{
     to_json,

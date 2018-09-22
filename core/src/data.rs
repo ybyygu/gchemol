@@ -9,10 +9,10 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-08-27 Mon 18:16>
+//       UPDATED:  <2018-09-22 Sat 15:09>
 //===============================================================================#
 
-use molecule::{
+use crate::molecule::{
     Atom,
     Bond,
     Molecule,
@@ -20,7 +20,7 @@ use molecule::{
     BondKind,
 };
 
-use geometry::prelude::euclidean_distance;
+use crate::geometry::prelude::euclidean_distance;
 use quicli::prelude::*;
 
 // element radii data
@@ -293,7 +293,6 @@ impl Molecule {
 }
 
 // test
-// #+name: 2d6a4ce4-f616-4bea-a5fd-65ed9117e613
 
 #[test]
 fn test_guess_bond_kind() {

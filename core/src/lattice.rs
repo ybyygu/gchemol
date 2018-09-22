@@ -1,3 +1,5 @@
+// header
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*header][header:1]]
 //===============================================================================#
 //   DESCRIPTION:  Represents 3D periodic lattice
@@ -8,9 +10,11 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-08-30 Thu 10:17>
+//       UPDATED:  <2018-09-22 Sat 15:09>
 //===============================================================================#
 // header:1 ends here
+
+// base
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
 use quicli::prelude::*;
@@ -238,6 +242,8 @@ impl Lattice {
 }
 // base:1 ends here
 
+// utils
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*utils][utils:1]]
 // matrix inversion
 fn get_inv_matrix(matrix: Matrix3f) -> Matrix3f {
@@ -274,6 +280,9 @@ fn get_cell_angles(mat: Matrix3f) -> [f64; 3] {
 }
 // utils:1 ends here
 
+// base
+// The periodic image when periodic boundary conditions are employed.
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
 use std::f64;
 
@@ -285,6 +294,8 @@ pub struct PeriodicImage {
     pub image   : Vector3f,
 }
 // base:1 ends here
+
+// distance
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*distance][distance:1]]
 impl Lattice {
@@ -430,6 +441,8 @@ impl Lattice {
 }
 // distance:1 ends here
 
+// test
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*test][test:1]]
 #[test]
 fn test_mic_vector() {
@@ -453,8 +466,10 @@ fn test_mic_vector() {
 }
 // test:1 ends here
 
+// molecule
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*molecule][molecule:1]]
-use molecule::Molecule;
+use crate::molecule::Molecule;
 
 impl Molecule {
     /// Set periodic lattice
@@ -499,6 +514,8 @@ impl Molecule {
     }
 }
 // molecule:1 ends here
+
+// test
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*test][test:1]]
 #[test]

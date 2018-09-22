@@ -4,6 +4,7 @@
 [package]
 name = "gchemol-readwrite"
 version = "0.0.22"
+edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]

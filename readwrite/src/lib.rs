@@ -3,6 +3,7 @@
 // :header-args: :tangle src/lib.rs
 // :END:
 
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*lib.rs][lib.rs:1]]
 #[macro_use] extern crate nom;
 #[macro_use] extern crate quicli;
 #[macro_use] extern crate handlebars;
@@ -26,6 +27,7 @@ pub mod formats;
 pub mod template;
 
 pub mod prelude {
-    pub use io::prelude::*;
-    pub use template::*;
+    pub use crate::io::prelude::*;
+    pub use crate::template::*;
 }
+// lib.rs:1 ends here

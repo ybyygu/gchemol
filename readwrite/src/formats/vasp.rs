@@ -329,7 +329,7 @@ fn format_molecule(mol: &Molecule) -> String {
 
 // chemfile
 
-use io;
+use crate::io;
 
 pub struct PoscarFile();
 

@@ -1,3 +1,6 @@
+// header
+// #+name: 7e391e0e-a3e8-4c22-b881-e0425d0926bc
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::7e391e0e-a3e8-4c22-b881-e0425d0926bc][7e391e0e-a3e8-4c22-b881-e0425d0926bc]]
 //===============================================================================#
 //   DESCRIPTION:  molecule object repsented in graph data structure
@@ -8,9 +11,12 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-09-19 Wed 12:11>
+//       UPDATED:  <2018-09-22 Sat 15:08>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
+
+// base
+// #+name: 2a53090d-59f2-4b7e-a485-e6796c2a904d
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::2a53090d-59f2-4b7e-a485-e6796c2a904d][2a53090d-59f2-4b7e-a485-e6796c2a904d]]
 use std::collections::HashMap;
@@ -22,7 +28,7 @@ use quicli::prelude::*;
 
 mod property;
 use self::property::PropertyStore;
-use lattice::Lattice;
+use crate::lattice::Lattice;
 
 mod edit;
 mod view;
@@ -38,6 +44,8 @@ mod test;
 pub type Point3D = [f64; 3];
 pub type Points = Vec<Point3D>;
 // 2a53090d-59f2-4b7e-a485-e6796c2a904d ends here
+
+// globals
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*globals][globals:1]]
 use std::fmt::{self, Debug, Display};
@@ -163,6 +171,9 @@ const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
     ("Uuo", "ununoctium")];
 // globals:1 ends here
 
+// base
+// #+name: 731651b9-ebba-4df3-86f7-083f837e4065
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::731651b9-ebba-4df3-86f7-083f837e4065][731651b9-ebba-4df3-86f7-083f837e4065]]
 #[derive(Debug, Clone, PartialEq)]
 pub enum AtomKind {
@@ -205,6 +216,9 @@ impl fmt::Display for AtomKind {
 }
 // 731651b9-ebba-4df3-86f7-083f837e4065 ends here
 
+// test
+// #+name: b95edc21-e696-4625-ba99-94257394772d
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::b95edc21-e696-4625-ba99-94257394772d][b95edc21-e696-4625-ba99-94257394772d]]
 use self::AtomKind::{Element, Dummy};
 
@@ -245,6 +259,9 @@ fn test_element() {
     assert_eq!(k.name(), "sodium");
 }
 // b95edc21-e696-4625-ba99-94257394772d ends here
+
+// base
+// #+name: 150189fd-57d9-4e19-a888-d64497f5ba7e
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::150189fd-57d9-4e19-a888-d64497f5ba7e][150189fd-57d9-4e19-a888-d64497f5ba7e]]
 use std::hash::Hash;
@@ -361,8 +378,10 @@ impl Atom {
 }
 // 150189fd-57d9-4e19-a888-d64497f5ba7e ends here
 
+// geometry
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*geometry][geometry:1]]
-use geometry::prelude::euclidean_distance;
+use crate::geometry::prelude::euclidean_distance;
 
 impl Atom {
     /// Return the distance to other atom
@@ -371,6 +390,16 @@ impl Atom {
     }
 }
 // geometry:1 ends here
+
+// atom data builder
+// - 目的: 方便的设置不常用的Atom属性, 固定外围参数的使用接口, 隔离Atom内部属性的实
+//   现细节.
+// - 使用builder pattern
+
+// References
+// - servo: [[https://doc.servo.org/src/cookie/builder.rs.html#35-38][builder.rs.html -- source]]
+
+// #+name: d333cb1f-e622-462f-a892-4906c85b7da0
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::d333cb1f-e622-462f-a892-4906c85b7da0][d333cb1f-e622-462f-a892-4906c85b7da0]]
 /// Atom specific data independent of the molecule
@@ -474,6 +503,9 @@ fn test_atom_builder() {
 }
 // d333cb1f-e622-462f-a892-4906c85b7da0 ends here
 
+// convert
+// #+name: 7e463bf4-a6ab-4648-a8a2-4b2023d1c588
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::7e463bf4-a6ab-4648-a8a2-4b2023d1c588][7e463bf4-a6ab-4648-a8a2-4b2023d1c588]]
 use std::str::FromStr;
 
@@ -510,6 +542,9 @@ impl fmt::Display for Atom {
 }
 // 7e463bf4-a6ab-4648-a8a2-4b2023d1c588 ends here
 
+// test
+// #+name: b88435fd-d51c-48b8-880c-425b94b905e9
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::b88435fd-d51c-48b8-880c-425b94b905e9][b88435fd-d51c-48b8-880c-425b94b905e9]]
 #[test]
 fn test_atom_init() {
@@ -525,6 +560,10 @@ fn test_atom_init() {
 }
 // b88435fd-d51c-48b8-880c-425b94b905e9 ends here
 
+
+
+// #+name: cfdf0fc1-97a2-4da4-b0bb-a9baee31d275
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::cfdf0fc1-97a2-4da4-b0bb-a9baee31d275][cfdf0fc1-97a2-4da4-b0bb-a9baee31d275]]
 #[test]
 fn test_atom_string_conversion() {
@@ -539,6 +578,9 @@ fn test_atom_string_conversion() {
     let a: Atom = line.parse().unwrap();
 }
 // cfdf0fc1-97a2-4da4-b0bb-a9baee31d275 ends here
+
+// src
+// #+name: 7ff70329-69ef-4221-a539-fb097258d0a6
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::7ff70329-69ef-4221-a539-fb097258d0a6][7ff70329-69ef-4221-a539-fb097258d0a6]]
 /// https://en.wikipedia.org/wiki/Bond_order
@@ -687,6 +729,9 @@ impl Bond {
 }
 // 7ff70329-69ef-4221-a539-fb097258d0a6 ends here
 
+// test
+// #+name: 486bd5a4-e762-46bf-a237-e692393a795d
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::486bd5a4-e762-46bf-a237-e692393a795d][486bd5a4-e762-46bf-a237-e692393a795d]]
 #[test]
 fn test_bond() {
@@ -695,6 +740,9 @@ fn test_bond() {
     assert_eq!(1.5, b.order());
 }
 // 486bd5a4-e762-46bf-a237-e692393a795d ends here
+
+// molecule
+// #+name: 942dedaa-9351-426e-9be9-cdb640ec2b75
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::942dedaa-9351-426e-9be9-cdb640ec2b75][942dedaa-9351-426e-9be9-cdb640ec2b75]]
 pub type MolGraph = StableUnGraph<Atom, Bond>;
@@ -802,6 +850,11 @@ impl Molecule {
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
 
+
+
+// 方便直接使用usize整数来指认原子.
+// #+name: be29e151-18c6-43cb-9586-aba0e708d38c
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::be29e151-18c6-43cb-9586-aba0e708d38c][be29e151-18c6-43cb-9586-aba0e708d38c]]
 pub trait IntoAtomIndex {
     fn into_atom_index(&self) -> AtomIndex;
@@ -837,6 +890,11 @@ impl IntoBondIndex for BondIndex {
     }
 }
 // be29e151-18c6-43cb-9586-aba0e708d38c ends here
+
+// TODO charge, spin, magmon
+// 定义分子体系的电荷, 自旋等参数. ase里每个原子都有一个magmon的参数.
+
+// #+name: 80dcc47b-b7dc-4ba7-a9d6-a567831bae93
 
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::80dcc47b-b7dc-4ba7-a9d6-a567831bae93][80dcc47b-b7dc-4ba7-a9d6-a567831bae93]]
 impl Molecule {

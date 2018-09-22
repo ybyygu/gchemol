@@ -1,3 +1,9 @@
+// lib.rs
+// :PROPERTIES:
+// :header-args: :tangle src/lib.rs
+// :END:
+// #+name: 42fb78a1-aae3-40aa-8ae0-aa68b10f3f7e
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::42fb78a1-aae3-40aa-8ae0-aa68b10f3f7e][42fb78a1-aae3-40aa-8ae0-aa68b10f3f7e]]
 extern crate petgraph;
 #[macro_use] extern crate indexmap;
@@ -24,7 +30,7 @@ pub mod molecule;
 pub mod lattice;
 pub mod data;
 
-pub use molecule::{
+pub use crate::molecule::{
     Atom,
     Bond,
     BondKind,
@@ -33,7 +39,7 @@ pub use molecule::{
     BondIndex,
 };
 
-pub use lattice::{
+pub use crate::lattice::{
     Lattice,
 };
 // 42fb78a1-aae3-40aa-8ae0-aa68b10f3f7e ends here

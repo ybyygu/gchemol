@@ -1,4 +1,7 @@
-// [[file:~/Workspace/Programming/gchemol/io/io.note::fb7c688e-38d6-455b-a8f0-ae54c563f3cf][fb7c688e-38d6-455b-a8f0-ae54c563f3cf]]
+// header
+// #+name: fb7c688e-38d6-455b-a8f0-ae54c563f3cf
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::fb7c688e-38d6-455b-a8f0-ae54c563f3cf][fb7c688e-38d6-455b-a8f0-ae54c563f3cf]]
 // gchemol parses the following record types in a PDB file:
 //
 // CRYST
@@ -8,7 +11,12 @@
 // CONECT
 // fb7c688e-38d6-455b-a8f0-ae54c563f3cf ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::b5bad50c-2b36-4d09-9623-d487f9e2333b][b5bad50c-2b36-4d09-9623-d487f9e2333b]]
+// crystal
+// - [[https://www.wwpdb.org/documentation/file-format-content/format33/sect8.html][wwPDB Format version 3.3: Crystallographic and Coordinate Transformation Section]]
+
+// #+name: b5bad50c-2b36-4d09-9623-d487f9e2333b
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::b5bad50c-2b36-4d09-9623-d487f9e2333b][b5bad50c-2b36-4d09-9623-d487f9e2333b]]
 // Example
 // -------
 // CRYST1   18.126   18.126    7.567  90.00  90.00 120.00 P6/MMM
@@ -72,7 +80,10 @@ ATOM      3 T1   MOL     2      -5.234   6.009   1.536  1.00  0.00          Si1+
 }
 // b5bad50c-2b36-4d09-9623-d487f9e2333b ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8][ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8]]
+// atom record
+// #+name: ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8][ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8]]
 use super::*;
 
 // guess element from columns 55-80
@@ -216,8 +227,11 @@ fn format_atom(i: usize, a: &Atom) -> String {
 }
 // ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8 ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::0394bb2f-e054-4466-a090-04a0fbe69e03][0394bb2f-e054-4466-a090-04a0fbe69e03]]
-use parser::space_token;
+// bond record
+// #+name: 0394bb2f-e054-4466-a090-04a0fbe69e03
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::0394bb2f-e054-4466-a090-04a0fbe69e03][0394bb2f-e054-4466-a090-04a0fbe69e03]]
+use crate::parser::space_token;
 
 // atom index in bond record line
 // named!(bond_atom_index<&str, usize>, flat_map!(
@@ -326,7 +340,10 @@ CONECT 2043 2042 2044
 }
 // 0394bb2f-e054-4466-a090-04a0fbe69e03 ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::10e26e11-ab6c-4e7d-884a-6a0e98c8d08f][10e26e11-ab6c-4e7d-884a-6a0e98c8d08f]]
+// molecule
+// #+name: 10e26e11-ab6c-4e7d-884a-6a0e98c8d08f
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::10e26e11-ab6c-4e7d-884a-6a0e98c8d08f][10e26e11-ab6c-4e7d-884a-6a0e98c8d08f]]
 use std::collections::HashMap;
 
 named!(get_molecule<&str, Molecule>, do_parse!(
@@ -447,7 +464,10 @@ fn format_molecule(mol: &Molecule) -> String {
 }
 // 10e26e11-ab6c-4e7d-884a-6a0e98c8d08f ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::f026618f-fdc0-4590-a2b0-211078c30e14][f026618f-fdc0-4590-a2b0-211078c30e14]]
+// chemfile
+// #+name: f026618f-fdc0-4590-a2b0-211078c30e14
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::f026618f-fdc0-4590-a2b0-211078c30e14][f026618f-fdc0-4590-a2b0-211078c30e14]]
 pub struct PdbFile();
 
 impl ChemFileLike for PdbFile {

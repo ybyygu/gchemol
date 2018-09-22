@@ -1,5 +1,7 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::e2130a32-e39f-4b7b-9014-515f18ff5f48][e2130a32-e39f-4b7b-9014-515f18ff5f48]]
-use molecule::Molecule;
+// interplate
+
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*interplate][interplate:1]]
+use crate::molecule::Molecule;
 
 impl Molecule {
     /// Interpolate between this structure and end_structure. Useful for
@@ -8,4 +10,4 @@ impl Molecule {
         unimplemented!()
     }
 }
-// e2130a32-e39f-4b7b-9014-515f18ff5f48 ends here
+// interplate:1 ends here

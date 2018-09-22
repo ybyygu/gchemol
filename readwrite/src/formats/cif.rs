@@ -1,9 +1,15 @@
+// base
+// #+name: 94c6ffda-5384-4d9f-8888-ab8a70b28bef
+
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::94c6ffda-5384-4d9f-8888-ab8a70b28bef][94c6ffda-5384-4d9f-8888-ab8a70b28bef]]
 use nom;
 use super::*;
 
 use std::collections::HashMap;
 // 94c6ffda-5384-4d9f-8888-ab8a70b28bef ends here
+
+// cell loop
+// #+name: ea19d54a-dbe6-4367-90ea-5a0465018219
 
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::ea19d54a-dbe6-4367-90ea-5a0465018219][ea19d54a-dbe6-4367-90ea-5a0465018219]]
 named!(double_cif<&str, f64>, do_parse!(
@@ -70,6 +76,9 @@ _cell_angle_gamma                 90.0000
     assert_relative_eq!(20.5160, x.1, epsilon=1e-3);
 }
 // ea19d54a-dbe6-4367-90ea-5a0465018219 ends here
+
+// atom sites loop
+// #+name: 6dcc25a3-6738-497a-9317-df051c7afa74
 
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::6dcc25a3-6738-497a-9317-df051c7afa74][6dcc25a3-6738-497a-9317-df051c7afa74]]
 named!(atom_site_header<&str, &str>, preceded!(
@@ -201,6 +210,9 @@ Si12   Si    0.69630   0.69120   0.54610   0.00000  Uiso   1.00
 }
 // 6dcc25a3-6738-497a-9317-df051c7afa74 ends here
 
+// bond loop
+// #+name: 383cfb7d-0863-4efa-b969-4a6cbf7f3ad9
+
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::383cfb7d-0863-4efa-b969-4a6cbf7f3ad9][383cfb7d-0863-4efa-b969-4a6cbf7f3ad9]]
 named!(geom_bond_header<&str, &str>, preceded!(
     alt!(
@@ -227,6 +239,9 @@ _ccdc_geom_bond_type").unwrap();
     assert_eq!(5, x.len());
 }
 // 383cfb7d-0863-4efa-b969-4a6cbf7f3ad9 ends here
+
+// molecule
+// #+name: c7482893-b288-449a-82ba-387c85f3e55c
 
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::c7482893-b288-449a-82ba-387c85f3e55c][c7482893-b288-449a-82ba-387c85f3e55c]]
 named!(get_molecule_from<&str, Molecule>, do_parse!(
@@ -340,8 +355,10 @@ _atom_site_fract_z
 }
 // c7482893-b288-449a-82ba-387c85f3e55c ends here
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::246e575d-8f3b-419d-b007-febcd6e45991][246e575d-8f3b-419d-b007-febcd6e45991]]
-use io;
+// chemfile
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
+use crate::io;
 
 pub struct CifFile();
 
@@ -461,4 +478,4 @@ impl ChemFileLike for CifFile {
 fn test_formats_cif() {
     let mols = io::read("tests/files/cif/MS-MOR.cif");
 }
-// 246e575d-8f3b-419d-b007-febcd6e45991 ends here
+// chemfile:1 ends here

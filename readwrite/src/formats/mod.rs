@@ -3,6 +3,7 @@
 // :header-args: :tangle src/formats/mod.rs
 // :END:
 
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*mod.rs][mod.rs:1]]
 use std::str;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -26,9 +27,8 @@ pub use gchemol_core::{
 //     )
 // );
 
-#[macro_use]
-pub use parser::*;
-pub use io;
+pub use crate::parser::*;
+pub use crate::io;
 
 pub mod xyz;
 pub mod mol2;
@@ -86,7 +86,7 @@ pub trait ChemFileLike {
 
     /// Save multiple molecules into a file
     fn write(&self, filename: &str, mols: &[Molecule]) -> Result<()> {
-        use io::prelude::ToFile;
+        use crate::io::prelude::ToFile;
 
         let lines = self.format(mols)?;
         &lines.to_file(filename)?;
@@ -107,6 +107,7 @@ pub trait ChemFileLike {
     }
 
     // FIXME: rename to from_file
+    // FIXME: filename => Path
     /// Default implementation: parse multiple molecules from `filename`
     fn parse(&self, filename: &str) -> Result<Vec<Molecule>> {
         use nom;
@@ -276,3 +277,4 @@ pub fn describe_backends() {
 fn test_formats_descrb() {
     describe_backends();
 }
+// mod.rs:1 ends here

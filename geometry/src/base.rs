@@ -1,8 +1,10 @@
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::76dd5ca4-c907-4263-9c12-e59c9cbaed2f][76dd5ca4-c907-4263-9c12-e59c9cbaed2f]]
+// types
+
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*types][types:1]]
 use quicli::prelude::*;
 
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
-pub use test::stats::Stats;
+pub use crate::test::stats::Stats;
 use nalgebra as na;
 
 /// Vector in 3D space
@@ -21,9 +23,11 @@ pub type Positions = Vector3fVec;
 
 /// Dynamic array containing float numbers
 pub type FloatVec = na::DVector<f64>;
-// 76dd5ca4-c907-4263-9c12-e59c9cbaed2f ends here
+// types:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::bb4e49dd-5b03-4632-a0f4-9338a8e581d5][bb4e49dd-5b03-4632-a0f4-9338a8e581d5]]
+// traits
+
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*traits][traits:1]]
 /// A trait provides useful tools for Vec<f64> type.
 pub trait VecFloatMath {
     /// Convert to nalgebra dynamic 1xN vector
@@ -203,9 +207,11 @@ fn test_vec_math() {
     let x = positions.norms().max();
     assert_relative_eq!(1.8704, x, epsilon=1e-4);
 }
-// bb4e49dd-5b03-4632-a0f4-9338a8e581d5 ends here
+// traits:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::9b14f11f-505a-4799-b78f-7896627a4432][9b14f11f-505a-4799-b78f-7896627a4432]]
+// functions
+
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*functions][functions:1]]
 #[inline]
 pub fn euclidean_distance(p1: [f64; 3], p2: [f64; 3]) -> f64 {
     let mut d2 = 0.0;
@@ -268,4 +274,4 @@ fn test_weighted_center_of_geometry() {
     let pc = frag.center_of_mass(&masses).expect("geometry: com");
     relative_eq!(pc, expected, epsilon=1e-6);
 }
-// 9b14f11f-505a-4799-b78f-7896627a4432 ends here
+// functions:1 ends here

@@ -1,4 +1,6 @@
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::891f59cf-3963-4dbe-a7d2-48279723b72e][891f59cf-3963-4dbe-a7d2-48279723b72e]]
+// header
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*header][header:1]]
 //===============================================================================#
 //   DESCRIPTION:  basic read & write support for molecular file
 //
@@ -8,9 +10,12 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-09-17 Mon 10:12>
+//       UPDATED:  <2018-09-22 Sat 15:25>
 //===============================================================================#
-// 891f59cf-3963-4dbe-a7d2-48279723b72e ends here
+// header:1 ends here
+
+// trait
+// #+name: 4a0ea759-222c-42b7-ab82-8eb969751781
 
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::4a0ea759-222c-42b7-ab82-8eb969751781][4a0ea759-222c-42b7-ab82-8eb969751781]]
 use std::path::Path;
@@ -64,6 +69,9 @@ impl ToFile for str {
 }
 // 4a0ea759-222c-42b7-ab82-8eb969751781 ends here
 
+// molecule
+// #+name: 00093c10-2247-4242-a287-e5640c00cadb
+
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::00093c10-2247-4242-a287-e5640c00cadb][00093c10-2247-4242-a287-e5640c00cadb]]
 use gchemol_core:: {
     Atom,
@@ -71,7 +79,7 @@ use gchemol_core:: {
 };
 
 // import important traits
-use io::prelude::*;
+use crate::io::prelude::*;
 
 impl FromFile for Molecule {
     /// Construct molecule from external text file
@@ -143,8 +151,10 @@ fn test_molecule_formats() {
 }
 // 00093c10-2247-4242-a287-e5640c00cadb ends here
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::d317857c-a18d-4630-9155-119cf3533d5a][d317857c-a18d-4630-9155-119cf3533d5a]]
-use formats::{
+// molecules
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecules][molecules:1]]
+use crate::formats::{
     ChemFileLike,
     guess_chemfile,
 };
@@ -222,4 +232,4 @@ fn test_io_read_plain_xyz() {
     assert_eq!(1, mols.len());
     assert_eq!(17, mols[0].natoms());
 }
-// d317857c-a18d-4630-9155-119cf3533d5a ends here
+// molecules:1 ends here

@@ -1,3 +1,8 @@
+// lib.rs
+// :PROPERTIES:
+// :header-args: :tangle src/lib.rs
+// :END:
+
 // [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*lib.rs][lib.rs:1]]
 #![feature(test)]
 extern crate test;

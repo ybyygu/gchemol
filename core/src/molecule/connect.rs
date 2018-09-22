@@ -2,7 +2,7 @@
 // chemical bonds related methods
 
 use super::*;
-use data::guess_bond_kind;
+use crate::data::guess_bond_kind;
 
 impl Molecule {
     /// Access the bonded atom indices for bond `b`
@@ -57,7 +57,7 @@ impl Molecule {
 
 // distance
 
-use geometry::prelude::*;
+use crate::geometry::prelude::*;
 
 impl Molecule {
     /// Return the distance matrix (nalgebra dmatrix). Will apply mic if

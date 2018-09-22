@@ -1,3 +1,7 @@
+// sort
+// 按原子序号排序.
+// #+name: a762197d-df95-433c-8499-8148d0241a9f
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::a762197d-df95-433c-8499-8148d0241a9f][a762197d-df95-433c-8499-8148d0241a9f]]
 use super::*;
 use std::cmp::Reverse;
@@ -74,6 +78,9 @@ impl Molecule {
 }
 // a762197d-df95-433c-8499-8148d0241a9f ends here
 
+// permutation
+// #+name: b5512aff-1510-42cf-9b1d-7487485a282d
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::b5512aff-1510-42cf-9b1d-7487485a282d][b5512aff-1510-42cf-9b1d-7487485a282d]]
 // adopted from: https://rosettacode.org/wiki/Permutations#Rust
 pub fn permutations(size: usize) -> Permutations {
@@ -120,11 +127,15 @@ fn test_permutation() {
 }
 // b5512aff-1510-42cf-9b1d-7487485a282d ends here
 
+// molecule
+// Find equivalent atoms between two molecules.
+// #+name: e06ad932-0eef-4d99-beac-c43c4e83bc63
+
 // [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::e06ad932-0eef-4d99-beac-c43c4e83bc63][e06ad932-0eef-4d99-beac-c43c4e83bc63]]
 /// pairing atoms in two molecules using the brute force way
 fn matching_atoms_brute_force(mol_can: &Molecule, mol_ref: &Molecule) -> Vec<(AtomIndex, AtomIndex)> {
     use std::f64;
-    use geometry::prelude::Alignment;
+    use crate::geometry::prelude::Alignment;
     use itertools::Itertools;
 
     assert!(mol_ref.matchable(&mol_can));
