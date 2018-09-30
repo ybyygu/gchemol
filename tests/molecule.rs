@@ -82,6 +82,10 @@ fn test_new_molecule() {
     for (s1, s2) in mol.symbols().into_iter().zip(symbols) {
         assert_eq!(s1, s2);
     }
+
+    // molecular name
+    mol.name = " CH4 \nthe second line will be omitted\n".to_string();
+    assert_eq!("CH4".to_string(), mol.title());
 }
 // build molecule from atoms:1 ends here
 

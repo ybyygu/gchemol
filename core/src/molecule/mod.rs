@@ -11,7 +11,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-09-22 Sat 15:08>
+//       UPDATED:  <2018-09-30 Sun 10:32>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -762,7 +762,9 @@ pub type BondIndex = EdgeIndex;
 ///
 #[derive(Debug, Clone)]
 pub struct Molecule {
-    /// Molecule name
+    /// Molecular name. The default value is `untitled`. This field may be used
+    /// to store a registry number or other identifier, instead of a common
+    /// name.
     pub name: String,
     /// core data in graph
     pub graph: MolGraph,
@@ -778,7 +780,7 @@ impl Default for Molecule {
     fn default() -> Self {
         let graph = MolGraph::default();
         Molecule {
-            name: "default".to_string(),
+            name: String::new(),
             graph: graph,
             lattice: None,
             properties: PropertyStore::new(),
@@ -813,9 +815,15 @@ impl Molecule {
         }
     }
 
-    /// A convenient alias of molecular name
+    /// Return the name of the molecule. The title is typically trimmed for
+    /// safely storing in various molecular file formats.
     pub fn title(&self) -> String {
-        self.name.to_owned()
+        let tlines: Vec<_> = self.name.lines().collect();
+        if tlines.is_empty() {
+            "untitled".to_owned()
+        } else {
+            tlines[0].trim().to_owned()
+        }
     }
 
     /// Return the sites (AtomIndex) that hosting atoms.
@@ -850,12 +858,7 @@ impl Molecule {
 }
 // 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
 
-
-
-// 方便直接使用usize整数来指认原子.
-// #+name: be29e151-18c6-43cb-9586-aba0e708d38c
-
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::be29e151-18c6-43cb-9586-aba0e708d38c][be29e151-18c6-43cb-9586-aba0e708d38c]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*molecule][molecule:2]]
 pub trait IntoAtomIndex {
     fn into_atom_index(&self) -> AtomIndex;
 }
@@ -889,7 +892,7 @@ impl IntoBondIndex for BondIndex {
         *self
     }
 }
-// be29e151-18c6-43cb-9586-aba0e708d38c ends here
+// molecule:2 ends here
 
 // TODO charge, spin, magmon
 // 定义分子体系的电荷, 自旋等参数. ase里每个原子都有一个magmon的参数.
