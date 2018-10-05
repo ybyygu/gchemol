@@ -146,7 +146,7 @@ fn test_alignment() {
 
 #[test]
 fn test_alignment2() {
-    use gchemol::prelude::*;
+    use gchemol::prelude::FromFile;
     use gchemol::molecule::Molecule;
 
     // load test molecules

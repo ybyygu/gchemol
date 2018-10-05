@@ -52,7 +52,25 @@ impl VecFloatMath for [f64] {
     }
 }
 
-/// A trait provides useful tools for Vec<[f64; 3]> type.
+/// A trait provides useful methods for [f64; 3] type.
+pub trait Point3Math {
+    /// return the distance to other point
+    fn distance(&self, other: Self) -> f64;
+
+    // /// return the angle between the tree vector points: va(self), vb, vc
+    // fn angle(&self, pb: Self, pc: Self) -> f64;
+
+    // /// return the torsion angle between the four vector points: va, vb, vc, vd
+    // fn torsion(&self, pb, pc, pd) -> f64;
+}
+
+impl Point3Math for [f64; 3] {
+    fn distance(&self, other: Self) -> f64 {
+        euclidean_distance(*self, other.into())
+    }
+}
+
+/// A trait provides useful methods for Vec<[f64; 3]> type.
 pub trait VecFloat3Math {
     /// Return the Frobenius norm (matrix norm) defined as the square root of
     /// the sum of the absolute squares of its elements.
@@ -206,6 +224,14 @@ fn test_vec_math() {
 
     let x = positions.norms().max();
     assert_relative_eq!(1.8704, x, epsilon=1e-4);
+}
+
+#[test]
+fn test_point3_math() {
+    let pa = [0.1, 0.2, 0.3];
+    let pb = [1.0, 2.0, 0.3];
+
+    assert_eq!(pa.distance(pb), euclidean_distance(pa, pb));
 }
 // traits:1 ends here
 
