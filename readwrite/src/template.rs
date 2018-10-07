@@ -76,8 +76,8 @@ fn format(h: &Helper, _: &Handlebars, _: &Context, rc: &mut RenderContext, out: 
             .as_f64()
             .ok_or(RenderError::new("param 0: not f64 number"))?;
 
-        let width = width.unwrap_or(8) as usize;
-        let prec = prec.unwrap_or(4) as usize;
+        let width = width.unwrap_or(18) as usize;
+        let prec = prec.unwrap_or(8) as usize;
         let rendered = if let Some(align) = align {
             match align {
                 "center" => format!("{:^width$.prec$}", num, width=width, prec=prec),
