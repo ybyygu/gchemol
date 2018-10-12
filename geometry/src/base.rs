@@ -80,7 +80,15 @@ pub trait VecFloat3Math {
     fn norms(&self) -> Vec<f64>;
 
     /// Return a 1-D array, containing the elements of 3xN array
-    fn ravel(&self) -> Vec<f64>;
+    fn ravel(&self) -> Vec<f64> {
+        self.as_flat().to_vec()
+    }
+
+    /// View as a flat slice
+    fn as_flat(&self) -> &[f64];
+
+    /// View of mut flat slice
+    fn as_mut_flat(&mut self) -> &mut [f64];
 
     /// Convert to 3xN dynamic matrix
     fn to_dmatrix(&self) -> Vector3fVec;
@@ -111,20 +119,27 @@ pub trait VecFloat3Math {
     fn distance_matrix(&self) -> DMatrixf;
 }
 
-// impl VecFloat3Math for Vec<[f64; 3]> {
 impl VecFloat3Math for [[f64; 3]] {
-    fn ravel(&self) -> Vec<f64> {
-        let n = self.len();
-        let mut r = Vec::with_capacity(3 * n);
-
-        for i in 0..n {
-            for j in 0..3 {
-                r.push(self[i][j]);
-            }
+    /// View as a flat slice
+    fn as_flat(&self) -> &[f64] {
+        unsafe {
+            ::std::slice::from_raw_parts(
+                self.as_ptr() as *const _,
+                self.len() * 3,
+            )
         }
-
-        r
     }
+
+    /// View of mut flat slice
+    fn as_mut_flat(&mut self) -> &mut [f64] {
+        unsafe {
+            ::std::slice::from_raw_parts_mut(
+                self.as_mut_ptr() as *mut _,
+                self.len() * 3,
+            )
+        }
+    }
+
 
     fn norm(&self) -> f64 {
         let mut d2: f64 = 0.0;
@@ -158,9 +173,8 @@ impl VecFloat3Math for [[f64; 3]] {
     }
 
     fn to_dmatrix(&self) -> Vector3fVec {
-        // FIXME: performance
-        let r = self.ravel();
-        Vector3fVec::from_column_slice(self.len(), &r)
+        let r = self.as_flat();
+        Vector3fVec::from_column_slice(self.len(), r)
     }
 
     fn center_of_mass(&self, masses: &[f64]) -> Result<Position> {
@@ -224,6 +238,14 @@ fn test_vec_math() {
 
     let x = positions.norms().max();
     assert_relative_eq!(1.8704, x, epsilon=1e-4);
+
+    let flat = positions.as_flat();
+    assert_eq!(18, flat.len());
+
+    let mut positions = positions.clone();
+    let mflat = positions.as_mut_flat();
+    mflat[0] = 0.0;
+    assert_eq!(0.0, positions[0][0]);
 }
 
 #[test]
@@ -235,9 +257,9 @@ fn test_point3_math() {
 }
 // general:1 ends here
 
-// Vector3fVec
+// 3D positions
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*Vector3fVec][Vector3fVec:1]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*3D%20positions][3D positions:1]]
 /// Treat a flat slice as 3D positions
 ///
 /// # Panics
@@ -314,7 +336,7 @@ fn test_as_positions() {
     mp[0][0] = 1.1;
     assert_eq!(1.1, m[(0, 0)]);
 }
-// Vector3fVec:1 ends here
+// 3D positions:1 ends here
 
 // functions
 
