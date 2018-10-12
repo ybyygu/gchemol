@@ -25,9 +25,9 @@ pub type Positions = Vector3fVec;
 pub type FloatVec = na::DVector<f64>;
 // types:1 ends here
 
-// traits
+// general
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*traits][traits:1]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*general][general:1]]
 /// A trait provides useful tools for Vec<f64> type.
 pub trait VecFloatMath {
     /// Convert to nalgebra dynamic 1xN vector
@@ -233,7 +233,88 @@ fn test_point3_math() {
 
     assert_eq!(pa.distance(pb), euclidean_distance(pa, pb));
 }
-// traits:1 ends here
+// general:1 ends here
+
+// Vector3fVec
+
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*Vector3fVec][Vector3fVec:1]]
+/// Treat a flat slice as 3D positions
+///
+/// # Panics
+/// if the slice size is incorrect.
+pub trait AsPositions {
+    /// View `&[f64]` as `&[[f64; 3]]` without copying.
+    fn as_positions(&self) -> &[[f64; 3]];
+    /// View `&mut [f64]` as `&mut [[f64; 3]]` without copying.
+    fn as_mut_positions(&mut self) -> &mut [[f64; 3]];
+}
+
+impl AsPositions for [f64] {
+    fn as_positions(&self) -> &[[f64; 3]] {
+        assert_eq!(0, self.len() % 3, "cannot view slice of length {} as &[[_; 3]]", self.len());
+
+        unsafe {
+            ::std::slice::from_raw_parts(
+                self.as_ptr() as *const _,
+                self.len() / 3,
+            )
+        }
+    }
+
+    fn as_mut_positions(&mut self) -> &mut [[f64; 3]] {
+        assert_eq!(0, self.len() % 3, "cannot view slice of length {} as &[[_; 3]]", self.len());
+
+        unsafe {
+            ::std::slice::from_raw_parts_mut(
+                self.as_ptr() as *mut _,
+                self.len() / 3,
+            )
+        }
+    }
+}
+
+impl AsPositions for Vector3fVec {
+    fn as_positions(&self) -> &[[f64; 3]] {
+        assert_eq!(0, self.len() % 3, "cannot view Matrix of length {} as &[[_; 3]]", self.len());
+
+        self.as_slice().as_positions()
+    }
+
+    fn as_mut_positions(&mut self) -> &mut [[f64; 3]] {
+        assert_eq!(0, self.len() % 3, "cannot view Matrix of length {} as &[[_; 3]]", self.len());
+
+        self.as_mut_slice().as_mut_positions()
+    }
+}
+
+#[test]
+fn test_as_positions() {
+    let v = [1., 2., 3.];
+    let p = v.as_positions();
+    assert_eq!(&[[1., 2., 3.]], p);
+
+    let mut v = vec![1., 2., 3., 4., 5., 6.];
+    let p = &mut v.as_mut_positions();
+    assert_eq!(p,
+               &mut [
+                   [1., 2., 3.],
+                   [4., 5., 6.],
+               ]
+    );
+
+    let mut m = p.to_dmatrix();
+    let mut mp = m.as_mut_positions();
+    assert_eq!(mp,
+               &mut [
+                   [1., 2., 3.],
+                   [4., 5., 6.],
+               ]
+    );
+
+    mp[0][0] = 1.1;
+    assert_eq!(1.1, m[(0, 0)]);
+}
+// Vector3fVec:1 ends here
 
 // functions
 
