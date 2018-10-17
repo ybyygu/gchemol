@@ -11,12 +11,17 @@
 // CONECT
 // fb7c688e-38d6-455b-a8f0-ae54c563f3cf ends here
 
+// base
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*base][base:1]]
+use super::*;
+// base:1 ends here
+
 // crystal
 // - [[https://www.wwpdb.org/documentation/file-format-content/format33/sect8.html][wwPDB Format version 3.3: Crystallographic and Coordinate Transformation Section]]
 
-// #+name: b5bad50c-2b36-4d09-9623-d487f9e2333b
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::b5bad50c-2b36-4d09-9623-d487f9e2333b][b5bad50c-2b36-4d09-9623-d487f9e2333b]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*crystal][crystal:1]]
 // Example
 // -------
 // CRYST1   18.126   18.126    7.567  90.00  90.00 120.00 P6/MMM
@@ -78,14 +83,11 @@ ATOM      3 T1   MOL     2      -5.234   6.009   1.536  1.00  0.00          Si1+
 ";
     let (r, v) = get_lattice(lines).expect("pdb lattice");
 }
-// b5bad50c-2b36-4d09-9623-d487f9e2333b ends here
+// crystal:1 ends here
 
 // atom record
-// #+name: ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8][ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8]]
-use super::*;
-
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*atom%20record][atom record:1]]
 // guess element from columns 55-80
 // 55 - 60        Real(6.2)     occupancy    Occupancy.
 // 61 - 66        Real(6.2)     tempFactor   Temperature  factor.
@@ -225,12 +227,11 @@ fn format_atom(i: usize, a: &Atom) -> String {
         symbol=a.symbol(),
     )
 }
-// ffdfbdbc-f657-4961-a2d8-0ae6d9b261d8 ends here
+// atom record:1 ends here
 
 // bond record
-// #+name: 0394bb2f-e054-4466-a090-04a0fbe69e03
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::0394bb2f-e054-4466-a090-04a0fbe69e03][0394bb2f-e054-4466-a090-04a0fbe69e03]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*bond%20record][bond record:1]]
 use crate::parser::space_token;
 
 // atom index in bond record line
@@ -338,12 +339,11 @@ CONECT 2043 2042 2044
         .expect("pdb missing bonds");
     assert_eq!(2, x.len());
 }
-// 0394bb2f-e054-4466-a090-04a0fbe69e03 ends here
+// bond record:1 ends here
 
 // molecule
-// #+name: 10e26e11-ab6c-4e7d-884a-6a0e98c8d08f
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::10e26e11-ab6c-4e7d-884a-6a0e98c8d08f][10e26e11-ab6c-4e7d-884a-6a0e98c8d08f]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
 use std::collections::HashMap;
 
 named!(get_molecule<&str, Molecule>, do_parse!(
@@ -366,7 +366,10 @@ named!(get_molecule<&str, Molecule>, do_parse!(
     // locate bond records
     many_till!(read_until_eol, alt!(peek!(tag!("CONECT")) |
                                     terminated!(
-                                        tag!("END"),
+                                        alt!(
+                                            tag!("END") |
+                                            tag!("ENDMDL")
+                                        ),
                                         line_ending)))      >>
     bonds  : opt!(complete!(get_bonds_from))                >>
     (
@@ -462,12 +465,11 @@ fn format_molecule(mol: &Molecule) -> String {
 
     lines
 }
-// 10e26e11-ab6c-4e7d-884a-6a0e98c8d08f ends here
+// molecule:1 ends here
 
 // chemfile
-// #+name: f026618f-fdc0-4590-a2b0-211078c30e14
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::f026618f-fdc0-4590-a2b0-211078c30e14][f026618f-fdc0-4590-a2b0-211078c30e14]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
 pub struct PdbFile();
 
 impl ChemFileLike for PdbFile {
@@ -497,4 +499,4 @@ fn test_pdb_parse() {
     assert_eq!(1, mols.len());
     assert!(mols[0].lattice.is_some());
 }
-// f026618f-fdc0-4590-a2b0-211078c30e14 ends here
+// chemfile:1 ends here

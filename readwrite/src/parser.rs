@@ -1,11 +1,11 @@
-// src
+// base
 
-use nom;
-
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*base][base:1]]
 // line originated parsers
 use std::fmt::Debug;
 
 pub use nom::{
+    self,
     // Recognizes one or more numerical characters: 0-9
     digit,
     // Recognizes one or more spaces and tabs
@@ -17,7 +17,7 @@ pub use nom::{
     alphanumeric,
     is_alphanumeric,
     // Recognizes floating point number in a string and returs a f64
-    double_s,
+    double as double_s,
     // Recognizes an end of line (both '\n' and '\r\n')
     line_ending,
     not_line_ending,
@@ -25,11 +25,17 @@ pub use nom::{
     eol,
 };
 
+// Indicating the end of stream
+pub const MAGIC_EOF: &str = "$THIS_IS_THE=MAGIC_END_OF_FILE$";
+// base:1 ends here
+
+// utils
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*utils][utils:1]]
+pub use nom::IResult;
 pub use nom::types::{
     CompleteStr,
 };
-
-pub use nom::IResult;
 
 /// whitespace including one or more spaces or tabs
 named!(pub space_token<&str, &str>, eat_separator!(&b" \t"[..]));
@@ -139,7 +145,17 @@ fn test_parser_xyz_array() {
     let (_, x) = xyz_array("-11.4286\t1.7E-5  0.0000 \n").unwrap();
     assert_eq!(x[2], 0.0);
 }
+// utils:1 ends here
 
-// text parser
+// eof
 
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*eof][eof:1]]
+named!(pub eof<&str, &str>, tag!(MAGIC_EOF));
 
+#[test]
+fn test_eof() {
+    let x = "aaon";
+    let x = eof(x);
+    println!("{:#?}", x);
+}
+// eof:1 ends here
