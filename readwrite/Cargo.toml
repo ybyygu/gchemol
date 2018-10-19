@@ -3,7 +3,7 @@
 # [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*cargo][cargo:1]]
 [package]
 name = "gchemol-readwrite"
-version = "0.0.22"
+version = "0.0.23"
 edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
