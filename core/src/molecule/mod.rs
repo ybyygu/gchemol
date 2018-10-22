@@ -11,7 +11,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-09-30 Sun 10:32>
+//       UPDATED:  <2018-10-22 Mon 17:47>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
@@ -232,8 +232,9 @@ pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
     }
 
     // element specified in symbol or long name
+    let _sym = sym.to_uppercase();
     for (i, &(s, n) ) in ELEMENT_DATA.iter().enumerate() {
-        if s == sym  || n == sym {
+        if s.to_uppercase() == _sym  || n.to_uppercase() == _sym {
             return Element(i+1);
         }
     }
@@ -257,6 +258,9 @@ fn test_element() {
     assert_eq!(k.number(), 11);
     assert_eq!(k.symbol(), "Na");
     assert_eq!(k.name(), "sodium");
+
+    let k = atom_kind_from_string("SI");
+    assert_eq!(k.symbol(), "Si");
 }
 // b95edc21-e696-4625-ba99-94257394772d ends here
 
@@ -815,8 +819,8 @@ impl Molecule {
         }
     }
 
-    /// Return the name of the molecule. The title is typically trimmed for
-    /// safely storing in various molecular file formats.
+    /// Return the name of the molecule, while is typpically modified for safely
+    /// storing in various molecular file formats.
     pub fn title(&self) -> String {
         let tlines: Vec<_> = self.name.lines().collect();
         if tlines.is_empty() {

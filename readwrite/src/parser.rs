@@ -150,12 +150,12 @@ fn test_parser_xyz_array() {
 // eof
 
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*eof][eof:1]]
-named!(pub eof<&str, &str>, tag!(MAGIC_EOF));
+named!(pub magic_eof<&str, &str>, tag!(MAGIC_EOF));
 
-#[test]
-fn test_eof() {
-    let x = "aaon";
-    let x = eof(x);
-    println!("{:#?}", x);
-}
+// #[test]
+// fn test_magic_eof() {
+//     let x = "aaon";
+//     let x = eof(x);
+//     println!("{:#?}", x);
+// }
 // eof:1 ends here
