@@ -1,18 +1,24 @@
-// [[file:~/Workspace/Programming/gchemol/io/io.note::4138ba02-140e-4bdb-8083-74424610b600][4138ba02-140e-4bdb-8083-74424610b600]]
-use super::*;
-// 4138ba02-140e-4bdb-8083-74424610b600 ends here
+// base
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::c8f2f29e-b23a-4de3-a888-e6cbfee64760][c8f2f29e-b23a-4de3-a888-e6cbfee64760]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*base][base:1]]
+use super::*;
+// base:1 ends here
+
+// header
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*header][header:1]]
 // Gaussian input file
 //
 // Reference
 // ---------
 // http://gaussian.com/input/?tabid=0
-// c8f2f29e-b23a-4de3-a888-e6cbfee64760 ends here
+// header:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc][c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc]]
+// link0 and route sections
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*link0%20and%20route%20sections][link0 and route sections:1]]
 // sections are separated by a blank line
-named!(blank_line<&str, &str>, sp!(line_ending));
+named!(pub blank_line<&str, &str>, sp!(line_ending));
 
 named!(gjf_link0<&str, (&str)>, do_parse!(
     opt!(space)              >>
@@ -80,9 +86,21 @@ named!(title_section<&str, String>, do_parse!(
         }
     )
 ));
-// c41ceaa0-01c0-4848-b1ea-3f77e0a3e0fc ends here
+// link0 and route sections:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::dac5abf9-43a6-40a7-bf33-8338e106f738][dac5abf9-43a6-40a7-bf33-8338e106f738]]
+// molecular specifications
+// - [[http://gaussian.com/molspec/][Molecule Specifications | Gaussian.com]]
+// - [[http://gaussian.com/zmat/][Constructing Z-Matrices | Gaussian.com]]
+// - [[http://gaussian.com/oniom/][ONIOM | Gaussian.com]]
+
+// gaussian input中的原子非常复杂
+// : Element-label[–Atom-type[–Charge]][(param=value[, …])] Atom-position-parameters
+
+// 可以用空格, Tab或逗号来间隔.
+
+// #+name: dac5abf9-43a6-40a7-bf33-8338e106f738
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::dac5abf9-43a6-40a7-bf33-8338e106f738][dac5abf9-43a6-40a7-bf33-8338e106f738]]
 use std::collections::HashMap;
 use std::iter::FromIterator;
 
@@ -285,7 +303,9 @@ fn test_gjf_atom_line() {
 }
 // dac5abf9-43a6-40a7-bf33-8338e106f738 ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2][d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2]]
+// molecular connectivity
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecular%20connectivity][molecular connectivity:1]]
 // Connectivity lines like this:
 // 1 2 1.0 3 1.0 4 1.0 5 1.0
 //     2
@@ -324,9 +344,11 @@ fn test_gjf_connectivity() {
     let (_, x) = gjf_connect_line(" 1,2 1.0 3 1.0 4 1.0 5 1.0\n").expect("gjf connectivity");
     assert_eq!(4, x.len());
 }
-// d03ec7e2-6cc0-475f-8fbc-d140db9ee4b2 ends here
+// molecular connectivity:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::2357368c-ab7e-4eb3-96a8-a8e4aba19bac][2357368c-ab7e-4eb3-96a8-a8e4aba19bac]]
+// molecule
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
 named!(get_molecule_from<&str, Molecule>, do_parse!(
     link0: opt!(complete!(link0_section)) >>
     // route card
@@ -490,9 +512,11 @@ fn format_molecule(mol: &Molecule) -> String {
     lines.push_str("\n");
     lines
 }
-// 2357368c-ab7e-4eb3-96a8-a8e4aba19bac ends here
+// molecule:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::ac025fea-3d20-45f4-97eb-2969138a4716][ac025fea-3d20-45f4-97eb-2969138a4716]]
+// chemfile
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
 /// plain xyz coordinates with atom symbols
 pub struct GaussInputFile();
 
@@ -526,4 +550,250 @@ impl ChemFileLike for GaussInputFile {
         Ok(ms.join("--Link1--\n"))
     }
 }
-// ac025fea-3d20-45f4-97eb-2969138a4716 ends here
+// chemfile:1 ends here
+
+// data type
+// Each data section has data (single or in a array) in different type.
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*data%20type][data type:1]]
+use std::str::FromStr;
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum DataType {
+    Integer,
+    Real,
+    Logical,
+    Character1,
+    Character2,
+}
+
+impl DataType {
+    pub fn width(&self) -> usize {
+        use self::DataType::*;
+
+        match self {
+            // I, fortran format: 6I12
+            Integer    => 12,
+            // R, fortran format: 5E16.8
+            Real       => 16,
+            // L, fortran format: 72L1
+            Logical    => 1,
+            // C, fortran format: 5A12
+            Character1 => 12,
+            // H, fortran format: 9A8
+            Character2 => 8,
+        }
+    }
+}
+
+impl FromStr for DataType {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self> {
+        let dt = match s.trim() {
+            "I" => DataType::Integer,
+            "R" => DataType::Real,
+            "C" => DataType::Character1,
+            "H" => DataType::Character2,
+            _  => {
+                bail!("unkown data type: {}", s.trim());
+            }
+        };
+
+        Ok(dt)
+    }
+}
+
+#[test]
+fn test_fchk_data_type() {
+    let s = "  I";
+    let dt = s.parse().expect("fchk data type: I");
+    assert_eq!(DataType::Integer, dt);
+    assert_eq!(dt.width(), 12);
+
+    let s = " R ";
+    let dt = s.parse().expect("fchk data type: R");
+    assert_eq!(DataType::Real, dt);
+    assert_eq!(dt.width(), 16);
+}
+// data type:1 ends here
+
+// data section
+// A data section in formatted checkpoint file.
+
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*data%20section][data section:1]]
+/// Represents a section of data in formatted checkpoint file (fchk)
+#[derive(Debug, Clone)]
+pub struct Section<'a> {
+    /// An informative section name
+    label: &'a str,
+    /// Data type: R, I, C, L, H
+    data_type: DataType,
+    /// if there is array data followed by one or more succeeding lines
+    is_array: bool,
+    /// The last item in section header representing section value or array size
+    value: &'a str,
+    /// Members of data array
+    data_array: Option<Vec<&'a str>>,
+}
+
+// Number of alpha electrons                  I              225
+// Nuclear charges                            R   N=         261
+// Mulliken Charges                           R   N=          11
+named!(read_section_header<&str, Section>, do_parse!(
+    label     : take!(40)  >>
+    data_type : take!(7)   >>
+    array     : take!(2)   >>
+    value     : read_line  >>
+    (
+        {
+            Section {
+                value: value.trim(),
+                label: label.trim(),
+                data_type: data_type.parse().expect("dt"),
+                is_array: array.trim() == "N=",
+                data_array: None,
+            }
+        }
+    )
+));
+
+#[test]
+fn test_fchk_section_header() {
+    let line = "Nuclear charges                            R   N=          11 \n";
+    let (_, s) = read_section_header(line).expect("fchk section header");
+    assert_eq!("Nuclear charges", s.label);
+    assert_eq!(DataType::Real, s.data_type);
+    assert_eq!("11", s.value);
+    assert!(s.is_array);
+
+    let line = "Number of alpha electrons                  I              225\n";
+    let (_, s) = read_section_header(line).expect("fchk section header");
+    assert!(! s.is_array);
+
+    let line = "Total Energy                               R     -1.177266205968928E+02\n";
+    let (_, s) = read_section_header(line).expect("fchk section header");
+    assert!(! s.is_array);
+}
+
+// read all members of data array. line endings are ignored using nl! macro
+fn read_data_array(input: &str, array_size: usize, width: usize) -> nom::IResult<&str, Vec<&str>> {
+    let (input, array) = many_m_n!(input,
+                                   array_size,
+                                   array_size,
+                                   nl!(take!(width))
+    )?;
+
+    Ok((input, array))
+}
+
+/// Read data for a named section
+pub fn read_section<'a>(input: &'a str, label: &'a str) -> nom::IResult<&'a str, Section<'a>> {
+    // goto section named as `label`
+    // jump to the line starts with `label`
+    let tag = format!("\n{}", label);
+    let (input, _) = take_until!(input, tag.as_str())?;
+    // consume '\n'
+    let (input, _) = take!(input, 1)?;
+
+    // parse section header
+    let (mut input, mut sect) = read_section_header(input)?;
+    let width = sect.data_type.width();
+
+    // parse array data
+    if sect.is_array {
+        let (_, array_size) = parse_to!(sect.value.trim(), usize)?;
+        let (input, array) = read_data_array(input, array_size, width)?;
+        sect.data_array = Some(array);
+        return Ok((input, sect));
+    }
+
+    Ok((input, sect))
+}
+
+#[test]
+fn test_read_section() {
+    let txt = "Title Card Required
+SP        RB3LYP                                                      STO-3G
+Number of atoms                            I               11
+Charge                                     I                0
+Multiplicity                               I                1
+Nuclear charges                            R   N=          11
+  6.00000000E+00  1.00000000E+00  1.00000000E+00  1.00000000E+00  6.00000000E+00
+  1.00000000E+00  1.00000000E+00  6.00000000E+00  1.00000000E+00  1.00000000E+00
+  1.00000000E+00
+";
+    // let x = read_section(txt, "Nuclear charges").expect("fchk section");
+    let x = read_section(txt, "Charge");
+    // let x = read_section(txt, "Nuclear charges");
+    println!("{:#?}", x);
+}
+// data section:1 ends here
+
+// data reader
+// Various readers for different data sections
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*data%20reader][data reader:1]]
+// Total Energy                               R     -1.177266205968928E+02
+pub fn read_total_energy(input: &str) -> nom::IResult<&str, f64> {
+    let (input, sect) = read_section(input, "Total Energy")?;
+    assert_eq!(sect.data_type, DataType::Real);
+    assert!(! sect.is_array);
+
+    let energy = sect.value.trim().parse().expect("total energy");
+    Ok((input, energy))
+}
+
+// Cartesian Gradient                         R   N=          33
+pub fn read_cartesian_gradient(input: &str) -> nom::IResult<&str, (f64, f64, f64)> {
+    unimplemented!()
+}
+
+// Dipole Moment                              R   N=           3
+pub fn read_dipole_moment(input: &str) -> nom::IResult<&str, (f64, f64, f64)> {
+    unimplemented!()
+}
+
+// Mulliken Charges                           R   N=          11
+pub fn read_mulliken_charges(input: &str) -> nom::IResult<&str, Vec<f64>> {
+    let (input, sect) = read_section(input, "Mulliken Charges")?;
+    assert_eq!(sect.data_type, DataType::Real);
+    assert!(sect.is_array);
+
+    let charges = if let Some(items) = sect.data_array {
+        items
+            .iter()
+            .map(|v| v.trim().parse().expect("Mulliken charge"))
+            .collect()
+    } else {
+        Vec::new()
+    };
+
+    Ok((input, charges))
+}
+
+// Relevant data for blackbox model calculation
+pub fn read_model_properties(input: &str) -> nom::IResult<&str, (f64, Vec<f64>)> {
+    let (input, energy) = read_total_energy(input)?;
+    // let (input, gradients) = read_cartesian_gradient(input)?
+    // let (input, dipoles) = read_dipole_moment(input)?
+    let (input, charges) = read_mulliken_charges(input)?;
+
+    Ok((input, (energy, charges)))
+}
+
+#[test]
+fn test_fchk_reader() {
+    use gchemol::io;
+
+    let fname = "tests/Test.FChk";
+
+    let mut parser = TextParser::default();
+    let f = File::open(fname).expect("fchk test file");
+
+    // parser.parse(f, read_total_energy, |p| println!("{:#?}", p)).unwrap();
+    parser.parse(f, read_model_properties, |p| println!("{:#?}", p)).unwrap();
+
+}
+// data reader:1 ends here

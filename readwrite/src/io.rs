@@ -10,14 +10,13 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-09-22 Sat 15:25>
+//       UPDATED:  <2018-10-25 Thu 16:01>
 //===============================================================================#
 // header:1 ends here
 
 // trait
-// #+name: 4a0ea759-222c-42b7-ab82-8eb969751781
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::4a0ea759-222c-42b7-ab82-8eb969751781][4a0ea759-222c-42b7-ab82-8eb969751781]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*trait][trait:1]]
 use std::path::Path;
 
 use quicli;
@@ -67,12 +66,11 @@ impl ToFile for str {
         quicli::fs::write_to_file(path, &self)
     }
 }
-// 4a0ea759-222c-42b7-ab82-8eb969751781 ends here
+// trait:1 ends here
 
 // molecule
-// #+name: 00093c10-2247-4242-a287-e5640c00cadb
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::00093c10-2247-4242-a287-e5640c00cadb][00093c10-2247-4242-a287-e5640c00cadb]]
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
 use gchemol_core:: {
     Atom,
     Molecule,
@@ -86,10 +84,8 @@ impl FromFile for Molecule {
     fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path = path.as_ref();
         let cf = guess_chemfile_from_filename(path)?;
-        let filename = format!("{}", path.display());
-        // FIXME: Path or &str?
-        let mut mols = cf.parse(&filename)?;
-        mols.pop().ok_or(format_err!("no molecule: {:?}", path.display()))
+        let mut mols = cf.parse(path)?;
+        mols.pop().ok_or(format_err!("No molecule: {:?}", path.display()))
     }
 }
 
@@ -122,8 +118,7 @@ impl StringIO for Molecule {
         let cf = guess_chemfile_from_fmt(fmt)?;
 
         let s = s.as_ref();
-        // FIXME: ....
-        let (_, m) = cf.parse_molecule(s).map_err(|e| format_err!("{:?}", e))?;
+        let m = cf.parse_from(s)?;
 
         Ok(m)
     }
@@ -149,7 +144,7 @@ fn test_molecule_formats() {
     let mol2 = Molecule::parse_from(txt, "text/xyz").expect("parse molecule from xyz stream");
     assert_eq!(mol.natoms(), mol2.natoms());
 }
-// 00093c10-2247-4242-a287-e5640c00cadb ends here
+// molecule:1 ends here
 
 // molecules
 
@@ -191,20 +186,20 @@ impl<'a> FileOptions<'a> {
     /// read molecules from file
     pub fn read<P: AsRef<Path>>(&self, path: P) -> ReadResult {
         let path = path.as_ref();
-        let filename = &format!("{}", path.display());
-        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", filename, self.fmt);
-        let chemfile = guess_chemfile(filename, self.fmt).ok_or(msg)?;
-        let mols = chemfile.parse(filename)?;
+        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", path.display(), self.fmt);
+        let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
+        let mols = chemfile.parse(path)?;
 
         Ok(mols)
     }
 
     pub fn write<P: AsRef<Path>>(&self, path: P, mols: &Vec<Molecule>) -> Result<()> {
         let path = path.as_ref();
-        let filename = &format!("{}", path.display());
-        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", filename, self.fmt);
-        let chemfile = guess_chemfile(filename, self.fmt).ok_or(msg)?;
-        chemfile.write(filename, mols)
+        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}",
+                              path.display(),
+                              self.fmt);
+        let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
+        chemfile.write(path, mols)
     }
 }
 

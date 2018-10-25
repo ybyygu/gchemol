@@ -1,0 +1,36 @@
+REMARK   This PDB file is created by CS Chem3D.
+SEQRES   1      1  MOL
+HETATM    1  N   MOL     1       1.386  -0.292   0.014                       N
+HETATM    2  N   MOL     1      -1.386   0.292   0.007                       N
+HETATM    3  C   MOL     1       0.919   0.971  -0.019                       C
+HETATM    4  C   MOL     1      -0.449   1.259  -0.022                       C
+HETATM    5  C   MOL     1      -0.919  -0.971   0.007                       C
+HETATM    6  C   MOL     1       0.449  -1.259   0.011                       C
+HETATM    7  H   MOL     1       1.661   1.766  -0.026                       H
+HETATM    8  H   MOL     1      -0.807   2.286  -0.032                       H
+HETATM    9  H   MOL     1       0.807  -2.286   0.027                       H
+HETATM   10  H   MOL     1      -1.661  -1.766   0.021                       H
+HETATM   11  O   MOL     1       4.175  -0.579  -0.379                       O
+HETATM   12  H   MOL     1       3.202  -0.812  -0.383                       H
+HETATM   13  H   MOL     1       4.567  -0.802   0.514                       H
+HETATM   14  O   MOL     1      -3.770   0.964  -1.494                       O
+HETATM   15  H   MOL     1      -3.352   1.740  -1.966                       H
+HETATM   16  H   MOL     1      -3.087   0.517  -0.917                       H
+TER
+CONECT    1    6    3
+CONECT    2    5    4
+CONECT    3    1    4    7
+CONECT    4    2    3    8
+CONECT    5    2    6   10
+CONECT    6    1    5    9
+CONECT    7    3
+CONECT    8    4
+CONECT    9    6
+CONECT   10    5
+CONECT   11   12   13
+CONECT   12   11
+CONECT   13   11
+CONECT   14   16   15
+CONECT   15   14
+CONECT   16   14
+END

@@ -1,75 +1,66 @@
-// parsing
+// base
 
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*base][base:1]]
 use super::*;
+// base:1 ends here
 
-const POSCAR_SFLAGS_KEY: &str = "vasp/poscar/sflags";
+// cell/elements
 
-named!(poscar_lattice_constant<&str, f64>, terminated!(
-    sp!(double_s),
-    sp!(line_ending)
-));
-
-#[test]
-fn test_poscar_lattice_constant() {
-    let (_, x) = poscar_lattice_constant(" 1.0000 \n")
-        .expect("POSCAR lattice constant");
-    assert_eq!(1.000, x);
-}
-
-named!(poscar_cell_vectors<&str, [[f64; 3]; 3]>, do_parse!(
-    va: sp!(xyz_array)   >>
-        sp!(line_ending) >>
-    vb: sp!(xyz_array)   >>
-        sp!(line_ending) >>
-    vc: sp!(xyz_array)   >>
-        sp!(line_ending) >>
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*cell/elements][cell/elements:1]]
+named!(poscar_cell_vectors<&str, [[f64; 3]; 3]>, sp!(do_parse!(
+    va: xyz_array   >> eol >>
+    vb: xyz_array   >> eol >>
+    vc: xyz_array   >> eol >>
     (
         [va, vb, vc]
     )
-));
+)));
 
 #[test]
 fn test_poscar_cell_vectors() {
-    let lines = " 21.23300000  0.00000000  0.00000000
+    let lines =
+" 21.23300000  0.00000000  0.00000000
   0.00000000 26.60400000  0.00000000
-  0.00000000  0.00000000 12.67600000 \n";
-    let (_, x) = poscar_cell_vectors(lines)
-        .expect("POSCAR cell vectors");
+  0.00000000  0.00000000 12.67600000
+";
+
+    let (_, x) = poscar_cell_vectors(lines).expect("POSCAR cell vectors");
     assert_eq!(21.233, x[0][0]);
 }
 
-named!(poscar_ion_types<&str, (Vec<&str>, Vec<usize>)>, do_parse!(
-    syms: many1!(sp!(alpha))          >>
-    sp!(line_ending)                  >>
-    nums: many1!(sp!(unsigned_digit)) >>
-    sp!(line_ending)                  >>
+named!(poscar_ion_types<&str, (Vec<&str>, Vec<usize>)>, sp!(do_parse!(
+    syms: many1!(alpha)          >> eol >>
+    nums: many1!(unsigned_digit) >> eol >>
     ((syms, nums))
-));
+)));
 
 #[test]
 fn test_formats_vasp_poscar_ion_types() {
     let lines = " O    Si   C    N    H
  225  112   8    1    19 \n";
-    let (r, v) = poscar_ion_types(lines)
-        .expect("POSCAR ion types");
+    let (_, v) = poscar_ion_types(lines).expect("POSCAR ion types");
     assert_eq!(5, v.0.len());
 }
+// cell/elements:1 ends here
 
+// coordinates
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*coordinates][coordinates:1]]
 // Selective dynamics -- optional, can be omitted
 // only the first character is relevant
 named!(selective_dynamics<&str, &str>, do_parse!(
-    s: tag_no_case!("S") >> read_until_eol >>
+    s: tag_no_case!("S") >> read_line >>
     (s)
 ));
 
 // Direct/Cartesian -- lattice coordinates type
 // only the first character is relevant
 named!(direct_or_catersian<&str, &str>, do_parse!(
-    d: sp!(alt!(tag_no_case!("D") | tag_no_case!("C"))) >> read_until_eol >>
+    d: alt!(tag_no_case!("D") | tag_no_case!("C")) >> read_line >>
     (d)
 ));
 
-// combine two above parsers
+// combine two parsers
 named!(poscar_select_direct<&str, (bool, bool)>, do_parse!(
     s: opt!(complete!(selective_dynamics)) >>
     d: direct_or_catersian >>
@@ -86,8 +77,7 @@ fn test_poscar_select_direct() {
     let lines = "Selective dynamics
 Direct\n";
 
-    let (_, (s, d)) = poscar_select_direct(lines)
-        .expect("poscar selective/direct");
+    let (_, (s, d)) = poscar_select_direct(lines).expect("poscar selective/direct");
     assert_eq!(true, s);
     assert_eq!(true, d);
 
@@ -102,10 +92,8 @@ Direct\n";
 /// Consume three chars in selective dynamics flag (T/F) separated by one or more spaces
 /// Return the frozen flag array
 named!(pub selective_dynamics_flags<&str, [bool; 3]>, do_parse!(
-    x: one_of!("TF") >>
-        space        >>
-    y: one_of!("TF") >>
-        space        >>
+    x: one_of!("TF") >> space >>
+    y: one_of!("TF") >> space >>
     z: one_of!("TF") >>
     (
         [x == 'T', y == 'T', z == 'T']
@@ -118,45 +106,48 @@ fn test_poscar_select_dynamics() {
     assert_eq!(x, [true, true, false]);
 }
 
-
 // 0.05185     0.39121     0.29921  T T T # O
 // 0.81339     0.57337     0.68777  T T T # O
-named!(poscar_position<&str, ([f64; 3], Option<[bool; 3]>, &str)>, do_parse!(
-    position: sp!(xyz_array)                      >>
-    frozen  : opt!(sp!(selective_dynamics_flags)) >>
-    remained: read_until_eol                      >>
-    ((position, frozen, remained))
-));
+named!(poscar_position<&str, ([f64; 3], Option<[bool; 3]>)>, sp!(do_parse!(
+    position: xyz_array                                   >>
+    //frozen  : opt!(complete!(selective_dynamics_flags)) >> read_line >>
+    frozen  : opt!(selective_dynamics_flags) >> read_line >>
+    ((position, frozen))
+)));
 
 #[test]
 fn test_poscar_position() {
-    let (_, (position, sflags, _)) = poscar_position("     0.05185     0.39121     0.29921  T T T # O \n")
-        .expect("POSCAR position style 1");
-    assert_relative_eq!(0.05185, position[0]);
-    assert_relative_eq!(0.39121, position[1]);
-    assert_relative_eq!(0.29921, position[2]);
+    let line = "     0.05185     0.39121     0.29921  T T T # O \n";
+    let (_, (position, sflags)) = poscar_position(line).expect("POSCAR position style 1");
+    assert_eq!(0.05185, position[0]);
+    assert_eq!(0.39121, position[1]);
+    assert_eq!(0.29921, position[2]);
     assert_eq!(Some([true, true, true]), sflags);
 
-    let (_, (position, sflags, _)) = poscar_position("     0.05185     0.39121     0.29921 \n")
-        .expect("POSCAR position style 1");
+    let line = "     0.05185     0.39121     0.29921\n";
+    let (_, (position, sflags)) = poscar_position(line).expect("POSCAR position style 1");
     assert_eq!(None, sflags);
 }
+// coordinates:1 ends here
 
-// TODO: read velocities
+// parse molecule
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*parse%20molecule][parse molecule:1]]
+/// Read Molecule from stream in VASP/POSCAR format
 named!(get_molecule_from<&str, Molecule>, do_parse!(
-    title            : sp!(read_until_eol)        >>
-    lattice_constant : poscar_lattice_constant    >>
-    cell_vectors     : poscar_cell_vectors        >>
-    ion_types        : poscar_ion_types           >>
-    select_direct    : poscar_select_direct       >>
-    ion_positions    : many1!(poscar_position)    >>
+    title            : sp!(read_line)          >>
+    lattice_constant : read_f64                >>
+    cell_vectors     : poscar_cell_vectors     >>
+    ion_types        : poscar_ion_types        >>
+    select_direct    : poscar_select_direct    >>
+    ion_positions    : many1!(poscar_position) >>
     (
         {
             let selective_dynamics = select_direct.0;
             let direct_coordinates = select_direct.1;
+
             let mut mol = Molecule::new(title);
-            let mut tvs = cell_vectors;
-            let mut lat = Lattice::new(tvs);
+            let mut lat = Lattice::new(cell_vectors);
             lat.scale_by(lattice_constant);
 
             let mut symbols = vec![];
@@ -169,10 +160,10 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
             }
 
             if symbols.len() != ion_positions.len() {
-                eprintln!("Inconsistency: some ions data not correctly parsed.");
+                eprintln!("WARNING: some ions data not correctly parsed!");
             }
 
-            for (&sym, (pos, sflags, _)) in symbols.iter().zip(ion_positions) {
+            for (&sym, (pos, sflags)) in symbols.iter().zip(ion_positions) {
                 let mut pos = pos;
                 if direct_coordinates {
                     pos = lat.to_cart(pos);
@@ -194,7 +185,8 @@ named!(get_molecule_from<&str, Molecule>, do_parse!(
 
 #[test]
 fn test_poscar_molecule() {
-    let lines = "title
+    let lines =
+"title
 1.0
  21.23300000  0.00000000  0.00000000
   0.00000000 26.60400000  0.00000000
@@ -223,52 +215,12 @@ Direct
     assert_eq!(14, mol.natoms());
     assert!(mol.lattice.is_some());
 }
+// parse molecule:1 ends here
 
-// Panic if symbols is empty
-fn count_symbols(symbols: Vec<&str>) -> Vec<(&str, usize)> {
-    use indexmap::IndexMap;
+// format molecule
 
-    let mut lines = String::new();
-
-    let mut syms1 = symbols.iter();
-    let mut syms2 = symbols.iter().skip(1);
-    let mut counts = vec![];
-
-    let mut c = 1;
-    let mut s = symbols[0];
-    for (&sym1, &sym2) in syms1.zip(syms2) {
-        if sym2 == sym1 {
-            c += 1;
-        } else {
-            counts.push((sym1, c));
-            c = 1;
-        }
-        s = sym2;
-    }
-    // append the last piece
-    counts.push((s, c));
-
-    counts
-}
-
-#[test]
-fn test_poscar_symbols_counts() {
-    let symbols = ["C", "C", "C", "H", "O", "O", "C"];
-    let x = count_symbols(symbols.to_vec());
-    assert_eq!([("C", 3), ("H", 1), ("O", 2), ("C", 1)].to_vec(), x);
-
-    let symbols = ["C", "C"];
-    let x = count_symbols(symbols.to_vec());
-    assert_eq!([("C", 2)].to_vec(), x);
-
-    let symbols = ["C", "H"];
-    let x = count_symbols(symbols.to_vec());
-    assert_eq!([("C", 1), ("H", 1)].to_vec(), x);
-
-    let symbols = ["C"];
-    let x = count_symbols(symbols.to_vec());
-    assert_eq!([("C", 1)].to_vec(), x);
-}
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*format%20molecule][format molecule:1]]
+const POSCAR_SFLAGS_KEY: &str = "vasp/poscar/sflags";
 
 fn format_molecule(mol: &Molecule) -> String {
     let mut lines = String::new();
@@ -327,10 +279,54 @@ fn format_molecule(mol: &Molecule) -> String {
     lines
 }
 
+// Panic if symbols is empty
+fn count_symbols(symbols: Vec<&str>) -> Vec<(&str, usize)> {
+    let mut lines = String::new();
+
+    let mut syms1 = symbols.iter();
+    let mut syms2 = symbols.iter().skip(1);
+    let mut counts = vec![];
+
+    let mut c = 1;
+    let mut s = symbols[0];
+    for (&sym1, &sym2) in syms1.zip(syms2) {
+        if sym2 == sym1 {
+            c += 1;
+        } else {
+            counts.push((sym1, c));
+            c = 1;
+        }
+        s = sym2;
+    }
+    // append the last piece
+    counts.push((s, c));
+
+    counts
+}
+
+#[test]
+fn test_poscar_symbols_counts() {
+    let symbols = ["C", "C", "C", "H", "O", "O", "C"];
+    let x = count_symbols(symbols.to_vec());
+    assert_eq!([("C", 3), ("H", 1), ("O", 2), ("C", 1)].to_vec(), x);
+
+    let symbols = ["C", "C"];
+    let x = count_symbols(symbols.to_vec());
+    assert_eq!([("C", 2)].to_vec(), x);
+
+    let symbols = ["C", "H"];
+    let x = count_symbols(symbols.to_vec());
+    assert_eq!([("C", 1), ("H", 1)].to_vec(), x);
+
+    let symbols = ["C"];
+    let x = count_symbols(symbols.to_vec());
+    assert_eq!([("C", 1)].to_vec(), x);
+}
+// format molecule:1 ends here
+
 // chemfile
 
-use crate::io;
-
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
 pub struct PoscarFile();
 
 impl ChemFileLike for PoscarFile {
@@ -354,7 +350,8 @@ impl ChemFileLike for PoscarFile {
 #[test]
 fn test_vasp_poscar_parse() {
     let poscar = PoscarFile();
-    let mols = poscar.parse("tests/files/vasp/POSCAR").unwrap();
+    let mols = poscar.parse(Path::new("tests/files/vasp/POSCAR")).unwrap();
     assert_eq!(1, mols.len());
     assert_eq!(365, mols[0].natoms());
 }
+// chemfile:1 ends here

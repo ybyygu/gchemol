@@ -1,4 +1,6 @@
-// [[file:~/Workspace/Programming/gchemol/io/io.note::a05dc011-24db-4b5c-8ae8-502d39007444][a05dc011-24db-4b5c-8ae8-502d39007444]]
+// car file
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*car%20file][car file:1]]
 use super::*;
 
 /// Accelrys/MSI Biosym/Insight II CAR format
@@ -52,14 +54,20 @@ fn test_formats_car() {
     let mols = io::read("tests/files/mol2/arginyl-ds.mol2").unwrap();
     io::write("/tmp/a.car", &mols).unwrap();
 }
-// a05dc011-24db-4b5c-8ae8-502d39007444 ends here
+// car file:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::78da2e68-530b-4b61-9fc8-6b0b08c2bc6e][78da2e68-530b-4b61-9fc8-6b0b08c2bc6e]]
+// chemfile
+// #+name: 78da2e68-530b-4b61-9fc8-6b0b08c2bc6e
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::78da2e68-530b-4b61-9fc8-6b0b08c2bc6e][78da2e68-530b-4b61-9fc8-6b0b08c2bc6e]]
 /// Accelrys/XSD input format
 pub struct XsdFile();
 // 78da2e68-530b-4b61-9fc8-6b0b08c2bc6e ends here
 
-// [[file:~/Workspace/Programming/gchemol/io/io.note::a2072561-bbcd-4fef-97f6-8fc67a23846a][a2072561-bbcd-4fef-97f6-8fc67a23846a]]
+// write
+// #+name: a2072561-bbcd-4fef-97f6-8fc67a23846a
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::a2072561-bbcd-4fef-97f6-8fc67a23846a][a2072561-bbcd-4fef-97f6-8fc67a23846a]]
 /// Accelrys XTL format
 /// -------------------
 /// The XTL file format provides a means of exchanging crystallographic

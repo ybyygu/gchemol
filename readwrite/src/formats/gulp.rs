@@ -1,4 +1,7 @@
-// [[file:~/Workspace/Programming/gchemol/io/io.note::b42aeb90-44d6-4404-b19c-2c33bc0e18ff][b42aeb90-44d6-4404-b19c-2c33bc0e18ff]]
+// chemfile
+// #+name: b42aeb90-44d6-4404-b19c-2c33bc0e18ff
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::b42aeb90-44d6-4404-b19c-2c33bc0e18ff][b42aeb90-44d6-4404-b19c-2c33bc0e18ff]]
 use indexmap;
 use super::*;
 

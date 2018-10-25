@@ -1,3 +1,6 @@
+// header
+// #+name: 580d4de7-5923-4885-87d5-20b24d8a703b
+
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::580d4de7-5923-4885-87d5-20b24d8a703b][580d4de7-5923-4885-87d5-20b24d8a703b]]
 // DFTBPlus GEN format
 //
@@ -7,7 +10,9 @@
 // http://www.dftbplus.org/fileadmin/DFTBPLUS/public/dftbplus/latest/manual.pdf
 // 580d4de7-5923-4885-87d5-20b24d8a703b ends here
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::00b6b7ea-25e9-4e42-ba0a-2af4a8b63013][00b6b7ea-25e9-4e42-ba0a-2af4a8b63013]]
+// atom/lattice
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*atom/lattice][atom/lattice:1]]
 use nom;
 use super::*;
 
@@ -102,7 +107,10 @@ fn test_dftb_lattice() {
     let (_, x) = get_lattice(lines).expect("dftb lattice");
     assert_relative_eq!(2.713546, x.vector_a()[0], epsilon=1e-3);
 }
-// 00b6b7ea-25e9-4e42-ba0a-2af4a8b63013 ends here
+// atom/lattice:1 ends here
+
+// molecule
+// #+name: cb010521-689c-4b07-9cba-4e2dbea7fac3
 
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::cb010521-689c-4b07-9cba-4e2dbea7fac3][cb010521-689c-4b07-9cba-4e2dbea7fac3]]
 use indexmap::IndexSet;
@@ -127,8 +135,7 @@ fn get_molecule(input: &str) -> IResult<&str, Molecule> {
         },
         _   => {
             error!("invalid geometry type");
-            // FIXME: nom error
-            return Err(nom::Err::Failure(error_position!(rest, nom::ErrorKind::Custom(29))));
+            return Err(nom_failure!(rest));
         }
     };
     // read element types
@@ -138,8 +145,7 @@ fn get_molecule(input: &str) -> IResult<&str, Molecule> {
         let (r, (kind, position)) = get_atom_type_and_position(rest)?;
         if kind > symbols.len() {
             error!("element type index out of range");
-            // FIXME: nom error
-            return Err(nom::Err::Failure(error_position!(rest, nom::ErrorKind::Custom(30))));
+            return Err(nom_failure!(rest));
         }
         let sym = symbols[kind - 1];
         let a = Atom::new(sym, position);
@@ -266,7 +272,9 @@ fn test_dftb_molecule() {
 }
 // cb010521-689c-4b07-9cba-4e2dbea7fac3 ends here
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::9f2c8e7a-461f-4f9c-aef2-636ac1f480a4][9f2c8e7a-461f-4f9c-aef2-636ac1f480a4]]
+// chemfile
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
 pub struct DftbInputFile();
 
 impl ChemFileLike for DftbInputFile {
@@ -286,4 +294,4 @@ impl ChemFileLike for DftbInputFile {
         format_molecule(mol)
     }
 }
-// 9f2c8e7a-461f-4f9c-aef2-636ac1f480a4 ends here
+// chemfile:1 ends here
