@@ -17,11 +17,7 @@
 
 extern crate serde;
 extern crate itertools;
-
 extern crate gchemol_core;
-
-#[macro_use]
-pub mod parser;
 
 pub mod io;
 pub mod formats;

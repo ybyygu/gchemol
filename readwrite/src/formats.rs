@@ -6,7 +6,7 @@ use std::fs::File;
 use std::collections::HashMap;
 
 use quicli::prelude::*;
-use crate::parser::*;
+use textparser::*;
 use nom::IResult;
 use gchemol_core::{Atom, Bond, Molecule, Lattice, BondKind};
 // use:1 ends here
