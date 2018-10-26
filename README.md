@@ -8,6 +8,7 @@ language.
 [![Build Status](https://travis-ci.org/ybyygu/gchemol.svg?branch=master)](https://travis-ci.org/ybyygu/gchemol)
 [![GPL3 licensed](https://img.shields.io/badge/license-GPL3-blue.svg)](./LICENSE)
 [![Tokei](https://tokei.rs/b1/github/ybyygu/gchemol)](https://github.com/ybyygu/gchemol)
+[![Coverage Status](https://coveralls.io/repos/github/ybyygu/gchemol/badge.svg?branch=master)](https://coveralls.io/github/ybyygu/gchemol?branch=master)
 
 
 # Features
