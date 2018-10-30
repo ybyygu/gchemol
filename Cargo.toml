@@ -3,7 +3,7 @@
 # [[file:~/Workspace/Programming/gchemol/gchemol.note::*cargo][cargo:1]]
 [package]
 name = "gchemol"
-version = "0.0.24"
+version = "0.0.25"
 edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
@@ -11,6 +11,8 @@ authors = ["Wenping Guo <ybyygu@gmail.com>"]
 members = ["geometry", "core", "readwrite"]
 
 [dependencies]
+nom = "4.1"
+quicli = "*"
 gchemol-geometry = {path = "geometry"}
 gchemol-core = {path = "core"}
 gchemol-readwrite = {path = "readwrite"}

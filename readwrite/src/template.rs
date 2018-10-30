@@ -1,6 +1,7 @@
 // traits
 
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*traits][traits:1]]
+/// Render molecule in user defined format
 pub trait TemplateRendering {
     /// Render molecule with user defined template
     fn render_with(&self, template: &str) -> Result<String>;

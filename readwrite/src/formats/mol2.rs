@@ -31,7 +31,7 @@ use super::*;
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*atoms][atoms:1]]
 /// Parse Tripos Atom section
 named!(read_atoms<&str, Vec<(usize, Atom)>>, preceded!(
-    ws!(tag!("@<TRIPOS>ATOM\n")),
+    ws!(tag!("@<TRIPOS>ATOM")),
     many1!(read_atom_record)
 ));
 
@@ -62,8 +62,7 @@ named!(read_atom_record<&str, (usize, Atom)>, sp!(do_parse!(
     z         : double                 >>
     emtype    : mm_type                >>     // Element and Atom type
     // substructure and partial charge, which could be omitted
-    optional  : opt!(atom_subst_and_charge) >>
-                tag!("\n")             >>
+    optional  : opt!(atom_subst_and_charge) >> eol >>
     (
         {
             let (e, mtype) = emtype;
@@ -453,6 +452,9 @@ impl ChemFileLike for Mol2File {
 fn test_formats_mol2() {
     let file = Mol2File();
 
+    let mols = file.parse(Path::new("tests/files/mol2/ch3f-dos.mol2")).expect("mol2 ch3f");
+    assert_eq!(1, mols.len());
+
     // when missing final blank line
     // gaussview generated .mol2 file
     let mols = file.parse(Path::new("tests/files/mol2/alanine-gv.mol2")).expect("gv generated mol2 file");
@@ -479,5 +481,6 @@ fn test_formats_mol2() {
     let mols = file.parse(Path::new("tests/files/mol2/LTL-crysin-ds.mol2")).expect("mol2 crysin");
     assert_eq!(1, mols.len());
     assert!(mols[0].lattice.is_some());
+
 }
 // test:1 ends here
