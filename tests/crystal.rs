@@ -1,9 +1,7 @@
 // build lattice
+// #+name: 8699ac14-e806-4d5b-bf5c-42e8d4624405
 
-extern crate gchemol;
-#[macro_use] extern crate approx;
-
-use gchemol::Lattice;
+use approx::*;
 
 #[test]
 fn test_crystal() {
@@ -13,7 +11,7 @@ fn test_crystal() {
     };
 
     // build lattice from lattice parameters
-    let lattice = Lattice::from_params
+    let _ = Lattice::from_params
         (
             3.84,                   // a
             3.84,                   // b
@@ -41,6 +39,7 @@ fn test_crystal() {
 }
 
 // distance using mic
+// #+name: 762e62bc-0b41-452b-a5de-739f4fca63ff
 
 #[test]
 fn test_molecule_pbc_distance() {
@@ -52,22 +51,18 @@ fn test_molecule_pbc_distance() {
 
     use gchemol::io;
 
-    let mut mols = io::read("tests/files/cif/MS-MOR.cif")
-        .expect("cif test file");
-    let mut mol = &mut mols[0];
-    let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12))
-        .expect("distance between 0 and 12");
+    let mut mols = io::read("tests/files/cif/MS-MOR.cif").expect("cif test file");
+    let mol = &mut mols[0];
+    let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12)).expect("distance between 0 and 12");
     assert_relative_eq!(12.6753, d, epsilon=1e-4);
 
     // remove periodic bound
     mol.unbuild_crystal();
-    let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12))
-        .expect("distance between 0 and 12");
+    let d = mol.distance(AtomIndex::new(0), AtomIndex::new(12)).expect("distance between 0 and 12");
     assert_relative_eq!(16.203993, d, epsilon=1e-4);
 
     // distance matrix
-    let mut mol = Molecule::from_file("tests/files/cif/quinone.cif")
-        .expect("mol2 test file");
+    let mol = Molecule::from_file("tests/files/cif/quinone.cif").expect("mol2 test file");
 
     let dm = mol.distance_matrix();
     let expected = [0.        , 1.46623609, 1.46701952, 1.21833857, 4.73857325,
