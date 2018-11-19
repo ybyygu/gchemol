@@ -27,11 +27,14 @@ mod random;
 mod alignment;
 mod interpolate;
 
+/// Re-exports important traits and types.
 pub mod prelude {
     pub use super::base::*;
     pub use super::transform::*;
-    pub use super::random::*;
     pub use super::alignment::*;
     pub use super::interpolate::*;
 }
+
+/// Re-exports important functions
+pub use self::random::*;
 // lib.rs:1 ends here
