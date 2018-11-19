@@ -11,8 +11,6 @@ authors = ["Wenping Guo <ybyygu@gmail.com>"]
 members = ["geometry", "core", "readwrite"]
 
 [dependencies]
-nom = "4.1"
-quicli = "*"
 gchemol-geometry = {path = "geometry"}
 gchemol-core = {path = "core"}
 gchemol-readwrite = {path = "readwrite"}
