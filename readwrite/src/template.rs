@@ -249,7 +249,8 @@ pub fn render_molecule_with(mol: &Molecule, template: &str) -> Result<String> {
     let data = molecule_to_template_data(mol);
     let mut h = Handlebars::new();
     h.register_helper("format", Box::new(format));
-    h.render_template(template, &data).map_err(|e| format_err!("failed to render: {:?}", e))
+    // h.render_template(template, &data).map_err(|e| format_err!("failed to render: {:?}", e))
+    h.render_template(template, &data).map_err(failure::err_msg)
 }
 
 #[test]
