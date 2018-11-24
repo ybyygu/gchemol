@@ -1,9 +1,6 @@
-// tests
-// :PROPERTIES:
-// :header-args: :tangle tests/geometry.rs
-// :END:
+// basic stats
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*tests][tests:1]]
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::*basic%20stats][basic stats:1]]
 #![feature(test)]
 #[macro_use]
 extern crate approx;
@@ -20,7 +17,11 @@ fn test_stats() {
     assert_eq!(-1.0, p.min());
     assert_relative_eq!(1.7333, p.mean(), epsilon=1e-4);
 }
+// basic stats:1 ends here
 
+// 3D points
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::*3D%20points][3D points:1]]
 #[test]
 fn test_point3() {
     // methods for points in 3D space
@@ -29,7 +30,11 @@ fn test_point3() {
 
     assert_relative_eq!(1.1554, p1.distance(p2), epsilon=1e-4);
 }
+// 3D points:1 ends here
 
+// 3D positions in cartesian coordinates
+
+// [[file:~/Workspace/Programming/gchemol/gchemol.note::*3D%20positions%20in%20cartesian%20coordinates][3D positions in cartesian coordinates:1]]
 #[test]
 fn test_positions() {
     // construct array
@@ -75,4 +80,4 @@ fn test_positions() {
     positions_flat[3] = 0.0;
     assert_eq!(0.0, positions_flat[3]);
 }
-// tests:1 ends here
+// 3D positions in cartesian coordinates:1 ends here
