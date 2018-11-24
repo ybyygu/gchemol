@@ -12,9 +12,6 @@ extern crate test;
 #[macro_use] extern crate approx;
 #[macro_use] extern crate quicli;
 
-extern crate nalgebra;
-extern crate rand;
-
 #[cfg(test)]
 extern crate gchemol;
 
