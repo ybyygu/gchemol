@@ -1,7 +1,6 @@
 // io.rs
 // :PROPERTIES:
-// :header-args: :tangle tests/io.rs :comments org
-// :ID:       75afbab7-abee-46f6-ae31-1232b81842ce
+// :header-args: :comments org :tangle tests/io.rs
 // :END:
 // demonstrate how to read/write molecules
 

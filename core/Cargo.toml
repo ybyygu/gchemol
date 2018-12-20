@@ -15,7 +15,7 @@ serde = "*"
 serde_json = "*"
 serde_derive = "*"
 itertools = "*"
-quicli = "*"
+quicli = "0.3"
 gchemol-geometry = {path = "../geometry"}
 
 [dev-dependencies]

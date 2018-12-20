@@ -2,9 +2,8 @@
 // :PROPERTIES:
 // :header-args: :tangle src/lib.rs
 // :END:
-// #+name: 42fb78a1-aae3-40aa-8ae0-aa68b10f3f7e
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::42fb78a1-aae3-40aa-8ae0-aa68b10f3f7e][42fb78a1-aae3-40aa-8ae0-aa68b10f3f7e]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*lib.rs][lib.rs:1]]
 extern crate petgraph;
 #[macro_use] extern crate indexmap;
 extern crate nalgebra;
@@ -12,9 +11,8 @@ extern crate serde;
 #[macro_use] extern crate serde_json;
 #[macro_use] extern crate serde_derive;
 extern crate itertools;
-#[macro_use] extern crate quicli;
 
-// for test-only uses
+// for tests
 #[cfg(test)]
 #[macro_use] extern crate approx;
 
@@ -42,4 +40,4 @@ pub use crate::molecule::{
 pub use crate::lattice::{
     Lattice,
 };
-// 42fb78a1-aae3-40aa-8ae0-aa68b10f3f7e ends here
+// lib.rs:1 ends here

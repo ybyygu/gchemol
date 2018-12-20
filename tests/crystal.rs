@@ -1,5 +1,4 @@
 // build lattice
-// #+name: 8699ac14-e806-4d5b-bf5c-42e8d4624405
 
 use approx::*;
 
@@ -39,7 +38,6 @@ fn test_crystal() {
 }
 
 // distance using mic
-// #+name: 762e62bc-0b41-452b-a5de-739f4fca63ff
 
 #[test]
 fn test_molecule_pbc_distance() {
