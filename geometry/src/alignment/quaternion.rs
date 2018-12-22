@@ -5,7 +5,7 @@
 // - P. Liu, D. K. Agrafiotis, D. L. Theobald, J. Comput. Chem., 2010, DOI:10.1002/jcc.21439.
 
 
-use super::super::base::*;
+use crate::base::*;
 use nalgebra as na;
 
 pub fn calc_rmsd_rotational_matrix(

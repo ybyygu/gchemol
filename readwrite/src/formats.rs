@@ -5,7 +5,7 @@ use std::path::Path;
 use std::fs::File;
 use std::collections::HashMap;
 
-use quicli::prelude::*;
+use crate::core_utils::*;
 use textparser::*;
 use nom::IResult;
 use gchemol_core::{Atom, Bond, Molecule, Lattice, BondKind};

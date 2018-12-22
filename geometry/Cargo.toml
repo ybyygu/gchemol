@@ -9,7 +9,7 @@ authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
 nalgebra = "0.16"
-quicli = "0.3"
+quicli = "0.4"
 rand = "=0.5"
 
 [dev-dependencies]

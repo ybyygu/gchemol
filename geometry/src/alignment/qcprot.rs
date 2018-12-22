@@ -1,3 +1,5 @@
+// header
+
 // [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*header][header:1]]
 // Author of Rust Port:
 //                 Wenping Guo
@@ -91,8 +93,11 @@
 //                    sum of weights (thanks to Geoff Skillman)
 // header:1 ends here
 
+// core
+
 // [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*core][core:1]]
-use quicli::prelude::*;
+use crate::core_utils::*;
+use crate::base::*;
 
 /// Calculate the inner product of two structures.
 ///
@@ -487,6 +492,8 @@ pub fn calc_rmsd_rotational_matrix(
     )
 }
 // core:1 ends here
+
+// test
 
 // [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*test][test:1]]
 /// test data provided in main.c

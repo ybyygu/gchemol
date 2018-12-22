@@ -10,7 +10,6 @@ extern crate test;
 // for test-only uses
 #[cfg(test)]
 #[macro_use] extern crate approx;
-#[macro_use] extern crate quicli;
 
 #[cfg(test)]
 extern crate gchemol;
@@ -34,4 +33,9 @@ pub mod prelude {
 
 /// Re-exports important functions
 pub use self::random::*;
+
+mod core_utils {
+    pub use quicli::prelude::*;
+    pub type Result<T> = ::std::result::Result<T, Error>;
+}
 // lib.rs:1 ends here

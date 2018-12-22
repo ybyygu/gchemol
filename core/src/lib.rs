@@ -40,4 +40,9 @@ pub use crate::molecule::{
 pub use crate::lattice::{
     Lattice,
 };
+
+mod core_utils {
+    pub use quicli::prelude::*;
+    pub type Result<T> = ::std::result::Result<T, Error>;
+}
 // lib.rs:1 ends here

@@ -1,6 +1,11 @@
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::8a489c41-809c-46c9-8a23-5d926db1c5ca][8a489c41-809c-46c9-8a23-5d926db1c5ca]]
+// interpolate.rs
+// :PROPERTIES:
+// :header-args: :tangle src/interpolate.rs
+// :END:
+
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*interpolate.rs][interpolate.rs:1]]
+use crate::core_utils::*;
 use super::base::*;
-use quicli::prelude::*;
 
 // direct linear interpolation
 // # Parameters
@@ -53,4 +58,4 @@ fn test_interpolate() {
     let x = linear_interpolate_positions(&ipositions, &fpositions, 3).unwrap();
     assert_eq!(3, x.len());
 }
-// 8a489c41-809c-46c9-8a23-5d926db1c5ca ends here
+// interpolate.rs:1 ends here

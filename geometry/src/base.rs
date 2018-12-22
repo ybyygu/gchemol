@@ -1,7 +1,7 @@
 // types
 
 // [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*types][types:1]]
-use quicli::prelude::*;
+use crate::core_utils::*;
 
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
 pub use crate::test::stats::Stats;
@@ -14,7 +14,8 @@ pub type Matrix4f = na::Matrix4<f64>;
 pub type DMatrixf = na::DMatrix<f64>;
 
 /// 3xN matrix storing a list of 3D vectors
-pub type Vector3fVec = na::Matrix<f64, na::U3, na::Dynamic, na::MatrixVec<f64, na::U3, na::Dynamic>>;
+pub type Vector3fVec =
+    na::Matrix<f64, na::U3, na::Dynamic, na::MatrixVec<f64, na::U3, na::Dynamic>>;
 
 /// Cartesian 3D coordinates
 pub type Position = Vector3f;
@@ -42,6 +43,7 @@ impl VecFloatMath for [f64] {
         FloatVec::from_column_slice(self.len(), &self)
     }
 
+    #[inline]
     fn norm(&self) -> f64 {
         let mut s = 0.0;
         for &x in self {
@@ -122,24 +124,13 @@ pub trait VecFloat3Math {
 impl VecFloat3Math for [[f64; 3]] {
     /// View as a flat slice
     fn as_flat(&self) -> &[f64] {
-        unsafe {
-            ::std::slice::from_raw_parts(
-                self.as_ptr() as *const _,
-                self.len() * 3,
-            )
-        }
+        unsafe { ::std::slice::from_raw_parts(self.as_ptr() as *const _, self.len() * 3) }
     }
 
     /// View of mut flat slice
     fn as_mut_flat(&mut self) -> &mut [f64] {
-        unsafe {
-            ::std::slice::from_raw_parts_mut(
-                self.as_mut_ptr() as *mut _,
-                self.len() * 3,
-            )
-        }
+        unsafe { ::std::slice::from_raw_parts_mut(self.as_mut_ptr() as *mut _, self.len() * 3) }
     }
-
 
     fn norm(&self) -> f64 {
         let mut d2: f64 = 0.0;
@@ -183,7 +174,7 @@ impl VecFloat3Math for [[f64; 3]] {
 
     fn center_of_geometry(&self) -> Position {
         let n = self.len();
-        let weights: Vec<_> = (0..n).map(|_ |1.0).collect();
+        let weights: Vec<_> = (0..n).map(|_| 1.0).collect();
         weighted_center_of_geometry(&self, &weights).expect("center of geometry")
     }
 
@@ -204,7 +195,7 @@ impl VecFloat3Math for [[f64; 3]] {
 
         let mut distances = DMatrixf::zeros(n, n);
         for i in 0..n {
-            for j in 0..i{
+            for j in 0..i {
                 let d = euclidean_distance(self[i], self[j]);
                 distances[(i, j)] = d;
                 distances[(j, i)] = d;
@@ -219,25 +210,27 @@ impl VecFloat3Math for [[f64; 3]] {
 fn test_vec_math() {
     let a = vec![1.0, 2.0, 3.0];
     let x = a.to_dvector();
-    assert_relative_eq!(x.norm(), a.norm(), epsilon=1e-3);
+    assert_relative_eq!(x.norm(), a.norm(), epsilon = 1e-3);
 
-    let positions = [[-0.131944, -0.282942,  0.315957],
-                     [ 0.40122 , -1.210646,  0.315957],
-                     [-1.201944, -0.282942,  0.315957],
-                     [ 0.543331,  0.892036,  0.315957],
-                     [ 0.010167,  1.819741,  0.315957],
-                     [ 1.613331,  0.892036,  0.315957]];
+    let positions = [
+        [-0.131944, -0.282942, 0.315957],
+        [0.40122, -1.210646, 0.315957],
+        [-1.201944, -0.282942, 0.315957],
+        [0.543331, 0.892036, 0.315957],
+        [0.010167, 1.819741, 0.315957],
+        [1.613331, 0.892036, 0.315957],
+    ];
 
     let n = positions.norm();
     let m = positions.to_dmatrix();
-    assert_relative_eq!(n, m.norm(), epsilon=1e-4);
+    assert_relative_eq!(n, m.norm(), epsilon = 1e-4);
     let n = positions.to_vec().norm();
 
     let x = positions.ravel();
     assert_eq!(positions.len() * 3, x.len());
 
     let x = positions.norms().max();
-    assert_relative_eq!(1.8704, x, epsilon=1e-4);
+    assert_relative_eq!(1.8704, x, epsilon = 1e-4);
 
     let flat = positions.as_flat();
     assert_eq!(18, flat.len());
@@ -257,9 +250,9 @@ fn test_point3_math() {
 }
 // general:1 ends here
 
-// 3D positions
+// positions
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*3D%20positions][3D positions:1]]
+// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*positions][positions:1]]
 /// Treat a flat slice as 3D positions
 ///
 /// # Panics
@@ -267,6 +260,7 @@ fn test_point3_math() {
 pub trait AsPositions {
     /// View `&[f64]` as `&[[f64; 3]]` without copying.
     fn as_positions(&self) -> &[[f64; 3]];
+
     /// View `&mut [f64]` as `&mut [[f64; 3]]` without copying.
     fn as_mut_positions(&mut self) -> &mut [[f64; 3]];
 }
@@ -336,7 +330,7 @@ fn test_as_positions() {
     mp[0][0] = 1.1;
     assert_eq!(1.1, m[(0, 0)]);
 }
-// 3D positions:1 ends here
+// positions:1 ends here
 
 // functions
 

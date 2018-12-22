@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-10-25 Thu 16:01>
+//       UPDATED:  <2018-12-22 Sat 13:31>
 //===============================================================================#
 // header:1 ends here
 
@@ -20,11 +20,11 @@
 use std::path::Path;
 
 use quicli;
-use quicli::prelude::*;
+use crate::core_utils::*;
 
 pub mod prelude {
-    use gchemol_core::Molecule;
     use super::*;
+    use gchemol_core::Molecule;
 
     pub trait FromFile: Sized {
         /// Return content of text file in string
@@ -71,10 +71,7 @@ impl ToFile for str {
 // molecule
 
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
-use gchemol_core:: {
-    Atom,
-    Molecule,
-};
+use gchemol_core::{Atom, Molecule};
 
 // import important traits
 use crate::io::prelude::*;
@@ -85,7 +82,8 @@ impl FromFile for Molecule {
         let path = path.as_ref();
         let cf = guess_chemfile_from_filename(path)?;
         let mut mols = cf.parse(path)?;
-        mols.pop().ok_or(format_err!("No molecule: {:?}", path.display()))
+        mols.pop()
+            .ok_or(format_err!("No molecule: {:?}", path.display()))
     }
 }
 

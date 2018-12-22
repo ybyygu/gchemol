@@ -11,20 +11,19 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-10-22 Mon 17:47>
+//       UPDATED:  <2018-12-22 Sat 13:26>
 //===============================================================================#
 // 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
 
 // base
-// #+name: 2a53090d-59f2-4b7e-a485-e6796c2a904d
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::2a53090d-59f2-4b7e-a485-e6796c2a904d][2a53090d-59f2-4b7e-a485-e6796c2a904d]]
+// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
 use std::collections::HashMap;
 use std::convert;
 
 use petgraph;
 use petgraph::prelude::*;
-use quicli::prelude::*;
+use crate::core_utils::*;
 
 mod property;
 use self::property::PropertyStore;
@@ -43,7 +42,7 @@ mod test;
 
 pub type Point3D = [f64; 3];
 pub type Points = Vec<Point3D>;
-// 2a53090d-59f2-4b7e-a485-e6796c2a904d ends here
+// base:1 ends here
 
 // globals
 

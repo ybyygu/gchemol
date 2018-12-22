@@ -10,7 +10,7 @@ authors = ["Wenping Guo <ybyygu@gmail.com>"]
 [dependencies]
 nom = ">=4.1.0"
 handlebars = ">=1.0.0"
-quicli = "0.3"
+quicli = "0.4"
 indexmap = "1.0"
 itertools = "0.7"
 gchemol-core = {path = "../core"}

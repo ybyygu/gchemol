@@ -24,7 +24,8 @@ use indexmap::IndexMap;
 use std::fs::File;
 use handlebars;
 
-use quicli::prelude::*;
+use crate::core_utils::*;
+
 use gchemol_core::Molecule;
 use crate::io;
 

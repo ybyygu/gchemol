@@ -23,6 +23,11 @@ pub mod io;
 pub mod formats;
 pub mod template;
 
+mod core_utils {
+    pub use quicli::prelude::*;
+    pub type Result<T> = ::std::result::Result<T, Error>;
+}
+
 pub mod prelude {
     pub use crate::io::prelude::*;
     pub use crate::template::*;

@@ -9,7 +9,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-09-22 Sat 15:09>
+//       UPDATED:  <2018-12-22 Sat 13:28>
 //===============================================================================#
 
 use crate::molecule::{
@@ -21,7 +21,7 @@ use crate::molecule::{
 };
 
 use crate::geometry::prelude::euclidean_distance;
-use quicli::prelude::*;
+use crate::core_utils::*;
 
 // element radii data
 // Element radii data taking from: https://mendeleev.readthedocs.io/en/stable/data.html
