@@ -17,64 +17,64 @@ impl TemplateRendering for Molecule {
 // handlebars
 
 // [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*handlebars][handlebars:1]]
-use serde_json;
-use serde_derive;
 use indexmap::IndexMap;
+use serde_derive;
+use serde_json;
 
-use std::fs::File;
 use handlebars;
+use std::fs::File;
 
 use crate::core_utils::*;
 
-use gchemol_core::Molecule;
 use crate::io;
+use gchemol_core::Molecule;
 
 use handlebars::{
-    to_json,
-    Handlebars,
-    Helper,
-    HelperResult,
-    Context,
-    Output,
-    RenderContext,
-    RenderError
+    to_json, Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError,
 };
 
 // https://docs.rs/handlebars/1.0.0/handlebars/trait.HelperDef.html
 // define a helper for formatting string or number
-fn format(h: &Helper, _: &Handlebars, _: &Context, rc: &mut RenderContext, out: &mut Output) -> HelperResult {
+fn format(
+    h: &Helper,
+    _: &Handlebars,
+    _: &Context,
+    rc: &mut RenderContext,
+    out: &mut Output,
+) -> HelperResult {
     // get positional parameter from helper or throw an error
-    let param = h.param(0).ok_or(RenderError::new("Param 0 is required for format helper."))?;
+    let param = h
+        .param(0)
+        .ok_or(RenderError::new("Param 0 is required for format helper."))?;
 
     // get keyword parameters
-    let width =  h.hash_get("width")
-        .and_then(|v| v.value().as_u64());
-    let prec =  h.hash_get("prec")
-        .and_then(|v| v.value().as_u64());
-    let align =  h.hash_get("align")
-        .and_then(|v| v.value().as_str());
+    let width = h.hash_get("width").and_then(|v| v.value().as_u64());
+    let prec = h.hash_get("prec").and_then(|v| v.value().as_u64());
+    let align = h.hash_get("align").and_then(|v| v.value().as_str());
 
     // format string
     if param.value().is_string() {
-        let v = param.value()
+        let v = param
+            .value()
             .as_str()
             .ok_or(RenderError::new("param 0: not str"))?;
         let width = width.unwrap_or(0) as usize;
         let rendered = if let Some(align) = align {
             match align {
-                "center" => format!("{:^width$}", v, width=width),
-                "right"  => format!("{:<width$}", v, width=width),
-                "left"   => format!("{:>width$}", v, width=width),
-                _        => format!("{:width$}", v, width=width),
+                "center" => format!("{:^width$}", v, width = width),
+                "right" => format!("{:<width$}", v, width = width),
+                "left" => format!("{:>width$}", v, width = width),
+                _ => format!("{:width$}", v, width = width),
             }
         } else {
-            format!("{:width$}", v, width=width)
+            format!("{:width$}", v, width = width)
         };
         out.write(rendered.as_ref())?;
 
     // format number
     } else if param.value().is_number() || param.value().is_f64() {
-        let num: f64 = param.value()
+        let num: f64 = param
+            .value()
             .as_f64()
             .ok_or(RenderError::new("param 0: not f64 number"))?;
 
@@ -82,17 +82,19 @@ fn format(h: &Helper, _: &Handlebars, _: &Context, rc: &mut RenderContext, out: 
         let prec = prec.unwrap_or(8) as usize;
         let rendered = if let Some(align) = align {
             match align {
-                "center" => format!("{:^width$.prec$}", num, width=width, prec=prec),
-                "right"  => format!("{:<width$.prec$}", num, width=width, prec=prec),
-                "left"   => format!("{:>width$.prec$}", num, width=width, prec=prec),
-                _        => format!("{:width$.prec$}",  num, width=width, prec=prec),
+                "center" => format!("{:^width$.prec$}", num, width = width, prec = prec),
+                "right" => format!("{:<width$.prec$}", num, width = width, prec = prec),
+                "left" => format!("{:>width$.prec$}", num, width = width, prec = prec),
+                _ => format!("{:width$.prec$}", num, width = width, prec = prec),
             }
         } else {
-            format!("{:-width$.prec$}", num, width=width, prec=prec)
+            format!("{:-width$.prec$}", num, width = width, prec = prec)
         };
         out.write(rendered.as_ref())?;
     } else {
-        return Err(RenderError::new("Possible type for param 0: string or number"));
+        return Err(RenderError::new(
+            "Possible type for param 0: string or number",
+        ));
     }
 
     Ok(())
@@ -110,6 +112,9 @@ struct AtomData {
     fx: f64,
     fy: f64,
     fz: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
 }
 
 impl Default for AtomData {
@@ -125,6 +130,9 @@ impl Default for AtomData {
             fx: 0.0,
             fy: 0.0,
             fz: 0.0,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
         }
     }
 }
@@ -133,7 +141,7 @@ impl Default for AtomData {
 struct BondData {
     i: usize,
     j: usize,
-    order: f64
+    order: f64,
 }
 
 #[derive(Debug, Serialize)]
@@ -181,7 +189,7 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
             gamma,
             va,
             vb,
-            vc
+            vc,
         };
 
         Some(cell)
@@ -205,16 +213,19 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
         let index = i;
         let number = a.number();
         let symbol = a.symbol().to_string();
-        let [fx, fy, fz] = mol.lattice
+        let [fx, fy, fz] = mol
+            .lattice
             .map(|mut lat| lat.to_frac([x, y, z]))
             .unwrap_or([0.0; 3]);
         let element_index = {
-            let (x, _, _) = element_types.get_full(a.symbol())
+            let (x, _, _) = element_types
+                .get_full(a.symbol())
                 .expect("element type index");
             x + 1
         };
 
-        atoms.push(AtomData{
+        let [vx, vy, vz] = a.momentum();
+        atoms.push(AtomData {
             index,
             element_index,
             symbol,
@@ -224,7 +235,10 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
             z,
             fx,
             fy,
-            fz
+            fz,
+            vx,
+            vy,
+            vz,
         })
     }
 

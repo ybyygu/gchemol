@@ -96,8 +96,8 @@
 // core
 
 // [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*core][core:1]]
-use crate::core_utils::*;
 use crate::base::*;
+use crate::core_utils::*;
 
 /// Calculate the inner product of two structures.
 ///
@@ -118,15 +118,13 @@ use crate::base::*;
 /// ------
 /// (arr_a, e0): inner product array and e0 (inputs for fast_calc_rmsd_and_rotation)
 ///
-fn inner_product
-    (
-        coords1: &[[f64; 3]],
-        center1: &[f64; 3],
-        coords2: &[[f64; 3]],
-        center2: &[f64; 3],
-        weights: Option<&[f64]>,
-    ) -> ([f64; 9], f64)
-{
+fn inner_product(
+    coords1: &[[f64; 3]],
+    center1: &[f64; 3],
+    coords2: &[[f64; 3]],
+    center2: &[f64; 3],
+    weights: Option<&[f64]>,
+) -> ([f64; 9], f64) {
     let natoms = coords1.len();
     debug_assert!(natoms == coords2.len());
 
@@ -168,10 +166,7 @@ fn inner_product
         mat_a[8] += z1 * z2;
     }
 
-    (
-        mat_a,
-        (g1 + g2) * 0.5
-    )
+    (mat_a, (g1 + g2) * 0.5)
 }
 
 // Calculate the RMSD, and/or the optimal rotation matrix.
@@ -188,37 +183,15 @@ fn inner_product
 //        Return:
 //                only the rmsd was calculated if < 0
 //                both the RMSD & rotational matrix calculated if > 0
-fn fast_calc_rmsd_and_rotation
-    (
-        mat_a: &[f64; 9],
-        e0: f64,
-        wsum: f64,
-        min_score: f64
-    ) -> (f64, Option<[f64; 9]>)
-{
-    let [
-        sxx,
-        sxy,
-        sxz,
-        syx,
-        syy,
-        syz,
-        szx,
-        szy,
-        szz
-    ] = mat_a;
+fn fast_calc_rmsd_and_rotation(
+    mat_a: &[f64; 9],
+    e0: f64,
+    wsum: f64,
+    min_score: f64,
+) -> (f64, Option<[f64; 9]>) {
+    let [sxx, sxy, sxz, syx, syy, syz, szx, szy, szz] = mat_a;
 
-    let [
-        sxx2,
-        sxy2,
-        sxz2,
-        syx2,
-        syy2,
-        syz2,
-        szx2,
-        szy2,
-        szz2
-    ] = [
+    let [sxx2, sxy2, sxz2, syx2, syy2, syz2, szx2, szy2, szz2] = [
         sxx.powi(2),
         sxy.powi(2),
         sxz.powi(2),
@@ -227,15 +200,18 @@ fn fast_calc_rmsd_and_rotation
         syz.powi(2),
         szx.powi(2),
         szy.powi(2),
-        szz.powi(2)
+        szz.powi(2),
     ];
 
-    let syzszymsyyszz2 = 2.0 * (syz*szy - syy*szz);
+    let syzszymsyyszz2 = 2.0 * (syz * szy - syy * szz);
     let sxx2syy2szz2syz2szy2 = syy2 + szz2 - sxx2 + syz2 + szy2;
 
     let mut arr_c = [0.0; 4];
     arr_c[2] = -2.0 * (sxx2 + syy2 + szz2 + sxy2 + syx2 + sxz2 + szx2 + syz2 + szy2);
-    arr_c[1] = 8.0 * (sxx*syz*szy + syy*szx*sxz + szz*sxy*syx - sxx*syy*szz - syz*szx*sxy - szy*syx*sxz);
+    arr_c[1] = 8.0 * (sxx * syz * szy + syy * szx * sxz + szz * sxy * syx
+        - sxx * syy * szz
+        - syz * szx * sxy
+        - szy * syx * sxz);
 
     let sxzpszx = sxz + szx;
     let syzpszy = syz + szy;
@@ -249,10 +225,14 @@ fn fast_calc_rmsd_and_rotation
 
     arr_c[0] = sxy2sxz2syx2szx2 * sxy2sxz2syx2szx2
         + (sxx2syy2szz2syz2szy2 + syzszymsyyszz2) * (sxx2syy2szz2syz2szy2 - syzszymsyyszz2)
-        + (-(sxzpszx)*(syzmszy)+(sxymsyx)*(sxxmsyy-szz)) * (-(sxzmszx)*(syzpszy)+(sxymsyx)*(sxxmsyy+szz))
-        + (-(sxzpszx)*(syzpszy)-(sxypsyx)*(sxxpsyy-szz)) * (-(sxzmszx)*(syzmszy)-(sxypsyx)*(sxxpsyy+szz))
-        + ((sxypsyx)*(syzpszy)+(sxzpszx)*(sxxmsyy+szz)) * (-(sxymsyx)*(syzmszy)+(sxzpszx)*(sxxpsyy+szz))
-        + ((sxypsyx)*(syzmszy)+(sxzmszx)*(sxxmsyy-szz)) * (-(sxymsyx)*(syzpszy)+(sxzmszx)*(sxxpsyy-szz));
+        + (-(sxzpszx) * (syzmszy) + (sxymsyx) * (sxxmsyy - szz))
+            * (-(sxzmszx) * (syzpszy) + (sxymsyx) * (sxxmsyy + szz))
+        + (-(sxzpszx) * (syzpszy) - (sxypsyx) * (sxxpsyy - szz))
+            * (-(sxzmszx) * (syzmszy) - (sxypsyx) * (sxxpsyy + szz))
+        + ((sxypsyx) * (syzpszy) + (sxzpszx) * (sxxmsyy + szz))
+            * (-(sxymsyx) * (syzmszy) + (sxzpszx) * (sxxpsyy + szz))
+        + ((sxypsyx) * (syzmszy) + (sxzmszx) * (sxxmsyy - szz))
+            * (-(sxymsyx) * (syzpszy) + (sxzmszx) * (sxxpsyy - szz));
 
     // Newton-Raphson
     let mut mx_eigenv = e0;
@@ -262,12 +242,12 @@ fn fast_calc_rmsd_and_rotation
     let evalprec: f64 = 1e-11;
     loop {
         let oldg = mx_eigenv;
-        let x2 = mx_eigenv*mx_eigenv;
-        let b = (x2 + arr_c[2])*mx_eigenv;
+        let x2 = mx_eigenv * mx_eigenv;
+        let b = (x2 + arr_c[2]) * mx_eigenv;
         let a = b + arr_c[1];
-        let delta = (a*mx_eigenv + arr_c[0])/(2.0*x2*mx_eigenv + b + a);
+        let delta = (a * mx_eigenv + arr_c[0]) / (2.0 * x2 * mx_eigenv + b + a);
         mx_eigenv -= delta;
-        if (mx_eigenv - oldg).abs() < (evalprec*mx_eigenv).abs() {
+        if (mx_eigenv - oldg).abs() < (evalprec * mx_eigenv).abs() {
             break;
         }
 
@@ -293,7 +273,7 @@ fn fast_calc_rmsd_and_rotation
 
     let a11 = sxxpsyy + szz - mx_eigenv;
     let a12 = syzmszy;
-    let a13 = - sxzmszx;
+    let a13 = -sxzmszx;
     let a14 = sxymsyx;
     let a21 = syzmszy;
     let a22 = sxxmsyy - szz - mx_eigenv;
@@ -313,9 +293,9 @@ fn fast_calc_rmsd_and_rotation
     let a3143_4133 = a31 * a43 - a41 * a33;
     let a3144_4134 = a31 * a44 - a41 * a34;
     let a3142_4132 = a31 * a42 - a41 * a32;
-    let mut q1 =  a22 * a3344_4334 - a23 * a3244_4234 + a24 * a3243_4233;
+    let mut q1 = a22 * a3344_4334 - a23 * a3244_4234 + a24 * a3243_4233;
     let mut q2 = -a21 * a3344_4334 + a23 * a3144_4134 - a24 * a3143_4133;
-    let mut q3 =  a21 * a3244_4234 - a22 * a3144_4134 + a24 * a3142_4132;
+    let mut q3 = a21 * a3244_4234 - a22 * a3144_4134 + a24 * a3142_4132;
     let mut q4 = -a21 * a3243_4233 + a22 * a3143_4133 - a23 * a3142_4132;
 
     let mut qsqr = q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4;
@@ -327,11 +307,11 @@ fn fast_calc_rmsd_and_rotation
     // uncommented, but it is most likely unnecessary.
     if qsqr < evecprec {
         info!("rare case: the norm of column vector is too small!");
-        q1 =  a12*a3344_4334 - a13*a3244_4234 + a14*a3243_4233;
-        q2 = -a11*a3344_4334 + a13*a3144_4134 - a14*a3143_4133;
-        q3 =  a11*a3244_4234 - a12*a3144_4134 + a14*a3142_4132;
-        q4 = -a11*a3243_4233 + a12*a3143_4133 - a13*a3142_4132;
-        qsqr = q1*q1 + q2*q2 + q3*q3 + q4*q4;
+        q1 = a12 * a3344_4334 - a13 * a3244_4234 + a14 * a3243_4233;
+        q2 = -a11 * a3344_4334 + a13 * a3144_4134 - a14 * a3143_4133;
+        q3 = a11 * a3244_4234 - a12 * a3144_4134 + a14 * a3142_4132;
+        q4 = -a11 * a3243_4233 + a12 * a3143_4133 - a13 * a3142_4132;
+        qsqr = q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4;
 
         if qsqr < evecprec {
             let a1324_1423 = a13 * a24 - a14 * a23;
@@ -341,18 +321,18 @@ fn fast_calc_rmsd_and_rotation
             let a1123_1321 = a11 * a23 - a13 * a21;
             let a1122_1221 = a11 * a22 - a12 * a21;
 
-            q1 =  a42 * a1324_1423 - a43 * a1224_1422 + a44 * a1223_1322;
+            q1 = a42 * a1324_1423 - a43 * a1224_1422 + a44 * a1223_1322;
             q2 = -a41 * a1324_1423 + a43 * a1124_1421 - a44 * a1123_1321;
-            q3 =  a41 * a1224_1422 - a42 * a1124_1421 + a44 * a1122_1221;
+            q3 = a41 * a1224_1422 - a42 * a1124_1421 + a44 * a1122_1221;
             q4 = -a41 * a1223_1322 + a42 * a1123_1321 - a43 * a1122_1221;
-            qsqr = q1*q1 + q2*q2 + q3*q3 + q4*q4;
+            qsqr = q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4;
 
             if qsqr < evecprec {
-                q1 =  a32 * a1324_1423 - a33 * a1224_1422 + a34 * a1223_1322;
+                q1 = a32 * a1324_1423 - a33 * a1224_1422 + a34 * a1223_1322;
                 q2 = -a31 * a1324_1423 + a33 * a1124_1421 - a34 * a1123_1321;
-                q3 =  a31 * a1224_1422 - a32 * a1124_1421 + a34 * a1122_1221;
+                q3 = a31 * a1224_1422 - a32 * a1124_1421 + a34 * a1122_1221;
                 q4 = -a31 * a1223_1322 + a32 * a1123_1321 - a33 * a1122_1221;
-                qsqr = q1*q1 + q2*q2 + q3*q3 + q4*q4;
+                qsqr = q1 * q1 + q2 * q2 + q3 * q3 + q4 * q4;
 
                 if qsqr < evecprec {
                     /* if qsqr is still too small, return the identity matrix. */
@@ -403,10 +383,7 @@ fn fast_calc_rmsd_and_rotation
     rot[7] = 2. * (yz - ax);
     rot[8] = a2 - x2 - y2 + z2;
 
-    (
-        rms,
-        Some(rot)
-    )
+    (rms, Some(rot))
 }
 
 fn get_center_of_coords(coords: &[[f64; 3]], weights: Option<&[f64]>) -> [f64; 3] {
@@ -429,11 +406,7 @@ fn get_center_of_coords(coords: &[[f64; 3]], weights: Option<&[f64]>) -> [f64; 3
     ysum /= wsum;
     zsum /= wsum;
 
-    [
-        xsum,
-        ysum,
-        zsum
-    ]
+    [xsum, ysum, zsum]
 }
 
 // Calculate the RMSD & rotational matrix.
@@ -451,8 +424,8 @@ fn get_center_of_coords(coords: &[[f64; 3]], weights: Option<&[f64]>) -> [f64; 3
 pub fn calc_rmsd_rotational_matrix(
     coords1: &[[f64; 3]],
     coords2: &[[f64; 3]],
-    weights: Option<&[f64]>) -> (f64, [f64; 3], Option<[f64; 9]>)
-{
+    weights: Option<&[f64]>,
+) -> (f64, [f64; 3], Option<[f64; 9]>) {
     // calculate the centers of the structures
     let center1 = get_center_of_coords(coords1, weights);
     let center2 = get_center_of_coords(coords2, weights);
@@ -482,14 +455,10 @@ pub fn calc_rmsd_rotational_matrix(
     let translation = [
         center1[0] - rotc[0],
         center1[1] - rotc[1],
-        center1[2] - rotc[2]
+        center1[2] - rotc[2],
     ];
 
-    (
-        rmsd,
-        translation,
-        rot,
-    )
+    (rmsd, translation, rot)
 }
 // core:1 ends here
 

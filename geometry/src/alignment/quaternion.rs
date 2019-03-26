@@ -11,8 +11,8 @@ use nalgebra as na;
 pub fn calc_rmsd_rotational_matrix(
     positions_ref: &[[f64; 3]],
     positions_can: &[[f64; 3]],
-    weights: Option<&[f64]>) -> (f64, [f64; 3], Option<[f64; 9]>)
-{
+    weights: Option<&[f64]>,
+) -> (f64, [f64; 3], Option<[f64; 9]>) {
     let npts = positions_ref.len();
 
     // set up weights for atoms
@@ -49,13 +49,24 @@ pub fn calc_rmsd_rotational_matrix(
     let szz = mat_f[(2, 2)];
 
     // 3. construct the key matrix K
-    let mat_k = na::Matrix4::from_column_slice(
-        &[
-            sxx + syy + szz , syz - szy      , szx - sxz       , sxy - syx,
-            syz - szy       , sxx - syy - szz, sxy + syx       , sxz + szx,
-            szx - sxz       , sxy + syx      , -sxx + syy - szz, syz + szy,
-            sxy - syx       , sxz + szx      , syz + szy       , -sxx - syy + szz
-        ]);
+    let mat_k = na::Matrix4::from_column_slice(&[
+        sxx + syy + szz,
+        syz - szy,
+        szx - sxz,
+        sxy - syx,
+        syz - szy,
+        sxx - syy - szz,
+        sxy + syx,
+        sxz + szx,
+        szx - sxz,
+        sxy + syx,
+        -sxx + syy - szz,
+        syz + szy,
+        sxy - syx,
+        sxz + szx,
+        syz + szy,
+        -sxx - syy + szz,
+    ]);
 
     // 4. compute the rotation quaternion
     // which is the eigenvector corresponding to the most positive eigenvalue
@@ -73,7 +84,7 @@ pub fn calc_rmsd_rotational_matrix(
         2.0 * (q[2] * q[3] - q[0] * q[1]),
         2.0 * (q[1] * q[3] - q[0] * q[2]),
         2.0 * (q[2] * q[3] + q[0] * q[1]),
-        q[0].powi(2) - q[1].powi(2) - q[2].powi(2) + q[3].powi(2)
+        q[0].powi(2) - q[1].powi(2) - q[2].powi(2) + q[3].powi(2),
     ];
 
     // or using nalgebra's library call
@@ -108,9 +119,10 @@ pub fn calc_rmsd_rotational_matrix(
     };
 
     let trans = [
-        com_ref[0] - rotc[0],
-        com_ref[1] - rotc[1],
-        com_ref[2] - rotc[2]
+        rotc[0] - com_ref[0],
+        rotc[1] - com_ref[1],
+        //rotc[2] - com_ref[2],
+        dbg!(rotc[2]) - dbg!(com_ref[2]),
     ];
 
     return (rmsd, trans, rotation);
@@ -133,16 +145,18 @@ fn test_quaterion() {
                              [ 0.28996,  1.02611,  0.47287],
                              [ 0.0685 , -1.05199,  0.47287]];
 
-    let r1 = calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
-    let r2 = qcprot::calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
-    relative_eq!(r1.0, r2.0, epsilon=1e-3);
+    let (r1, tran1, rot1) = calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
+    let (r2, tran2, rot2) = qcprot::calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
+    assert_relative_eq!(r1, r2, epsilon=1e-3);
+    dbg!(tran1);
+    dbg!(tran2);
 
     for i in 0..3 {
-        relative_eq!(r1.1[i], r2.1[i], epsilon=1e-3);
+        assert_relative_eq!(tran1[i], tran2[i], epsilon=1e-3);
     }
-    let rot1 = r1.2.unwrap();
-    let rot2 = r2.2.unwrap();
+    let rot1 = rot1.expect("rot1");
+    let rot2 = rot2.expect("rot2");
     for i in 0..9 {
-        relative_eq!(rot1[i], rot2[i], epsilon=1e-3);
+        assert_relative_eq!(rot1[i], rot2[i], epsilon=1e-3);
     }
 }

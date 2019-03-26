@@ -79,11 +79,15 @@ fn read_molecule_xyz(input: &str) -> nom::IResult<&str, Molecule> {
 
     // check atoms count
     if natoms != mol.natoms() {
-        warn!("Malformed xyz format: expect {} atoms, but found {}", natoms, mol.natoms());
+        warn!(
+            "Malformed xyz format: expect {} atoms, but found {}",
+            natoms,
+            mol.natoms()
+        );
     }
 
     // take molecule name
-    if ! title.trim().is_empty() {
+    if !title.trim().is_empty() {
         mol.name = title.into();
     }
 
@@ -148,10 +152,12 @@ impl ChemFileLike for XYZFile {
         // coordinates
         for a in mol.atoms() {
             let p = a.position();
+            let v = a.momentum();
             let sym = a.symbol();
-            let s = format!("{:6} {:-18.6}{:-18.6}{:-18.6}\n",
-                            sym,
-                            p[0], p[1], p[2]);
+            let s = format!(
+                "{:6} {:-18.6}{:-18.6}{:-18.6}{:-18.6}{:-18.6}{:-18.6}\n",
+                sym, p[0], p[1], p[2], v[0], v[1], v[2]
+            );
             lines.push_str(&s);
         }
 
@@ -241,7 +247,9 @@ fn test_formats_plain_xyz() {
     assert_eq!("Si", symbols[0]);
 
     // parse multiple molecules
-    let mols = file.parse(Path::new("tests/files/xyz/multi.pxyz")).expect("multi xyz");
+    let mols = file
+        .parse(Path::new("tests/files/xyz/multi.pxyz"))
+        .expect("multi xyz");
     assert_eq!(6, mols.len());
 
     let natoms_expected = vec![16, 10, 16, 16, 16, 13];
