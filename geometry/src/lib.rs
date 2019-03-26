@@ -5,7 +5,6 @@
 
 // [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*lib.rs][lib.rs:1]]
 #![feature(test)]
-extern crate test;
 
 // for test-only uses
 #[cfg(test)]
@@ -34,6 +33,7 @@ pub mod prelude {
 /// Re-exports important functions
 pub use self::random::*;
 
+// logging, error handling, ...
 mod core_utils {
     pub use quicli::prelude::*;
     pub type Result<T> = ::std::result::Result<T, Error>;

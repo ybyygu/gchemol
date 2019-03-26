@@ -4,7 +4,7 @@
 use crate::core_utils::*;
 
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
-pub use crate::test::stats::Stats;
+pub use libtest::stats::Stats;
 use nalgebra as na;
 
 /// Vector in 3D space
@@ -395,6 +395,6 @@ fn test_weighted_center_of_geometry() {
     // expected results
     let expected = Vector3f::new(0.3687142857142857, -13.15214285714286, 29.955499999999997);
     let pc = frag.center_of_mass(&masses).expect("geometry: com");
-    relative_eq!(pc, expected, epsilon=1e-6);
+    assert_relative_eq!(pc, expected, epsilon=1e-6);
 }
 // functions:1 ends here
