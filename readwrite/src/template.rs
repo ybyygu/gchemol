@@ -14,25 +14,24 @@ impl TemplateRendering for Molecule {
 }
 // traits:1 ends here
 
-// handlebars
+// imports
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*handlebars][handlebars:1]]
-use indexmap::IndexMap;
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*imports][imports:1]]
+use handlebars::*;
 use serde_derive;
-use serde_json;
 
-use handlebars;
+use indexmap::indexmap;
 use std::fs::File;
 
 use crate::core_utils::*;
-
 use crate::io;
+
 use gchemol_core::Molecule;
+// imports:1 ends here
 
-use handlebars::{
-    to_json, Context, Handlebars, Helper, HelperResult, Output, RenderContext, RenderError,
-};
+// format float number
 
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*format%20float%20number][format float number:1]]
 // https://docs.rs/handlebars/1.0.0/handlebars/trait.HelperDef.html
 // define a helper for formatting string or number
 fn format(
@@ -99,7 +98,11 @@ fn format(
 
     Ok(())
 }
+// format float number:1 ends here
 
+// core
+
+// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*core][core:1]]
 #[derive(Debug, Serialize)]
 struct AtomData {
     index: usize,
@@ -171,6 +174,7 @@ struct MoleculeData {
     // 1 2 3
     element_types: Vec<(String, usize)>,
 }
+
 
 /// construct a shallow representation of molecule for templating
 fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
@@ -261,10 +265,11 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
 
 /// render molecule in user defined template
 pub fn render_molecule_with(mol: &Molecule, template: &str) -> Result<String> {
-    let data = molecule_to_template_data(mol);
     let mut h = Handlebars::new();
     h.register_helper("format", Box::new(format));
-    // h.render_template(template, &data).map_err(|e| format_err!("failed to render: {:?}", e))
+    h.register_helper("fgt", Box::new(crate::fgt));
+
+    let data = molecule_to_template_data(mol);
     h.render_template(template, &data).map_err(failure::err_msg)
 }
 
@@ -276,4 +281,4 @@ fn test_template_render() {
     let template = io::read_file("tests/files/templates/xyz.hbs").expect("template xyz.hbs");
     let x = render_molecule_with(&mol, &template).unwrap();
 }
-// handlebars:1 ends here
+// core:1 ends here
