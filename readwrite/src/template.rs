@@ -20,13 +20,13 @@ impl TemplateRendering for Molecule {
 use handlebars::*;
 use serde_derive;
 
-use indexmap::indexmap;
+use indexmap::{indexmap, IndexMap};
 use std::fs::File;
 
 use crate::core_utils::*;
 use crate::io;
 
-use gchemol_core::Molecule;
+use gchemol_core::{Atom, Molecule};
 // imports:1 ends here
 
 // format float number
@@ -161,11 +161,20 @@ struct UnitCell {
 }
 
 #[derive(Debug, Serialize)]
+struct SpeciesData {
+    index: usize,
+    element_symbol: String,
+    element_number: usize,
+    number_of_atoms: usize,
+}
+
+#[derive(Debug, Serialize)]
 struct MoleculeData {
     title: String,
     unit_cell: Option<UnitCell>,
     number_of_atoms: usize,
     number_of_bonds: usize,
+    number_of_species: usize,
     atoms: Vec<AtomData>,
     bonds: Vec<BondData>,
 
@@ -173,8 +182,8 @@ struct MoleculeData {
     // O C H
     // 1 2 3
     element_types: Vec<(String, usize)>,
+    species: Vec<SpeciesData>,
 }
-
 
 /// construct a shallow representation of molecule for templating
 fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
@@ -203,7 +212,7 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
 
     let mut bonds = vec![];
 
-    let mut element_types = indexmap!{};
+    let mut element_types: IndexMap<String, usize> = indexmap!{};
     for a in mol.atoms() {
         let k = a.symbol().into();
         let c = element_types.entry(k).or_insert(0);
@@ -246,16 +255,32 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
         })
     }
 
-    // convert to indexmap to plain list
+    // convert indexmap to plain list
     let element_types: Vec<(_, _)> = element_types.into_iter().collect();
+
+    let n = element_types.len();
+    let species: Vec<_> = element_types
+        .iter()
+        .enumerate()
+        .map(|(i, (s, n))| SpeciesData {
+            index: i + 1,
+            element_symbol: s.clone(),
+            // FIXME: dirty
+            element_number: Atom::new(s.as_ref(), [0.0; 3]).number(),
+            number_of_atoms: *n,
+        })
+        .collect();
+
     let md = MoleculeData {
         title: mol.title(),
         number_of_atoms: mol.natoms(),
         number_of_bonds: mol.nbonds(),
+        number_of_species: n,
         unit_cell,
         atoms,
         bonds,
         element_types,
+        species,
     };
 
     json!({

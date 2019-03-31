@@ -30,6 +30,7 @@ pub mod data;
 
 pub use crate::molecule::{
     Atom,
+    AtomKind,
     Bond,
     BondKind,
     Molecule,
