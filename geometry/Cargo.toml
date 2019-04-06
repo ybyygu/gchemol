@@ -17,5 +17,5 @@ rand = "=0.5"
 approx = "0.3"
 tempfile = "3"
 timeit = "*"
-gchemol = { path = ".." }
+gchemol = { path = "../gchemol" }
 # cargo:1 ends here

@@ -1,20 +1,20 @@
 # cargo
 
-# [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*cargo][cargo:1]]
+# [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*cargo][cargo:1]]
 [package]
 name = "gchemol-readwrite"
-version = "0.0.27"
+version = "0.0.28"
 edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
 nom = ">=4.1.0"
-handlebars = ">=1.0.0"
+handlebars = "1.1"
 quicli = "0.4"
 indexmap = "1.0"
 itertools = "0.7"
 gchemol-core = {path = "../core"}
-textparser = {git = "https://github.com/ybyygu/text-parser.git" }
+text-parser = {git = "https://github.com/ybyygu/text-parser.git", tag="v0.0.3" }
 failure = "*"
 serde = "*"
 serde_json = "*"

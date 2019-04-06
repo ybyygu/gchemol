@@ -1,19 +1,19 @@
 // use
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*use][use:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*use][use:1]]
 use std::path::Path;
 use std::fs::File;
 use std::collections::HashMap;
 
 use crate::core_utils::*;
-use textparser::*;
+use text_parser::*;
 use nom::IResult;
 use gchemol_core::{Atom, Bond, Molecule, Lattice, BondKind};
 // use:1 ends here
 
 // mods
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*mods][mods:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*mods][mods:1]]
 mod xyz;
 mod pdb;
 mod mol2;
@@ -25,7 +25,7 @@ mod vasp;
 // traits
 // Unify behaviors for all chemical file formats
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*traits][traits:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*traits][traits:1]]
 pub trait ChemFileLike {
     /// file type string
     fn ftype(&self) -> &str;
@@ -137,7 +137,7 @@ pub trait ChemFileLike {
 
 // backends
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*backends][backends:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*backends][backends:1]]
 macro_rules! avail_parsers {
     () => {
         vec![

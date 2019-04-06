@@ -1,0 +1,18 @@
+# cargo
+
+# [[file:~/Workspace/Programming/gchemol/gchemol/gchemol.note::*cargo][cargo:1]]
+[package]
+name = "gchemol"
+version = "0.0.27"
+edition = "2018"
+authors = ["Wenping Guo <ybyygu@gmail.com>"]
+
+[dependencies]
+gchemol-core = {version = "*", path = "../core"}
+gchemol-geometry = {version = "*", path = "../geometry"}
+gchemol-readwrite = {version = "*", path = "../readwrite"}
+
+[dev-dependencies]
+approx = "0.3"
+tempfile = "3"
+# cargo:1 ends here

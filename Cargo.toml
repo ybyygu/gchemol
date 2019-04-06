@@ -1,21 +1,6 @@
 # cargo
 
-# [[file:~/Workspace/Programming/gchemol/gchemol.note::*cargo][cargo:1]]
-[package]
-name = "gchemol"
-version = "0.0.27"
-edition = "2018"
-authors = ["Wenping Guo <ybyygu@gmail.com>"]
-
+# [[file:~/Workspace/Programming/gchemol-rs/gchemol-rs.note::*cargo][cargo:1]]
 [workspace]
-members = ["geometry", "core", "readwrite"]
-
-[dependencies]
-gchemol-geometry = {path = "geometry"}
-gchemol-core = {path = "core"}
-gchemol-readwrite = {path = "readwrite"}
-
-[dev-dependencies]
-approx = "0.3"
-tempfile = "3"
+members = ["geometry", "core", "readwrite", "gchemol"]
 # cargo:1 ends here

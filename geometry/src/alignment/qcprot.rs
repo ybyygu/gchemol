@@ -1,6 +1,6 @@
 // header
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*header][header:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*header][header:1]]
 // Author of Rust Port:
 //                 Wenping Guo
 //                 Synefuels China Technology Co.Ltd.
@@ -95,7 +95,7 @@
 
 // core
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*core][core:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*core][core:1]]
 use crate::base::*;
 use crate::core_utils::*;
 
@@ -464,7 +464,7 @@ pub fn calc_rmsd_rotational_matrix(
 
 // test
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*test][test:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*test][test:1]]
 /// test data provided in main.c
 pub fn prepare_test_data() -> (Vec<[f64; 3]>, Vec<[f64; 3]>, Vec<f64>) {
     let mut frag_a = vec![

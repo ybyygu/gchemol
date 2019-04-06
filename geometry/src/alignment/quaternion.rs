@@ -18,6 +18,7 @@ pub fn calc_rmsd_rotational_matrix(
     // set up weights for atoms
     let default_weights = vec![1.0; npts];
     let weights = weights.unwrap_or(&default_weights);
+
     // FIXME: Option
     let com_ref = positions_ref.center_of_mass(weights).unwrap();
     let com_can = positions_can.center_of_mass(weights).unwrap();
@@ -74,7 +75,7 @@ pub fn calc_rmsd_rotational_matrix(
     let ci = se.eigenvalues.imax();
     let q = se.eigenvectors.column(ci);
 
-    // // 5. construct rotation matrix from the quaternion q
+    // 5. construct rotation matrix from the quaternion q
     let rot = [
         q[0].powi(2) + q[1].powi(2) - q[2].powi(2) - q[3].powi(2),
         2.0 * (q[1] * q[2] - q[0] * q[3]),
@@ -87,10 +88,16 @@ pub fn calc_rmsd_rotational_matrix(
         q[0].powi(2) - q[1].powi(2) - q[2].powi(2) + q[3].powi(2),
     ];
 
+    // FIXME: dirty fixing
+    let mut rotx = rot.clone();
+    for i in 0..6 {
+        rotx[i] = -1.0 * rot[i];
+    }
+
     // or using nalgebra's library call
     // let q = na::geometry::Quaternion::new(q[0], q[1], q[2], q[3]);
     // let rot = na::geometry::UnitQuaternion::from_quaternion(q).to_rotation_matrix();
-    let rotation = Some(rot);
+    let rotation = Some(rotx);
 
     // 6. calculate superposition rmsd
     let mut rmsd = 0.0f64;
@@ -119,12 +126,10 @@ pub fn calc_rmsd_rotational_matrix(
     };
 
     let trans = [
-        rotc[0] - com_ref[0],
-        rotc[1] - com_ref[1],
-        //rotc[2] - com_ref[2],
-        dbg!(rotc[2]) - dbg!(com_ref[2]),
+        com_ref[0]- rotc[0],
+        com_ref[1]- rotc[1],
+        com_ref[2]- rotc[2]
     ];
-
     return (rmsd, trans, rotation);
 }
 
@@ -148,12 +153,10 @@ fn test_quaterion() {
     let (r1, tran1, rot1) = calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
     let (r2, tran2, rot2) = qcprot::calc_rmsd_rotational_matrix(&positions_ref, &positions_can, None);
     assert_relative_eq!(r1, r2, epsilon=1e-3);
-    dbg!(tran1);
-    dbg!(tran2);
-
     for i in 0..3 {
         assert_relative_eq!(tran1[i], tran2[i], epsilon=1e-3);
     }
+
     let rot1 = rot1.expect("rot1");
     let rot2 = rot2.expect("rot2");
     for i in 0..9 {
