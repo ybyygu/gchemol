@@ -1,7 +1,6 @@
 // header
-// #+name: bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d][bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/gchemol/gchemol.note::*header][header:1]]
 //===============================================================================#
 //   DESCRIPTION:  gchemol: a Graph-based CHEMical Objects Library
 //
@@ -11,17 +10,18 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 2 or upper
 //       CREATED:  <2018-04-10 Tue 15:46>
-//       UPDATED:  <2018-11-24 Sat 16:14>
+//       UPDATED:  <2019-04-08 Mon 16:43>
 //===============================================================================#
-// bdab2ff7-59d6-4b5e-8b47-53eaccf5e64d ends here
+// header:1 ends here
 
 // base
 
-// [[file:~/Workspace/Programming/gchemol/gchemol.note::*base][base:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/gchemol/gchemol.note::*base][base:1]]
 pub use gchemol_core::*;
 
 pub mod io {
     pub use gchemol_readwrite::io::*;
+    pub use gchemol_readwrite::formats::describe_backends;
 }
 
 pub mod prelude {
