@@ -1,6 +1,6 @@
 // header
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*header][header:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*header][header:1]]
 //===============================================================================#
 //   DESCRIPTION:  Represents 3D periodic lattice
 //
@@ -10,18 +10,18 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2018-12-22 Sat 13:28>
+//       UPDATED:  <2019-04-08 Mon 11:01>
 //===============================================================================#
 // header:1 ends here
 
 // base
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*base][base:1]]
 use crate::core_utils::*;
 
 use nalgebra::{
-    Vector3,               // A stack-allocated, 3-dimensional column vector.
-    Matrix3,               // A stack-allocated, column-major, 3x3 square matrix
+    Matrix3, // A stack-allocated, column-major, 3x3 square matrix
+    Vector3, // A stack-allocated, 3-dimensional column vector.
 };
 
 type Matrix3f = Matrix3<f64>;
@@ -79,18 +79,20 @@ impl Lattice {
     fn inv_matrix(&mut self) -> Matrix3f {
         // make a readonly reference
         let matrix = self.matrix;
-        let im = self.inv_matrix.get_or_insert_with(|| matrix.try_inverse().expect("bad matrix"));
+        let im = self
+            .inv_matrix
+            .get_or_insert_with(|| matrix.try_inverse().expect("bad matrix"));
 
         *im
     }
 
-    fn get_cell_widths(&mut self)  -> [f64; 3] {
+    fn get_cell_widths(&mut self) -> [f64; 3] {
         let volume = self.volume();
         let [van, vbn, vcn] = self.lengths();
 
-        let wa = volume / (vbn*vcn);
-        let wb = volume / (vcn*van);
-        let wc = volume / (van*vbn);
+        let wa = volume / (vbn * vcn);
+        let wb = volume / (vcn * van);
+        let wc = volume / (van * vbn);
 
         [wa, wb, wc]
     }
@@ -120,31 +122,20 @@ impl Lattice {
     /// Unit cell angles in degrees, lengths in Angstrom
     pub fn from_params(a: f64, b: f64, c: f64, alpha: f64, beta: f64, gamma: f64) -> Self {
         let alpha = alpha.to_radians();
-        let beta  = beta.to_radians();
+        let beta = beta.to_radians();
         let gamma = gamma.to_radians();
 
         let acos = alpha.cos();
         let bcos = beta.cos();
         let gcos = gamma.cos();
         let gsin = gamma.sin();
-        let v = (1.
-                 - acos.powi(2)
-                 - bcos.powi(2)
-                 - gcos.powi(2)
-                 + 2.0 * acos * bcos * gcos).sqrt();
+        let v = (1. - acos.powi(2) - bcos.powi(2) - gcos.powi(2) + 2.0 * acos * bcos * gcos).sqrt();
 
-        let va = [a,
-                  0.0,
-                  0.0];
+        let va = [a, 0.0, 0.0];
 
-        let vb = [b*gcos,
-                  b*gsin,
-                  0.0
-                  ];
+        let vb = [b * gcos, b * gsin, 0.0];
 
-        let vc = [c*bcos,
-                  c*(acos - bcos*gcos)/gsin,
-                  c*v/gsin];
+        let vc = [c * bcos, c * (acos - bcos * gcos) / gsin, c * v / gsin];
 
         Lattice::new([va, vb, vc])
     }
@@ -159,11 +150,7 @@ impl Lattice {
         let mat = self.matrix;
         let lengths = self.lengths.get_or_insert_with(|| get_cell_lengths(mat));
 
-        [
-            lengths[0],
-            lengths[1],
-            lengths[2],
-        ]
+        [lengths[0], lengths[1], lengths[2]]
     }
 
     /// Lattice angle parameters in degrees
@@ -171,11 +158,7 @@ impl Lattice {
         let mat = self.matrix;
         let angles = self.angles.get_or_insert_with(|| get_cell_angles(mat));
 
-        [
-            angles[0],
-            angles[1],
-            angles[2],
-        ]
+        [angles[0], angles[1], angles[2]]
     }
 
     // FIXME: cell widths
@@ -208,7 +191,7 @@ impl Lattice {
     /// Returns the cartesian coordinates given fractional coordinates.
     pub fn to_cart(&self, p: [f64; 3]) -> [f64; 3] {
         let v = Vector3f::from(p);
-        let fs = self.matrix*v + self.origin;
+        let fs = self.matrix * v + self.origin;
 
         fs.into()
     }
@@ -244,7 +227,7 @@ impl Lattice {
 
 // utils
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*utils][utils:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*utils][utils:1]]
 // matrix inversion
 fn get_inv_matrix(matrix: Matrix3f) -> Matrix3f {
     matrix.try_inverse().expect("bad matrix")
@@ -283,7 +266,7 @@ fn get_cell_angles(mat: Matrix3f) -> [f64; 3] {
 // base
 // The periodic image when periodic boundary conditions are employed.
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*base][base:1]]
 use std::f64;
 
 #[derive (Debug, Clone)]
@@ -297,7 +280,7 @@ pub struct PeriodicImage {
 
 // distance
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*distance][distance:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*distance][distance:1]]
 impl Lattice {
     /// Return the shortest vector by applying the minimum image convention.
     pub fn apply_mic(&mut self, p: [f64; 3]) -> PeriodicImage {
@@ -443,32 +426,40 @@ impl Lattice {
 
 // test
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*test][test:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*test][test:1]]
 #[test]
 fn test_mic_vector() {
     let mut lat = Lattice::new([
-        [ 7.055     ,  0.        ,  0.        ],
-        [ 0.        ,  6.795     ,  0.        ],
-        [-1.14679575,  0.        ,  5.65182701]
+        [7.055, 0., 0.],
+        [0., 6.795, 0.],
+        [-1.14679575, 0., 5.65182701],
     ]);
 
     // mic vector
-    let expected = Vector3f::from([-0.48651737,  0.184824  , -1.31913642]);
+    let expected = Vector3f::from([-0.48651737, 0.184824, -1.31913642]);
 
-    let pmic = lat.apply_mic_tuckerman([5.42168688, 0.184824  , 4.33269058]);
-    assert_relative_eq!(expected, pmic.position, epsilon=1e-4);
+    let pmic = lat.apply_mic_tuckerman([5.42168688, 0.184824, 4.33269058]);
+    assert_relative_eq!(expected, pmic.position, epsilon = 1e-4);
 
-    assert_relative_eq!(pmic.image, Vector3f::from([-1.0, 0.0, -1.0]), epsilon=1e-4);
+    assert_relative_eq!(
+        pmic.image,
+        Vector3f::from([-1.0, 0.0, -1.0]),
+        epsilon = 1e-4
+    );
 
-    let pmic = lat.apply_mic([5.42168688, 0.184824  , 4.33269058]);
-    assert_relative_eq!(expected, pmic.position, epsilon=1e-4);
-    assert_relative_eq!(pmic.image, Vector3f::from([-1.0, 0.0, -1.0]), epsilon=1e-4);
+    let pmic = lat.apply_mic([5.42168688, 0.184824, 4.33269058]);
+    assert_relative_eq!(expected, pmic.position, epsilon = 1e-4);
+    assert_relative_eq!(
+        pmic.image,
+        Vector3f::from([-1.0, 0.0, -1.0]),
+        epsilon = 1e-4
+    );
 }
 // test:1 ends here
 
 // molecule
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*molecule][molecule:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*molecule][molecule:1]]
 use crate::molecule::Molecule;
 
 impl Molecule {
@@ -515,9 +506,114 @@ impl Molecule {
 }
 // molecule:1 ends here
 
+// supercell
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*supercell][supercell:1]]
+pub struct Supercell {
+    range_a: [isize; 2],
+    range_b: [isize; 2],
+    range_c: [isize; 2],
+}
+
+impl Default for Supercell {
+    fn default() -> Self {
+        Self {
+            range_a: [0, 1],
+            range_b: [0, 1],
+            range_c: [0, 1],
+        }
+    }
+}
+
+impl Supercell {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_range_a(mut self, min: isize, max: isize) -> Self {
+        assert!(min < max, "invalid range a.");
+        self.range_a[0] = min;
+        self.range_a[1] = max;
+        self
+    }
+
+    pub fn with_range_b(mut self, min: isize, max: isize) -> Self {
+        assert!(min < max, "invalid range b.");
+        self.range_b[0] = min;
+        self.range_b[1] = max;
+        self
+    }
+
+    pub fn with_range_c(mut self, min: isize, max: isize) -> Self {
+        assert!(min < max, "invalid range c.");
+        self.range_c[0] = min;
+        self.range_c[1] = max;
+        self
+    }
+
+    pub fn build(mut self, mol: &Molecule) -> Molecule {
+        if let Some(ref lat) = mol.lattice {
+            make_supercell(mol, &lat, self.range_a, self.range_b, self.range_c)
+        } else {
+            panic!("No lattice data.");
+        }
+    }
+}
+
+/// Create a supercell.
+///
+/// # Arguments
+///
+/// * range: An sequence of three scaling factors. E.g., [2, 1, 1] specifies
+/// that the supercell should have dimensions 2a x b x c
+///
+fn make_supercell(
+    mol: &Molecule,
+    lat: &Lattice,
+    range_a: [isize; 2],
+    range_b: [isize; 2],
+    range_c: [isize; 2],
+) -> Molecule {
+    // add atoms by looping over three lattice directions
+    let mut mol_new = mol.clone();
+    for i in range_a[0]..range_a[1] {
+        for j in range_b[0]..range_b[1] {
+            for k in range_c[0]..range_c[1] {
+                // ignore the origin
+                if i == 0 && j == 0 && k == 0 {
+                    continue;
+                }
+                let mut m = mol.clone();
+                let v = [i as f64, j as f64, k as f64];
+                let t = lat.to_cart(v);
+                m.translate(t);
+                for a in m.atoms() {
+                    mol_new.add_atom(a.clone());
+                }
+            }
+        }
+    }
+    // update lattice
+    let mut vabc = lat.vectors();
+    let size = [
+        range_a[1] - range_a[0],
+        range_b[1] - range_b[0],
+        range_c[1] - range_c[0],
+    ];
+    for v in vabc.iter_mut() {
+        for i in 0..3 {
+            v[i] *= size[i] as f64;
+        }
+    }
+
+    mol_new.lattice = Some(Lattice::new(vabc));
+    mol_new
+}
+// supercell:1 ends here
+
 // test
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*test][test:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*test][test:1]]
 #[test]
 fn test_lattice_construct() {
     let mut lat = Lattice::default();

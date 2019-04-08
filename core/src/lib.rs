@@ -3,7 +3,7 @@
 // :header-args: :tangle src/lib.rs
 // :END:
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*lib.rs][lib.rs:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*lib.rs][lib.rs:1]]
 extern crate petgraph;
 #[macro_use] extern crate indexmap;
 extern crate nalgebra;
@@ -40,6 +40,7 @@ pub use crate::molecule::{
 
 pub use crate::lattice::{
     Lattice,
+    Supercell,
 };
 
 mod core_utils {

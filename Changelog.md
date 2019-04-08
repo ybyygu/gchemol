@@ -1,4 +1,9 @@
 
+# v0.0.29 - <span class="timestamp-wrapper"><span class="timestamp">[2019-04-08 Mon]</span></span>
+
+-   add a struct for making supercell: \`Supercell\`
+
+
 # v0.0.28 - <span class="timestamp-wrapper"><span class="timestamp">[2019-04-06 Sat]</span></span>
 
 -   add \`fgt\` helper for rendering molecule

@@ -75,22 +75,17 @@ fn test_molecule_pbc_distance() {
 // supercell
 
 #[test]
-fn test_supercell() -> Result<()> {
+fn test_supercell() {
     use gchemol::io::prelude::*;
     use gchemol::Supercell;
 
-    let path = "/tmp/a.cif";
-    let images = gchemol::io::read(path)?;
+    let path = "tests/files/cif/babel.cif";
+    let images = gchemol::io::read(path).expect("test file: babel.cif");
 
-    let mut images_modified = vec![];
-    for image in images {
-        let mol = Supercell::new()
-            .with_range_a(-1, 1)
-            .with_range_b(-1, 1)
-            .build(&image);
-        images_modified.push(mol);
-    }
-    gchemol::io::write("/tmp/all.cif", &images_modified)?;
-
-    Ok(())
+    assert_eq!(1, images.len());
+    let mol = Supercell::new()
+        .with_range_a(-1, 1)
+        .with_range_b(-1, 1)
+        .build(&images[0]);
+    assert_eq!(136, mol.natoms());
 }
