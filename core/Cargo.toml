@@ -8,16 +8,16 @@ edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
-nalgebra = "*"
-petgraph = "*"
-indexmap = {version=">=1.0.0", features=["serde-1"]}
-serde = "*"
-serde_json = "*"
-serde_derive = "*"
-itertools = "*"
+nalgebra = "0.18"
+petgraph = "0.4"
+indexmap = {version="1.0", features=["serde-1"]}
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+itertools = "0.8"
 quicli = "0.4"
 gchemol-geometry = {path = "../geometry"}
 
 [dev-dependencies]
-approx = "*"
+approx = "0.3"
 # cargo:1 ends here
