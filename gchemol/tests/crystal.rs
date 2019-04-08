@@ -71,3 +71,26 @@ fn test_molecule_pbc_distance() {
         assert_relative_eq!(expected[i], dm[i], epsilon=1e-4);
     }
 }
+
+// supercell
+
+#[test]
+fn test_supercell() -> Result<()> {
+    use gchemol::io::prelude::*;
+    use gchemol::Supercell;
+
+    let path = "/tmp/a.cif";
+    let images = gchemol::io::read(path)?;
+
+    let mut images_modified = vec![];
+    for image in images {
+        let mol = Supercell::new()
+            .with_range_a(-1, 1)
+            .with_range_b(-1, 1)
+            .build(&image);
+        images_modified.push(mol);
+    }
+    gchemol::io::write("/tmp/all.cif", &images_modified)?;
+
+    Ok(())
+}
