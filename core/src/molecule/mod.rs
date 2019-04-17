@@ -1,7 +1,6 @@
 // header
-// #+name: 7e391e0e-a3e8-4c22-b881-e0425d0926bc
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::7e391e0e-a3e8-4c22-b881-e0425d0926bc][7e391e0e-a3e8-4c22-b881-e0425d0926bc]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*header][header:1]]
 //===============================================================================#
 //   DESCRIPTION:  molecule object repsented in graph data structure
 //
@@ -11,13 +10,13 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2018-12-22 Sat 13:26>
+//       UPDATED:  <2019-04-19 Fri 13:36>
 //===============================================================================#
-// 7e391e0e-a3e8-4c22-b881-e0425d0926bc ends here
+// header:1 ends here
 
 // base
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*base][base:1]]
 use std::collections::HashMap;
 use std::convert;
 
@@ -46,7 +45,7 @@ pub type Points = Vec<Point3D>;
 
 // globals
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*globals][globals:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*globals][globals:1]]
 use std::fmt::{self, Debug, Display};
 
 const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
@@ -171,9 +170,8 @@ const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
 // globals:1 ends here
 
 // base
-// #+name: 731651b9-ebba-4df3-86f7-083f837e4065
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::731651b9-ebba-4df3-86f7-083f837e4065][731651b9-ebba-4df3-86f7-083f837e4065]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*base][base:1]]
 #[derive(Debug, Clone, PartialEq)]
 pub enum AtomKind {
     /// physical elements
@@ -213,12 +211,11 @@ impl fmt::Display for AtomKind {
         }
     }
 }
-// 731651b9-ebba-4df3-86f7-083f837e4065 ends here
+// base:1 ends here
 
 // test
-// #+name: b95edc21-e696-4625-ba99-94257394772d
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::b95edc21-e696-4625-ba99-94257394772d][b95edc21-e696-4625-ba99-94257394772d]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*test][test:1]]
 use self::AtomKind::{Element, Dummy};
 
 /// Return AtomKind using common sense
@@ -261,12 +258,11 @@ fn test_element() {
     let k = atom_kind_from_string("SI");
     assert_eq!(k.symbol(), "Si");
 }
-// b95edc21-e696-4625-ba99-94257394772d ends here
+// test:1 ends here
 
 // base
-// #+name: 150189fd-57d9-4e19-a888-d64497f5ba7e
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::150189fd-57d9-4e19-a888-d64497f5ba7e][150189fd-57d9-4e19-a888-d64497f5ba7e]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*base][base:1]]
 use std::hash::Hash;
 use std::cmp::Ordering;
 
@@ -379,11 +375,11 @@ impl Atom {
         atoms
     }
 }
-// 150189fd-57d9-4e19-a888-d64497f5ba7e ends here
+// base:1 ends here
 
 // geometry
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*geometry][geometry:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*geometry][geometry:1]]
 use crate::geometry::prelude::euclidean_distance;
 
 impl Atom {
@@ -402,9 +398,8 @@ impl Atom {
 // References
 // - servo: [[https://doc.servo.org/src/cookie/builder.rs.html#35-38][builder.rs.html -- source]]
 
-// #+name: d333cb1f-e622-462f-a892-4906c85b7da0
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::d333cb1f-e622-462f-a892-4906c85b7da0][d333cb1f-e622-462f-a892-4906c85b7da0]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*atom%20data%20builder][atom data builder:1]]
 /// Atom specific data independent of the molecule
 #[derive(Debug, Clone)]
 pub struct AtomData {
@@ -504,12 +499,12 @@ fn test_atom_builder() {
 
     assert_eq!(13, a.number());
 }
-// d333cb1f-e622-462f-a892-4906c85b7da0 ends here
+// atom data builder:1 ends here
 
 // convert
 // #+name: 7e463bf4-a6ab-4648-a8a2-4b2023d1c588
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::7e463bf4-a6ab-4648-a8a2-4b2023d1c588][7e463bf4-a6ab-4648-a8a2-4b2023d1c588]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::7e463bf4-a6ab-4648-a8a2-4b2023d1c588][7e463bf4-a6ab-4648-a8a2-4b2023d1c588]]
 use std::str::FromStr;
 
 impl FromStr for Atom {
@@ -546,9 +541,8 @@ impl fmt::Display for Atom {
 // 7e463bf4-a6ab-4648-a8a2-4b2023d1c588 ends here
 
 // test
-// #+name: b88435fd-d51c-48b8-880c-425b94b905e9
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::b88435fd-d51c-48b8-880c-425b94b905e9][b88435fd-d51c-48b8-880c-425b94b905e9]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*test][test:1]]
 #[test]
 fn test_atom_init() {
     let atom = Atom::default();
@@ -561,13 +555,7 @@ fn test_atom_init() {
     assert_eq!("dummy", atom.symbol());
     assert_eq!(0, atom.number());
 }
-// b88435fd-d51c-48b8-880c-425b94b905e9 ends here
 
-
-
-// #+name: cfdf0fc1-97a2-4da4-b0bb-a9baee31d275
-
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::cfdf0fc1-97a2-4da4-b0bb-a9baee31d275][cfdf0fc1-97a2-4da4-b0bb-a9baee31d275]]
 #[test]
 fn test_atom_string_conversion() {
     let line = "H 1.0 1.0 1.0";
@@ -580,12 +568,12 @@ fn test_atom_string_conversion() {
     let line = "24 0.124 1.230 2.349";
     let a: Atom = line.parse().unwrap();
 }
-// cfdf0fc1-97a2-4da4-b0bb-a9baee31d275 ends here
+// test:1 ends here
 
 // src
 // #+name: 7ff70329-69ef-4221-a539-fb097258d0a6
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::7ff70329-69ef-4221-a539-fb097258d0a6][7ff70329-69ef-4221-a539-fb097258d0a6]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::7ff70329-69ef-4221-a539-fb097258d0a6][7ff70329-69ef-4221-a539-fb097258d0a6]]
 /// https://en.wikipedia.org/wiki/Bond_order
 #[derive(Debug, Clone, Copy, PartialOrd, PartialEq)]
 pub enum BondKind {
@@ -735,7 +723,7 @@ impl Bond {
 // test
 // #+name: 486bd5a4-e762-46bf-a237-e692393a795d
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::486bd5a4-e762-46bf-a237-e692393a795d][486bd5a4-e762-46bf-a237-e692393a795d]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::486bd5a4-e762-46bf-a237-e692393a795d][486bd5a4-e762-46bf-a237-e692393a795d]]
 #[test]
 fn test_bond() {
     let b = Bond::default();
@@ -745,9 +733,8 @@ fn test_bond() {
 // 486bd5a4-e762-46bf-a237-e692393a795d ends here
 
 // molecule
-// #+name: 942dedaa-9351-426e-9be9-cdb640ec2b75
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::942dedaa-9351-426e-9be9-cdb640ec2b75][942dedaa-9351-426e-9be9-cdb640ec2b75]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*molecule][molecule:1]]
 pub type MolGraph = StableUnGraph<Atom, Bond>;
 pub type AtomIndex = NodeIndex;
 pub type BondIndex = EdgeIndex;
@@ -859,9 +846,9 @@ impl Molecule {
         self.atoms().map(|ref a| a.number()).collect()
     }
 }
-// 942dedaa-9351-426e-9be9-cdb640ec2b75 ends here
+// molecule:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*molecule][molecule:2]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*molecule][molecule:2]]
 pub trait IntoAtomIndex {
     fn into_atom_index(&self) -> AtomIndex;
 }
@@ -902,7 +889,7 @@ impl IntoBondIndex for BondIndex {
 
 // #+name: 80dcc47b-b7dc-4ba7-a9d6-a567831bae93
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::80dcc47b-b7dc-4ba7-a9d6-a567831bae93][80dcc47b-b7dc-4ba7-a9d6-a567831bae93]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::80dcc47b-b7dc-4ba7-a9d6-a567831bae93][80dcc47b-b7dc-4ba7-a9d6-a567831bae93]]
 impl Molecule {
     // TODO
     /// Return molecule net charge

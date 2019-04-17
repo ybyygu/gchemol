@@ -1,4 +1,9 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*property.rs][property.rs:1]]
+// property.rs
+// :PROPERTIES:
+// :header-args: :tangle src/molecule/property.rs
+// :END:
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*property.rs][property.rs:1]]
 use std::collections::HashMap;
 
 use serde::{
@@ -41,7 +46,7 @@ impl PropertyStore {
 
     /// Discard property associated with the `key`
     pub fn discard(&mut self, key: &str) {
-        self.data.remove(key.into());
+        self.data.remove(key);
     }
 }
 

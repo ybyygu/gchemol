@@ -1,4 +1,10 @@
 
+# v0.0.30 - <span class="timestamp-wrapper"><span class="timestamp">[2019-04-17 Wed]</span></span>
+
+-   fixed compiling error with new version of Rust
+-   io: public \`describe\_backends\` method
+
+
 # v0.0.29 - <span class="timestamp-wrapper"><span class="timestamp">[2019-04-08 Mon]</span></span>
 
 -   add a struct for making supercell: \`Supercell\`
