@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2019-04-19 Fri 13:36>
+//       UPDATED:  <2019-04-20 Sat 11:54>
 //===============================================================================#
 // header:1 ends here
 
@@ -20,21 +20,21 @@
 use std::collections::HashMap;
 use std::convert;
 
+use crate::core_utils::*;
 use petgraph;
 use petgraph::prelude::*;
-use crate::core_utils::*;
 
 mod property;
 use self::property::PropertyStore;
 use crate::lattice::Lattice;
 
-mod edit;
-mod view;
-mod formula;
-mod fragment;
 mod clean;
 mod connect;
+mod edit;
+mod formula;
+mod fragment;
 mod order;
+mod view;
 
 #[cfg(test)]
 mod test;
@@ -166,7 +166,8 @@ const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
     ("Uup", "ununpentium"),
     ("Uuh", "ununhexium"),
     ("Uus", "ununseptium"),
-    ("Uuo", "ununoctium")];
+    ("Uuo", "ununoctium"),
+];
 // globals:1 ends here
 
 // base
@@ -183,8 +184,8 @@ pub enum AtomKind {
 impl AtomKind {
     pub fn symbol(&self) -> &str {
         match self {
-            &Element(num) => ELEMENT_DATA[num-1].0,
-            &Dummy(ref sym) => sym
+            &Element(num) => ELEMENT_DATA[num - 1].0,
+            &Dummy(ref sym) => sym,
         }
     }
 
@@ -197,7 +198,7 @@ impl AtomKind {
 
     pub fn name(&self) -> String {
         match self {
-            &Element(num) => String::from(ELEMENT_DATA[num-1].1),
+            &Element(num) => String::from(ELEMENT_DATA[num - 1].1),
             &Dummy(ref sym) => format!("dummy atom {}", sym),
         }
     }
@@ -207,7 +208,7 @@ impl fmt::Display for AtomKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             &Element(num) => write!(f, "{:}", self.symbol()),
-            &Dummy(ref sym) =>  write!(f, "{:}", self.symbol()),
+            &Dummy(ref sym) => write!(f, "{:}", self.symbol()),
         }
     }
 }
@@ -216,7 +217,7 @@ impl fmt::Display for AtomKind {
 // test
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*test][test:1]]
-use self::AtomKind::{Element, Dummy};
+use self::AtomKind::{Dummy, Element};
 
 /// Return AtomKind using common sense
 pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
@@ -229,9 +230,9 @@ pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
 
     // element specified in symbol or long name
     let _sym = sym.to_uppercase();
-    for (i, &(s, n) ) in ELEMENT_DATA.iter().enumerate() {
-        if s.to_uppercase() == _sym  || n.to_uppercase() == _sym {
-            return Element(i+1);
+    for (i, &(s, n)) in ELEMENT_DATA.iter().enumerate() {
+        if s.to_uppercase() == _sym || n.to_uppercase() == _sym {
+            return Element(i + 1);
         }
     }
 
