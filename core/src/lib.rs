@@ -30,6 +30,7 @@ pub mod geometry {
 pub mod data;
 pub mod lattice;
 pub mod molecule;
+pub mod trajectory;
 
 pub use crate::molecule::{Atom, AtomIndex, AtomKind, Bond, BondIndex, BondKind, Molecule};
 

@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2019-04-20 Sat 11:54>
+//       UPDATED:  <2019-04-20 Sat 11:56>
 //===============================================================================#
 // header:1 ends here
 
@@ -39,8 +39,8 @@ mod view;
 #[cfg(test)]
 mod test;
 
-pub type Point3D = [f64; 3];
-pub type Points = Vec<Point3D>;
+pub(crate) type Point3D = [f64; 3];
+pub(crate) type Points = Vec<Point3D>;
 // base:1 ends here
 
 // globals
