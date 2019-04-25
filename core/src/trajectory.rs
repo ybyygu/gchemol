@@ -1,9 +1,11 @@
 // imports
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*imports][imports:1]]
-use crate::core_utils::*;
 use crate::lattice::Lattice;
 use crate::molecule::Molecule;
+
+use crate::core_utils::*;
+//use quicli::prelude::*;
 // imports:1 ends here
 
 // core
@@ -60,17 +62,25 @@ impl Trajectory {
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*pub][pub:1]]
 use std::convert::TryFrom;
 
-impl TryFrom<&[Molecule]> for Trajectory {
+impl TryFrom<Vec<Molecule>> for Trajectory {
     type Error = Error;
 
-    fn try_from(mols: &[Molecule]) -> Result<Self> {
+    fn try_from(mols: Vec<Molecule>) -> Result<Self> {
         for (i, pair) in mols.windows(2).enumerate() {
             if !matchable(&pair[0], &pair[1]) {
-                bail!("found inconsistent molecules: {} -- {}!", i, i + 1);
+                bail!("found inconsistent molecules: {} -- {}!", i, i + 1)
             }
         }
 
-        Ok(Self::new(mols))
+        // FIXME: avoid re-allocation
+        Ok(Self::new(&mols))
+    }
+}
+
+impl Trajectory {
+    pub fn iter(&self) -> impl Iterator<Item = Molecule> {
+        let mut mol = self.parent.clone();
+        std::iter::from_fn(move || Some(mol.clone()))
     }
 }
 // pub:1 ends here

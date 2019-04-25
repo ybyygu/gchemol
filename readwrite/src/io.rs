@@ -1,6 +1,12 @@
+// imports
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*imports][imports:1]]
+use crate::core_utils::*;
+// imports:1 ends here
+
 // header
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*header][header:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*header][header:1]]
 //===============================================================================#
 //   DESCRIPTION:  basic read & write support for molecular file
 //
@@ -10,13 +16,13 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2018-12-22 Sat 13:31>
+//       UPDATED:  <2019-04-25 Thu 11:13>
 //===============================================================================#
 // header:1 ends here
 
 // trait
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*trait][trait:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*trait][trait:1]]
 use std::path::Path;
 
 use quicli;
@@ -70,7 +76,7 @@ impl ToFile for str {
 
 // molecule
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
 use gchemol_core::{Atom, Molecule};
 
 // import important traits
@@ -146,11 +152,8 @@ fn test_molecule_formats() {
 
 // molecules
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecules][molecules:1]]
-use crate::formats::{
-    ChemFileLike,
-    guess_chemfile,
-};
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*molecules][molecules:1]]
+use crate::formats::{guess_chemfile, ChemFileLike};
 
 type ReadResult = Result<Vec<Molecule>>;
 
@@ -178,24 +181,31 @@ impl<'a> FileOptions<'a> {
 
     /// set chemfile format
     pub fn fmt(&mut self, fmt: &'a str) -> &mut Self {
-        self.fmt = Some(fmt); self
+        self.fmt = Some(fmt);
+        self
     }
 
     /// read molecules from file
     pub fn read<P: AsRef<Path>>(&self, path: P) -> ReadResult {
         let path = path.as_ref();
-        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}", path.display(), self.fmt);
+        let msg = format_err!(
+            "not supported file\nfilename: {:}\n fmt: {:?}",
+            path.display(),
+            self.fmt
+        );
         let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
         let mols = chemfile.parse(path)?;
 
         Ok(mols)
     }
 
-    pub fn write<P: AsRef<Path>>(&self, path: P, mols: &Vec<Molecule>) -> Result<()> {
+    pub fn write<P: AsRef<Path>>(&self, path: P, mols: &[Molecule]) -> Result<()> {
         let path = path.as_ref();
-        let msg = format_err!("not supported file\nfilename: {:}\n fmt: {:?}",
-                              path.display(),
-                              self.fmt);
+        let msg = format_err!(
+            "not supported file\nfilename: {:}\n fmt: {:?}",
+            path.display(),
+            self.fmt
+        );
         let chemfile = guess_chemfile(path, self.fmt).ok_or(msg)?;
         chemfile.write(path, mols)
     }
@@ -211,7 +221,7 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Vec<Molecule>> {
 
 /// Write molecules into file
 /// file format will be determined according to the path
-pub fn write<P: AsRef<Path>>(path: P, mols: &Vec<Molecule>) -> Result<()>{
+pub fn write<P: AsRef<Path>>(path: P, mols: &[Molecule]) -> Result<()> {
     let path = path.as_ref();
     FileOptions::new().write(path, mols)
 }
@@ -220,9 +230,36 @@ pub fn write<P: AsRef<Path>>(path: P, mols: &Vec<Molecule>) -> Result<()>{
 fn test_io_read_plain_xyz() {
     let mols = FileOptions::new()
         .fmt("text/pxyz")
-        .read("tests/files/xyz/ele-num.pxyz").unwrap();
+        .read("tests/files/xyz/ele-num.pxyz")
+        .unwrap();
 
     assert_eq!(1, mols.len());
     assert_eq!(17, mols[0].natoms());
 }
 // molecules:1 ends here
+
+// trajectory
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*trajectory][trajectory:1]]
+use crate::gchemol_core::trajectory::*;
+use std::convert::TryFrom;
+use std::convert::TryInto;
+
+impl FromFile for Trajectory {
+    /// Construct molecule from external text file
+    fn from_file<P: AsRef<Path>>(path: P) -> Result<Trajectory> {
+        let path = path.as_ref();
+        guess_chemfile_from_filename(path)?.parse(path)?.try_into()
+    }
+}
+
+impl ToFile for Trajectory {
+    /// Save trajectory to an external file
+    fn to_file<T: AsRef<Path>>(&self, filename: T) -> Result<()> {
+        let filename = filename.as_ref();
+
+        let mols: Vec<_> = self.iter().collect();
+        write(filename, &mols)
+    }
+}
+// trajectory:1 ends here
