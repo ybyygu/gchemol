@@ -6,16 +6,15 @@
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*property.rs][property.rs:1]]
 use std::collections::HashMap;
 
-use serde::{
-    de::DeserializeOwned,
-    ser::Serialize,
-};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+// use serde::de::DeserializeOwned;
+//use serde::{de::DeserializeOwned, ser::Serialize};
 
 use serde_json;
 use std::result;
 
 /// A container storing extra information managed as key/value pairs
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct PropertyStore {
     data: HashMap<String, String>,
 }

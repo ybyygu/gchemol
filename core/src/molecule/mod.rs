@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2019-04-20 Sat 11:56>
+//       UPDATED:  <2019-04-29 Mon 09:35>
 //===============================================================================#
 // header:1 ends here
 
@@ -20,12 +20,12 @@
 use std::collections::HashMap;
 use std::convert;
 
-use crate::core_utils::*;
 use petgraph;
 use petgraph::prelude::*;
+use serde::{Deserialize, Serialize};
 
-mod property;
 use self::property::PropertyStore;
+use crate::core_utils::*;
 use crate::lattice::Lattice;
 
 mod clean;
@@ -34,6 +34,7 @@ mod edit;
 mod formula;
 mod fragment;
 mod order;
+mod property;
 mod view;
 
 #[cfg(test)]
@@ -173,7 +174,7 @@ const ELEMENT_DATA: [(&'static str, &'static str); 118] = [
 // base
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*base][base:1]]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum AtomKind {
     /// physical elements
     Element(usize),
@@ -267,13 +268,13 @@ fn test_element() {
 use std::hash::Hash;
 use std::cmp::Ordering;
 
-#[derive (Debug, Clone)]
 /// Atom is the smallest particle still characterizing a chemical element.
 ///
 /// # Reference
 ///
 /// https://goldbook.iupac.org/html/A/A00493.html
 ///
+#[derive (Debug, Clone, Deserialize, Serialize)]
 pub struct Atom {
     /// Arbitrary property stored in key-value pair.
     /// Key is a string type, but it is the responsibility
@@ -402,7 +403,7 @@ impl Atom {
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*atom%20data%20builder][atom data builder:1]]
 /// Atom specific data independent of the molecule
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AtomData {
     /// Atom type, could be an element or a pseudo-atom
     kind: AtomKind,
@@ -421,9 +422,9 @@ pub struct AtomData {
 }
 
 impl Default for AtomData {
-    fn default()  -> Self {
+    fn default() -> Self {
         AtomData {
-            kind: Element(6),   // carbon atom
+            kind: Element(6), // carbon atom
             position: [0.0; 3],
             momentum: [0.0; 3],
             velocity: [0.0; 3],
@@ -442,21 +443,25 @@ impl AtomData {
 
     /// Set atom position
     pub fn position(&mut self, x: f64, y: f64, z: f64) -> &mut Self {
-        self.position = [x, y, z]; self
+        self.position = [x, y, z];
+        self
     }
 
     /// Set atom kind using element number
     pub fn element(&mut self, n: usize) -> &mut Self {
-        self.kind = Element(n); self
+        self.kind = Element(n);
+        self
     }
 
     /// Set atom kind using element symbol
     pub fn symbol<T: Into<String>>(&mut self, s: T) -> &mut Self {
-        self.kind = atom_kind_from_string(s.into()); self
+        self.kind = atom_kind_from_string(s.into());
+        self
     }
 
     pub fn momentum(&mut self, x: f64, y: f64, z: f64) -> &mut Self {
-        self.momentum = [x, y, z]; self
+        self.momentum = [x, y, z];
+        self
     }
 
     /// return a new `Atom` struct
@@ -572,11 +577,10 @@ fn test_atom_string_conversion() {
 // test:1 ends here
 
 // src
-// #+name: 7ff70329-69ef-4221-a539-fb097258d0a6
 
-// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::7ff70329-69ef-4221-a539-fb097258d0a6][7ff70329-69ef-4221-a539-fb097258d0a6]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*src][src:1]]
 /// https://en.wikipedia.org/wiki/Bond_order
-#[derive(Debug, Clone, Copy, PartialOrd, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialOrd, PartialEq, Deserialize, Serialize)]
 pub enum BondKind {
     Dummy,
     Partial,
@@ -595,27 +599,27 @@ pub enum BondKind {
 /// # Reference
 /// https://goldbook.iupac.org/html/B/B00697.html
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Bond {
-    pub kind : BondKind,
-    pub name : String,
+    pub kind: BondKind,
+    pub name: String,
 
     /// will be managed by molecule
     index: BondIndex,
 
     /// set this attribute for arbitrary bond order
-    order    : Option<f64>,
+    order: Option<f64>,
 }
 
 impl Default for Bond {
     fn default() -> Self {
         Bond {
-            order : None,
-            kind  : BondKind::Single,
+            order: None,
+            kind: BondKind::Single,
 
             // private
-            name  : String::default(),
-            index : BondIndex::new(0),
+            name: String::default(),
+            index: BondIndex::new(0),
         }
     }
 }
@@ -636,12 +640,12 @@ impl Bond {
             order
         } else {
             match self.kind {
-                BondKind::Dummy     => 0.0,
-                BondKind::Partial   => 0.5,
-                BondKind::Single    => 1.0,
-                BondKind::Aromatic  => 1.5,
-                BondKind::Double    => 2.0,
-                BondKind::Triple    => 3.0,
+                BondKind::Dummy => 0.0,
+                BondKind::Partial => 0.5,
+                BondKind::Single => 1.0,
+                BondKind::Aromatic => 1.5,
+                BondKind::Double => 2.0,
+                BondKind::Triple => 3.0,
                 BondKind::Quadruple => 4.0,
             }
         }
@@ -719,19 +723,18 @@ impl Bond {
         None
     }
 }
-// 7ff70329-69ef-4221-a539-fb097258d0a6 ends here
+// src:1 ends here
 
 // test
-// #+name: 486bd5a4-e762-46bf-a237-e692393a795d
 
-// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::486bd5a4-e762-46bf-a237-e692393a795d][486bd5a4-e762-46bf-a237-e692393a795d]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*test][test:1]]
 #[test]
 fn test_bond() {
     let b = Bond::default();
     let b = Bond::new(1.5);
     assert_eq!(1.5, b.order());
 }
-// 486bd5a4-e762-46bf-a237-e692393a795d ends here
+// test:1 ends here
 
 // molecule
 
@@ -751,7 +754,7 @@ pub type BondIndex = EdgeIndex;
 /// 1. http://goldbook.iupac.org/M03986.html
 /// 2. https://en.wikipedia.org/wiki/Molecular_entity
 ///
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Molecule {
     /// Molecular name. The default value is `untitled`. This field may be used
     /// to store a registry number or other identifier, instead of a common
@@ -799,7 +802,7 @@ impl Molecule {
     }
 
     /// Construct from an existing graph
-    pub fn from_graph(graph: MolGraph) -> Self{
+    pub fn from_graph(graph: MolGraph) -> Self {
         Molecule {
             graph: graph,
             ..Default::default()
@@ -888,9 +891,8 @@ impl IntoBondIndex for BondIndex {
 // TODO charge, spin, magmon
 // 定义分子体系的电荷, 自旋等参数. ase里每个原子都有一个magmon的参数.
 
-// #+name: 80dcc47b-b7dc-4ba7-a9d6-a567831bae93
 
-// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::80dcc47b-b7dc-4ba7-a9d6-a567831bae93][80dcc47b-b7dc-4ba7-a9d6-a567831bae93]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*charge,%20spin,%20magmon][charge, spin, magmon:1]]
 impl Molecule {
     // TODO
     /// Return molecule net charge
@@ -911,4 +913,4 @@ impl Molecule {
         unimplemented!()
     }
 }
-// 80dcc47b-b7dc-4ba7-a9d6-a567831bae93 ends here
+// charge, spin, magmon:1 ends here

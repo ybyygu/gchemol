@@ -1,4 +1,10 @@
 
+# v0.0.31 - <span class="timestamp-wrapper"><span class="timestamp">[2019-04-29 Mon]</span></span>
+
+-   update nalgebra to v0.18
+-   serialize/deserialize \`Molecule\` using serde
+
+
 # v0.0.30 - <span class="timestamp-wrapper"><span class="timestamp">[2019-04-17 Wed]</span></span>
 
 -   fixed compiling error with new version of Rust

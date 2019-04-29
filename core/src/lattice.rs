@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2019-04-08 Mon 11:01>
+//       UPDATED:  <2019-04-29 Mon 09:23>
 //===============================================================================#
 // header:1 ends here
 
@@ -24,11 +24,13 @@ use nalgebra::{
     Vector3, // A stack-allocated, 3-dimensional column vector.
 };
 
+use serde::{Deserialize, Serialize};
+
 type Matrix3f = Matrix3<f64>;
 type Vector3f = Vector3<f64>;
 
 /// Periodic 3D lattice
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize)]
 pub struct Lattice {
     /// internal translation matrix
     matrix: Matrix3f,
@@ -593,6 +595,7 @@ fn make_supercell(
             }
         }
     }
+
     // update lattice
     let mut vabc = lat.vectors();
     let size = [

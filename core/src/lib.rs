@@ -4,17 +4,6 @@
 // :END:
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*lib.rs][lib.rs:1]]
-extern crate petgraph;
-#[macro_use]
-extern crate indexmap;
-extern crate nalgebra;
-extern crate serde;
-#[macro_use]
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-extern crate itertools;
-
 #[cfg(test)]
 #[macro_use]
 extern crate approx;

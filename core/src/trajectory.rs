@@ -1,3 +1,10 @@
+// header
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*header][header:1]]
+/// A Trajectory represents a collection of molecules in the same size but with
+/// different configurations.
+// header:1 ends here
+
 // imports
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*imports][imports:1]]
@@ -11,8 +18,6 @@ use crate::core_utils::*;
 // core
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*core][core:1]]
-pub struct Conformation {}
-
 pub struct Configuration {
     /// The molecule positions.
     positions: Vec<[f64; 3]>,

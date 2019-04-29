@@ -1,6 +1,6 @@
 // types
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*types][types:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*types][types:1]]
 use crate::core_utils::*;
 
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
@@ -28,7 +28,7 @@ pub type FloatVec = na::DVector<f64>;
 
 // general
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*general][general:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*general][general:1]]
 /// A trait provides useful tools for Vec<f64> type.
 pub trait VecFloatMath {
     /// Convert to nalgebra dynamic 1xN vector
@@ -40,7 +40,7 @@ pub trait VecFloatMath {
 
 impl VecFloatMath for [f64] {
     fn to_dvector(&self) -> FloatVec {
-        FloatVec::from_column_slice(self.len(), &self)
+        FloatVec::from_column_slice(&self)
     }
 
     #[inline]
@@ -165,7 +165,7 @@ impl VecFloat3Math for [[f64; 3]] {
 
     fn to_dmatrix(&self) -> Vector3fVec {
         let r = self.as_flat();
-        Vector3fVec::from_column_slice(self.len(), r)
+        Vector3fVec::from_column_slice(r)
     }
 
     fn center_of_mass(&self, masses: &[f64]) -> Result<Position> {
@@ -252,7 +252,7 @@ fn test_point3_math() {
 
 // positions
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*positions][positions:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*positions][positions:1]]
 /// Treat a flat slice as 3D positions
 ///
 /// # Panics
@@ -334,7 +334,7 @@ fn test_as_positions() {
 
 // functions
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::*functions][functions:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*functions][functions:1]]
 #[inline]
 pub fn euclidean_distance(p1: [f64; 3], p2: [f64; 3]) -> f64 {
     let mut d2 = 0.0;

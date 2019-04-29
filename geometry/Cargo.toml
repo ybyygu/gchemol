@@ -3,12 +3,12 @@
 # [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*cargo][cargo:1]]
 [package]
 name = "gchemol-geometry"
-version = "0.0.30"
+version = "0.0.31"
 edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
-nalgebra = "0.16"
+nalgebra = {version="0.18", features=["serde-serialize"]}
 quicli = "0.4"
 libtest = "0.0.1"
 rand = "=0.5"

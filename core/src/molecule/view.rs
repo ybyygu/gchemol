@@ -1,4 +1,6 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::e1d0c51a-0dd7-4977-ae54-7928ee46d373][e1d0c51a-0dd7-4977-ae54-7928ee46d373]]
+// atoms view
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*atoms%20view][atoms view:1]]
 use std::ops::Index;
 use super::*;
 
@@ -80,10 +82,12 @@ impl Molecule {
         AtomsView::new(&self)
     }
 }
-// e1d0c51a-0dd7-4977-ae54-7928ee46d373 ends here
+// atoms view:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::5916eec2-ec7e-4525-bc6c-fade1d250a16][5916eec2-ec7e-4525-bc6c-fade1d250a16]]
-use indexmap::IndexMap;
+// bonds view
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*bonds%20view][bonds view:1]]
+use indexmap::{IndexMap, indexmap};
 
 /// A list-like object providing a convenient view on bonds in molecule
 #[derive(Debug, Clone)]
@@ -192,4 +196,4 @@ impl Molecule {
         BondsView::new(&self)
     }
 }
-// 5916eec2-ec7e-4525-bc6c-fade1d250a16 ends here
+// bonds view:1 ends here
