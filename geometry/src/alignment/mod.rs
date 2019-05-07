@@ -13,18 +13,28 @@ mod quaternion;
 
 // superpose
 
-// pub enum SuperpositionAlgo {
-//     QCP,
-//     Quaternion
-// }
+#[derive(Clone, Copy, Debug)]
+pub enum SuperpositionAlgo {
+    QCP,
+    Quaternion,
+}
+
+impl Default for SuperpositionAlgo {
+    fn default() -> Self {
+        SuperpositionAlgo::QCP
+        // SuperpositionAlgo::Quaternion
+    }
+}
 
 /// The result of alignment defining how to superimpose.
 #[derive(Clone, Debug)]
 pub struct Superposition {
     /// superpostion rmsd
     pub rmsd: f64,
+
     /// translation vector
     pub translation: Vector3f,
+
     /// rotation matrix
     pub rotation_matrix: Matrix3f,
 }
@@ -48,6 +58,9 @@ impl Superposition {
 pub struct Alignment<'a> {
     /// The positions of the candidate structure
     positions: &'a [[f64; 3]],
+
+    /// Select algo
+    pub algorithm: SuperpositionAlgo,
 }
 
 impl<'a> Alignment<'a> {
@@ -55,6 +68,7 @@ impl<'a> Alignment<'a> {
     pub fn new(positions: &'a [[f64; 3]]) -> Self {
         Alignment {
             positions,
+            algorithm: SuperpositionAlgo::default(),
         }
     }
 
@@ -97,10 +111,20 @@ impl<'a> Alignment<'a> {
     /// ----------
     /// * reference: reference coordinates
     /// * weights  : weight of each point
-    pub fn superpose(&mut self, reference: &[[f64; 3]], weights: Option<&[f64]>) -> Result<Superposition> {
+    pub fn superpose(
+        &mut self,
+        reference: &[[f64; 3]],
+        weights: Option<&[f64]>,
+    ) -> Result<Superposition> {
         // calculate the RMSD & rotational matrix
-        let (rmsd, trans, rot) = qcprot::calc_rmsd_rotational_matrix(&reference, &self.positions, weights);
-        // let (rmsd, trans, rot) = quaternion::calc_rmsd_rotational_matrix(&reference, &self.positions, weights);
+        let (rmsd, trans, rot) = match self.algorithm {
+            SuperpositionAlgo::QCP => {
+                qcprot::calc_rmsd_rotational_matrix(&reference, &self.positions, weights)
+            }
+            SuperpositionAlgo::Quaternion => {
+                quaternion::calc_rmsd_rotational_matrix(&reference, &self.positions, weights)
+            }
+        };
 
         // return unit matrix if two structures are already close enough
         let rotation_matrix = if let Some(rot) = rot {
@@ -137,21 +161,29 @@ fn test_alignment() {
 
     // validation
     let rot_expected = Matrix3f::from_row_slice(&[
-        0.77227551,    0.63510272,   -0.01533190,
-        -0.44544846,    0.52413614,   -0.72584914,
-        -0.45295276,    0.56738509,    0.68768304,
+        0.77227551,
+        0.63510272,
+        -0.01533190,
+        -0.44544846,
+        0.52413614,
+        -0.72584914,
+        -0.45295276,
+        0.56738509,
+        0.68768304,
     ]);
-    assert_relative_eq!(rot_expected, rot, epsilon=1e-4);
+    assert_relative_eq!(rot_expected, rot, epsilon = 1e-4);
 }
 
 #[test]
 fn test_alignment2() {
-    use gchemol::prelude::FromFile;
     use gchemol::molecule::Molecule;
+    use gchemol::prelude::FromFile;
 
     // load test molecules
-    let mol1 = Molecule::from_file("tests/files/alignment/reference.mol2").expect("alignment reference");
-    let mol2 = Molecule::from_file("tests/files/alignment/candidate.mol2").expect("alignment candidate");
+    let mol1 =
+        Molecule::from_file("tests/files/alignment/reference.mol2").expect("alignment reference");
+    let mol2 =
+        Molecule::from_file("tests/files/alignment/candidate.mol2").expect("alignment candidate");
 
     // take the first 5 atoms for superposition
     let reference = &mol1.positions()[0..5];
@@ -163,5 +195,5 @@ fn test_alignment2() {
 
     // apply superposition to all atoms
     let new = sp.apply(&candidate);
-    assert_relative_eq!(reference.to_dmatrix(), new.to_dmatrix(), epsilon=1e-3);
+    assert_relative_eq!(reference.to_dmatrix(), new.to_dmatrix(), epsilon = 1e-3);
 }
