@@ -23,6 +23,8 @@ pub mod trajectory;
 
 pub use crate::molecule::{Atom, AtomIndex, AtomKind, Bond, BondIndex, BondKind, Molecule};
 
+pub use crate::trajectory::Trajectory;
+
 pub use crate::lattice::{Lattice, Supercell};
 
 mod core_utils {

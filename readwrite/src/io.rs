@@ -16,7 +16,7 @@ use crate::core_utils::*;
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2019-04-25 Thu 11:13>
+//       UPDATED:  <2019-06-02 Sun 14:24>
 //===============================================================================#
 // header:1 ends here
 
@@ -121,8 +121,7 @@ impl StringIO for Molecule {
         let fmt = fmt.as_ref();
         let cf = guess_chemfile_from_fmt(fmt)?;
 
-        let s = s.as_ref();
-        let m = cf.parse_from(s)?;
+        let m = cf.parse_from(s.as_ref())?;
 
         Ok(m)
     }

@@ -1,6 +1,6 @@
 // traits
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*traits][traits:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*traits][traits:1]]
 /// Render molecule in user defined format
 pub trait TemplateRendering {
     /// Render molecule with user defined template
@@ -16,7 +16,7 @@ impl TemplateRendering for Molecule {
 
 // imports
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*imports][imports:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*imports][imports:1]]
 use handlebars::*;
 use serde_derive;
 
@@ -31,7 +31,7 @@ use gchemol_core::{Atom, Molecule};
 
 // format float number
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*format%20float%20number][format float number:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*format%20float%20number][format float number:1]]
 // https://docs.rs/handlebars/1.0.0/handlebars/trait.HelperDef.html
 // define a helper for formatting string or number
 fn format(
@@ -39,7 +39,7 @@ fn format(
     _: &Handlebars,
     _: &Context,
     rc: &mut RenderContext,
-    out: &mut Output,
+    out: &mut dyn Output,
 ) -> HelperResult {
     // get positional parameter from helper or throw an error
     let param = h
@@ -102,7 +102,7 @@ fn format(
 
 // core
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*core][core:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*core][core:1]]
 #[derive(Debug, Serialize)]
 struct AtomData {
     index: usize,
@@ -266,7 +266,7 @@ fn molecule_to_template_data(mol: &Molecule) -> serde_json::Value {
             index: i + 1,
             element_symbol: s.clone(),
             // FIXME: dirty
-            element_number: Atom::new(s.as_ref(), [0.0; 3]).number(),
+            element_number: Atom::new(s, [0.0; 3]).number(),
             number_of_atoms: *n,
         })
         .collect();

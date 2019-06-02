@@ -1,4 +1,9 @@
 
+# v0.0.32 - <span class="timestamp-wrapper"><span class="timestamp">[2019-06-02 Sun]</span></span>
+
+-   fixed compiling errors in new version of rust (1.37)
+
+
 # v0.0.31 - <span class="timestamp-wrapper"><span class="timestamp">[2019-04-29 Mon]</span></span>
 
 -   update nalgebra to v0.18
