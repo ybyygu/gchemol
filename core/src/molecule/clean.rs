@@ -88,6 +88,7 @@ fn get_weight_between(lij: f64, uij: f64, dij: f64) -> f64 {
     debug_assert!(lij <= uij);
 
     let weight = if dij >= lij && dij < uij {
+        // avoid dividing by zero (nan)
         1e-4
     } else if dij < lij {
         1.0
@@ -163,7 +164,7 @@ impl Molecule {
                     // ij pair counts twice, so divide the weight
                     // let wij = lij.powi(-4);
                     let wij = get_weight_between(lij, uij, cur_dij);
-                    dbg!((wij, lij, uij, cur_dij));
+                    // dbg!((wij, lij, uij, cur_dij));
                     let wij = 0.5 * wij;
                     wijs.push(wij);
 
@@ -181,7 +182,7 @@ impl Molecule {
                 let swij: f64 = wijs.iter().sum();
 
                 // FIXME: if all pair weights are zero
-                dbg!(swij);
+                // dbg!(swij);
                 debug_assert!(swij.abs() >= 1e-4);
                 for v in 0..3 {
                     pi_new[v] /= swij;
