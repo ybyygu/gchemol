@@ -3,7 +3,7 @@
 # [[file:~/Workspace/Programming/gchemol-rs/gchemol/gchemol/gchemol.note::*cargo][cargo:1]]
 [package]
 name = "gchemol"
-version = "0.0.31"
+version = "0.0.33"
 edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
