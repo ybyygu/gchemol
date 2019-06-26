@@ -8,7 +8,7 @@ edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
-nom = ">=4.1.0"
+nom = "4"
 handlebars = "1.1"
 quicli = "0.4"
 indexmap = "1.0"
