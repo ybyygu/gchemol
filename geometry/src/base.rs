@@ -4,7 +4,8 @@
 use crate::core_utils::*;
 
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
-pub use libtest::stats::Stats;
+// pub use libtest::stats::Stats;
+pub use crate::stats::Stats;
 use nalgebra as na;
 
 /// Vector in 3D space

@@ -9,7 +9,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 14:40>
-//       UPDATED:  <2018-12-22 Sat 13:28>
+//       UPDATED:  <2019-07-03 Wed 16:59>
 //===============================================================================#
 
 use crate::molecule::{
@@ -22,6 +22,22 @@ use crate::molecule::{
 
 use crate::geometry::prelude::euclidean_distance;
 use crate::core_utils::*;
+
+// base
+
+#[derive(Deserialize, Debug)]
+#[serde(default)]
+pub struct Config {
+    bonding_ratio: f64,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            bonding_ratio: 1.15,
+        }
+    }
+}
 
 // element radii data
 // Element radii data taking from: https://mendeleev.readthedocs.io/en/stable/data.html
@@ -182,11 +198,20 @@ fn get_vdw_radius(element_number: usize) -> Option<f64> {
 }
 
 pub fn guess_bond_kind(atom1: &Atom, atom2: &Atom) -> BondKind {
+    let config = match envy::prefixed("GCHEMOL_").from_env::<Config>() {
+        Ok(config) => config,
+        Err(error) => {
+            error!("{:?}", error);
+            Config::default()
+        }
+    };
+
     if let Some(cr1) = get_cov_radius(atom1.number(), 1) {
         if let Some(cr2) = get_cov_radius(atom2.number(), 1) {
             let d12 = atom1.distance(atom2);
 
-            let rcutoff = (cr1 + cr2)*1.15;
+            let r = config.bonding_ratio;
+            let rcutoff = (cr1 + cr2) * r;
             if d12 > rcutoff {
                 return BondKind::Dummy;
             } else {

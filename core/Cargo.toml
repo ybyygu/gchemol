@@ -3,7 +3,7 @@
 # [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*cargo][cargo:1]]
 [package]
 name = "gchemol-core"
-version = "0.0.33"
+version = "0.0.34"
 edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
@@ -12,6 +12,7 @@ nalgebra = {version="0.18", features=["serde-serialize"]}
 petgraph = {version="0.4", features=["serde-1"]}
 indexmap = {version="1.0", features=["serde-1"]}
 serde = {version="1.0", features = ["derive"]}
+envy = "0.4"
 serde_json = "1.0"
 itertools = "0.8"
 quicli = "0.4"
