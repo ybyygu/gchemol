@@ -1,6 +1,6 @@
 // base
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*base][base:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*base][base:1]]
 /// Tripos Mol2 File Format
 ///
 /// Reference
@@ -28,7 +28,7 @@ use super::*;
 // atom_id atom_name x y z atom_type [subst_id [subst_name [charge [status_bit]]]]
 
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*atoms][atoms:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*atoms][atoms:1]]
 /// Parse Tripos Atom section
 named!(read_atoms<&str, Vec<(usize, Atom)>>, preceded!(
     ws!(tag!("@<TRIPOS>ATOM")),
@@ -114,16 +114,16 @@ named!(atom_subst_and_charge<&str, (usize, &str, Option<f64>)>, sp!(do_parse!(
 /// I just want material studio happy to accept my .mol2 file
 fn get_atom_type(atom: &Atom) -> &str {
     match atom.symbol() {
-        "C"  => "C.3",
-        "P"  => "P.3",
+        "C" => "C.3",
+        "P" => "P.3",
         "Co" => "Co.oh",
         "Ru" => "Ru.oh",
-        "O"  => "O.2",
-        "N"  => "N.3",
-        "S"  => "S.2",
+        "O" => "O.2",
+        "N" => "N.3",
+        "S" => "S.2",
         "Ti" => "Ti.oh",
         "Cr" => "Cr.oh",
-        _    => atom.symbol(),
+        _ => atom.symbol(),
     }
 }
 
@@ -144,8 +144,8 @@ fn format_atom(a: &Atom) -> String {
 
 #[test]
 fn test_formats_mol2_atom() {
-    let (r, (_, a)) = read_atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE	0.000	DICT\n")
-        .expect("mol2 full");
+    let (r, (_, a)) =
+        read_atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE	0.000	DICT\n").expect("mol2 full");
     assert_eq!("C", a.symbol());
     let (r, (_, a)) = read_atom_record(" 3	C3	2.414	0.000	0.000	C.ar	1	BENZENE	0.000\n")
         .expect("mol2 atom: missing status bit");
@@ -170,7 +170,7 @@ fn test_formats_mol2_atom() {
 // bond_id origin_atom_id target_atom_id bond_type [status_bits]
 
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*bond][bond:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*bond][bond:1]]
 /// Parse Tripos Bond section
 named!(read_bonds<&str, Vec<(usize, usize, Bond)>>, do_parse!(
            tag!("@<TRIPOS>BOND")       >> eol >>
@@ -211,7 +211,7 @@ named!(read_bond_record<&str, (usize, usize, Bond)>, sp!(do_parse!(
                 "ar" => Bond::aromatic(),
                 "am" => Bond::aromatic(),
                 "nc" => Bond::dummy(),
-                "wc" => Bond::partial(), // gaussian view use this
+                "wk" => Bond::partial(), // gaussian view use this
                 _    => Bond::single()
             };
             (n1, n2, bond)
@@ -253,7 +253,7 @@ fn format_bond_order(bond: &Bond) -> &str {
 // @<TRIPOS>CRYSIN
 // cell cell cell cell cell cell space_grp setting
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*lattice][lattice:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*lattice][lattice:1]]
 named!(read_lattice<&str, Lattice>, sp!(do_parse!(
                 tag!("@<TRIPOS>CRYSIN") >>
                 tag!("\n")              >>
@@ -289,7 +289,7 @@ fn test_formats_mol2_crystal() {
 // - charge_type
 // - [status_bits [mol_comment]]
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
 fn read_molecule(input: &str) -> IResult<&str, Molecule> {
     let (input, _) = read_lines_until(input, "@<TRIPOS>MOLECULE")?;
 
@@ -361,7 +361,7 @@ fn read_molecule(input: &str) -> IResult<&str, Molecule> {
 
 // chemfile
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
 pub struct Mol2File();
 
 impl ChemFileLike for Mol2File {
@@ -447,7 +447,7 @@ impl ChemFileLike for Mol2File {
 
 // test
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*test][test:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*test][test:1]]
 #[test]
 fn test_formats_mol2() {
     let file = Mol2File();
