@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2019-04-29 Mon 09:23>
+//       UPDATED:  <2019-12-23 Mon 16:38>
 //===============================================================================#
 // header:1 ends here
 
@@ -19,15 +19,9 @@
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*base][base:1]]
 use crate::core_utils::*;
 
-use nalgebra::{
-    Matrix3, // A stack-allocated, column-major, 3x3 square matrix
-    Vector3, // A stack-allocated, 3-dimensional column vector.
-};
+use vecfx::{Matrix3f, Vector3f};
 
 use serde::{Deserialize, Serialize};
-
-type Matrix3f = Matrix3<f64>;
-type Vector3f = Vector3<f64>;
 
 /// Periodic 3D lattice
 #[derive(Debug, Clone, Copy, Deserialize, Serialize)]
@@ -221,7 +215,7 @@ impl Lattice {
     /// Check if lattice is orthorhombic
     pub fn is_orthorhombic(&self) -> bool {
         let diag = self.matrix.diagonal();
-        let m = Matrix3::from_diagonal(&diag);
+        let m = Matrix3f::from_diagonal(&diag);
         m == self.matrix
     }
 }
