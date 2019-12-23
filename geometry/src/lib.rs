@@ -4,8 +4,6 @@
 // :END:
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*lib.rs][lib.rs:1]]
-#![feature(test)]
-
 // for test-only uses
 #[cfg(test)]
 #[macro_use]

@@ -2,11 +2,9 @@
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*types][types:1]]
 use crate::core_utils::*;
-
-/// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
-// pub use libtest::stats::Stats;
-pub use crate::stats::Stats;
 use vecfx::nalgebra as na;
+
+pub use crate::stats::*;
 
 /// Vector in 3D space
 pub type Vector3f = na::Vector3<f64>;
