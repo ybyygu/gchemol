@@ -4,7 +4,7 @@
 use crate::core_utils::*;
 use super::base::*;
 
-use nalgebra as na;
+use vecfx::nalgebra as na;
 
 type Rotation3f = na::Rotation3<f64>;
 

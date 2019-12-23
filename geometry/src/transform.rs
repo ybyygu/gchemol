@@ -1,10 +1,12 @@
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::26f9be7f-1dbd-4ac0-9cdf-4759ede5d338][26f9be7f-1dbd-4ac0-9cdf-4759ede5d338]]
+// src
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*src][src:1]]
 type Point3D = [f64; 3];
 type Points = Vec<Point3D>;
 
 use super::prelude::euclidean_distance;
 
-pub use nalgebra::{
+pub use vecfx::nalgebra::{
     Vector3,
     Rotation3,
 };
@@ -57,9 +59,9 @@ pub fn get_distance_matrix(points: Points) -> Vec<Vec<f64>>{
 
     distmat
 }
-// 26f9be7f-1dbd-4ac0-9cdf-4759ede5d338 ends here
+// src:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/geometry/geometry.note::c7248d32-74e1-47a8-8a78-56fef9ca529c][c7248d32-74e1-47a8-8a78-56fef9ca529c]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/geometry/geometry.note::*src][src:2]]
 /// rotate coordinates about x axis in radian
 pub fn rotate_about_x_axis(points: &Points, angle: f64, center: Point3D) -> Points {
     let axis = Vector3::x_axis();
@@ -75,4 +77,4 @@ pub fn rotate_about_x_axis(points: &Points, angle: f64, center: Point3D) -> Poin
 
     rpoints
 }
-// c7248d32-74e1-47a8-8a78-56fef9ca529c ends here
+// src:2 ends here

@@ -8,7 +8,7 @@ edition = "2018"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
-nalgebra = {version="0.18", features=["serde-serialize"]}
+vecfx = { git = "https://github.com/gchemol/vecfx.git", features = ["nalgebra"] }
 petgraph = {version="0.4", features=["serde-1"]}
 indexmap = {version="1.0", features=["serde-1"]}
 serde = {version="1.0", features = ["derive"]}

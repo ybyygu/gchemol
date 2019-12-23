@@ -6,7 +6,7 @@ use crate::core_utils::*;
 /// Providing simple statistics methods (min, max, mean, var, ...) for [f64]
 // pub use libtest::stats::Stats;
 pub use crate::stats::Stats;
-use nalgebra as na;
+use vecfx::nalgebra as na;
 
 /// Vector in 3D space
 pub type Vector3f = na::Vector3<f64>;

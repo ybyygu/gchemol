@@ -6,7 +6,7 @@
 
 
 use crate::base::*;
-use nalgebra as na;
+use vecfx::nalgebra as na;
 
 pub fn calc_rmsd_rotational_matrix(
     positions_ref: &[[f64; 3]],
