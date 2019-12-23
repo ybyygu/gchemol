@@ -1,6 +1,5 @@
 // basic stats
 
-#![feature(test)]
 #[macro_use]
 extern crate approx;
 
