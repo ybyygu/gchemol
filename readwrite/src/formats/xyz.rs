@@ -205,6 +205,13 @@ fn test_formats_xyz() {
     let natoms_expected = vec![16, 10, 16, 16, 16, 13];
     let natoms: Vec<_> = mols.iter().map(|m| m.natoms()).collect();
     assert_eq!(natoms_expected, natoms);
+
+    // pbc
+    let path = Path::new("tests/files/xyz/pbc.xyz");
+    let mols = file.parse(path).expect("pbc xyz");
+    assert_eq!(1, mols.len());
+    assert_eq!(32, mols[0].natoms());
+    assert!(mols[0].lattice.is_some());
 }
 // XYZFile:1 ends here
 
@@ -287,5 +294,12 @@ fn test_formats_plain_xyz() {
     let natoms_expected = vec![16, 10, 16, 16, 16, 13];
     let natoms: Vec<_> = mols.iter().map(|m| m.natoms()).collect();
     assert_eq!(natoms_expected, natoms);
+
+    // pbc
+    let path = Path::new("tests/files/xyz/pbc.pxyz");
+    let mols = file.parse(path).expect("pbc xyz");
+    assert_eq!(1, mols.len());
+    assert_eq!(32, mols[0].natoms());
+    assert!(mols[0].lattice.is_some());
 }
 // PlainXYZFile:1 ends here
