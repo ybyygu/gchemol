@@ -1,12 +1,12 @@
 // base
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*base][base:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*base][base:1]]
 use super::*;
 // base:1 ends here
 
 // atom/atoms
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*atom/atoms][atom/atoms:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*atom/atoms][atom/atoms:1]]
 /// Create Atom object from xyz line
 /// # Example
 /// C -11.4286  1.7645  0.0000
@@ -51,7 +51,7 @@ C -11.4286 -1.3155  0.0000
 
 // molecule
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
 /// Create a Molecule object from lines in plain xyz format (coordinates only)
 named!(read_molecule_pxyz<&str, Molecule>, do_parse!(
     atoms: read_atoms_xyz >>
@@ -120,7 +120,7 @@ H -13.7062  1.5395  0.0000\n";
 
 // XYZFile
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*XYZFile][XYZFile:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*XYZFile][XYZFile:1]]
 pub struct XYZFile();
 
 named!(parse_xyz<&str, Molecule>, do_parse!(
@@ -161,6 +161,14 @@ impl ChemFileLike for XYZFile {
             lines.push_str(&s);
         }
 
+        // write lattice transition vectors using Tv symbol.
+        if let Some(lat) = &mol.lattice {
+            for v in lat.vectors().iter() {
+                let line = format!("Tv {:-12.8} {:-12.8} {:-12.8}\n", v[0], v[1], v[2]);
+                lines.push_str(&line);
+            }
+        }
+
         Ok(lines)
     }
 }
@@ -186,7 +194,7 @@ fn test_formats_xyz() {
 
 // PlainXYZFile
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*PlainXYZFile][PlainXYZFile:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*PlainXYZFile][PlainXYZFile:1]]
 /// plain xyz coordinates with atom symbols
 #[derive(Debug, Clone)]
 pub struct PlainXYZFile();
@@ -220,6 +228,14 @@ impl ChemFileLike for PlainXYZFile {
 
         for a in mol.atoms() {
             lines.push_str(format!("{}\n", a.to_string()).as_ref());
+        }
+
+        // write lattice transition vectors using Tv symbol.
+        if let Some(lat) = &mol.lattice {
+            for v in lat.vectors().iter() {
+                let line = format!("Tv {:-12.8} {:-12.8} {:-12.8}\n", v[0], v[1], v[2]);
+                lines.push_str(&line);
+            }
         }
 
         // append a blank line as a separator between multiple molecules
