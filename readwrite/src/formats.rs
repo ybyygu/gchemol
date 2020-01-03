@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use crate::core_utils::*;
 use text_parser::*;
 use nom::IResult;
-use gchemol_core::{Atom, Bond, Molecule, Lattice, BondKind};
+use gchemol_core::{Atom, Bond, Molecule, Lattice, BondKind, AtomKind};
 // use:1 ends here
 
 // mods

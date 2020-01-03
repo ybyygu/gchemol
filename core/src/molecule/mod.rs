@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2020-01-03 Fri 12:57>
+//       UPDATED:  <2020-01-03 Fri 16:16>
 //===============================================================================#
 // header:1 ends here
 
@@ -237,7 +237,7 @@ pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
         }
     }
 
-    // treat as dummy atom for the last resort
+    // treat as dummy atom as the last resort
     Dummy(sym)
 }
 
@@ -312,6 +312,11 @@ impl Atom {
     /// Return atomic number
     pub fn number(&self) -> usize {
         self.data.kind.number()
+    }
+
+    /// Return atom kind
+    pub fn kind(&self) -> &AtomKind {
+        &self.data.kind
     }
 
     // FIXME: return &str?

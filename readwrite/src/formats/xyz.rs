@@ -58,8 +58,24 @@ named!(read_molecule_pxyz<&str, Molecule>, do_parse!(
     (
         {
             let mut mol = Molecule::new("plain xyz");
+            let mut lat_vectors = vec![];
             for a in atoms {
-                mol.add_atom(a);
+                match a.kind() {
+                    AtomKind::Dummy(x) => {
+                        if x == "TV" {
+                            info!("found TV dummy atom.");
+                            lat_vectors.push(a.position());
+                        }
+                    },
+                    AtomKind::Element(x) => {
+                        mol.add_atom(a);
+                    }
+                }
+            }
+            // construct lattice parsed from three "TV" dummy atoms.
+            if lat_vectors.len() == 3 {
+                let lat = Lattice::new([lat_vectors[0], lat_vectors[1], lat_vectors[2]]);
+                mol.set_lattice(lat);
             }
             mol
         }
@@ -161,10 +177,10 @@ impl ChemFileLike for XYZFile {
             lines.push_str(&s);
         }
 
-        // write lattice transition vectors using Tv symbol.
+        // write lattice transition vectors using TV symbol.
         if let Some(lat) = &mol.lattice {
             for v in lat.vectors().iter() {
-                let line = format!("Tv {:-12.8} {:-12.8} {:-12.8}\n", v[0], v[1], v[2]);
+                let line = format!("TV {:-12.8} {:-12.8} {:-12.8}\n", v[0], v[1], v[2]);
                 lines.push_str(&line);
             }
         }
@@ -230,10 +246,10 @@ impl ChemFileLike for PlainXYZFile {
             lines.push_str(format!("{}\n", a.to_string()).as_ref());
         }
 
-        // write lattice transition vectors using Tv symbol.
+        // write lattice transition vectors using TV symbol.
         if let Some(lat) = &mol.lattice {
             for v in lat.vectors().iter() {
-                let line = format!("Tv {:-12.8} {:-12.8} {:-12.8}\n", v[0], v[1], v[2]);
+                let line = format!("TV {:-12.8} {:-12.8} {:-12.8}\n", v[0], v[1], v[2]);
                 lines.push_str(&line);
             }
         }
