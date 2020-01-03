@@ -1,4 +1,6 @@
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*base][base:1]]
+// base
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*base][base:1]]
 use super::*;
 
 impl Molecule {
@@ -33,7 +35,9 @@ impl Molecule {
 }
 // base:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::9924e323-dd02-49d0-ab07-41208114546f][9924e323-dd02-49d0-ab07-41208114546f]]
+// one by one
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*one by one][one by one:1]]
 impl Molecule {
     /// Add a single atom into molecule
     /// Return an index to atom counting from 1
@@ -103,7 +107,7 @@ impl Molecule {
 
     /// Remove a bond specified by bond index
     /// Return the removed bond if it exists, or return None
-    pub fn remove_bond<T: IntoBondIndex>(&mut self, b: T) -> Option<Bond>{
+    pub fn remove_bond<T: IntoBondIndex>(&mut self, b: T) -> Option<Bond> {
         let b = b.into_bond_index();
         self.graph.remove_edge(b)
     }
@@ -147,16 +151,21 @@ impl Molecule {
         self.graph.edge_weight_mut(b)
     }
 }
-// 9924e323-dd02-49d0-ab07-41208114546f ends here
+// one by one:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::*batch%20edit][batch edit:1]]
 impl Molecule {
     /// add many atoms from a hashmap
-    pub fn add_atoms_from(&mut self, atoms: HashMap<&str, Atom>) -> Result<()>{
-        unimplemented!()
+    pub fn add_atoms_from<T>(&mut self, atoms: T)
+    where
+        T: IntoIterator,
+        T::Item: Into<Atom>,
+    {
+        for a in atoms {
+            self.add_atom(a.into());
+        }
     }
 
-    pub fn add_bonds_from(&mut self, bonds: HashMap<(String, String), Bond>) -> Result<()>{
+    pub fn add_bonds_from(&mut self, bonds: HashMap<(String, String), Bond>) -> Result<()> {
         unimplemented!()
     }
 
@@ -168,9 +177,10 @@ impl Molecule {
         unimplemented!()
     }
 }
-// batch edit:1 ends here
 
-// [[file:~/Workspace/Programming/gchemol/core/gchemol-core.note::2a27ca30-0a99-4d5d-b544-5f5900304bbb][2a27ca30-0a99-4d5d-b544-5f5900304bbb]]
+// translation
+
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*translation][translation:1]]
 use petgraph::algo;
 
 const EPSILON: f64 = 1.0E-6;
@@ -256,4 +266,4 @@ impl Molecule {
         self.translate(p);
     }
 }
-// 2a27ca30-0a99-4d5d-b544-5f5900304bbb ends here
+// translation:1 ends here
