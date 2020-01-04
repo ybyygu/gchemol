@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-29 14:27>
-//       UPDATED:  <2019-12-23 Mon 16:38>
+//       UPDATED:  <2020-01-03 Fri 20:14>
 //===============================================================================#
 // header:1 ends here
 
@@ -491,7 +491,7 @@ impl Molecule {
             let mut positions = vec![];
             for &p in scaled {
                 let xyz = lat.to_cart(p);
-                positions.push(p);
+                positions.push(xyz);
             }
 
             self.set_positions(&positions)

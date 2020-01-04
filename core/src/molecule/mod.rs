@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2019-04-29 Mon 09:35>
+//       UPDATED:  <2020-01-03 Fri 16:16>
 //===============================================================================#
 // header:1 ends here
 
@@ -237,7 +237,7 @@ pub fn atom_kind_from_string<T: Into<String>>(sym: T) -> AtomKind {
         }
     }
 
-    // treat as dummy atom for the last resort
+    // treat as dummy atom as the last resort
     Dummy(sym)
 }
 
@@ -312,6 +312,11 @@ impl Atom {
     /// Return atomic number
     pub fn number(&self) -> usize {
         self.data.kind.number()
+    }
+
+    /// Return atom kind
+    pub fn kind(&self) -> &AtomKind {
+        &self.data.kind
     }
 
     // FIXME: return &str?
@@ -401,7 +406,7 @@ impl Atom {
 // - servo: [[https://doc.servo.org/src/cookie/builder.rs.html#35-38][builder.rs.html -- source]]
 
 
-// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*atom%20data%20builder][atom data builder:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*atom data builder][atom data builder:1]]
 /// Atom specific data independent of the molecule
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct AtomData {
@@ -508,9 +513,8 @@ fn test_atom_builder() {
 // atom data builder:1 ends here
 
 // convert
-// #+name: 7e463bf4-a6ab-4648-a8a2-4b2023d1c588
 
-// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::7e463bf4-a6ab-4648-a8a2-4b2023d1c588][7e463bf4-a6ab-4648-a8a2-4b2023d1c588]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*convert][convert:1]]
 use std::str::FromStr;
 
 impl FromStr for Atom {
@@ -536,15 +540,29 @@ impl FromStr for Atom {
 
 impl fmt::Display for Atom {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:6} {:-12.6} {:-12.6} {:-12.6}",
-               self.symbol(),
-               self.data.position[0],
-               self.data.position[1],
-               self.data.position[2]
+        write!(
+            f,
+            "{:6} {:-12.6} {:-12.6} {:-12.6}",
+            self.symbol(),
+            self.data.position[0],
+            self.data.position[1],
+            self.data.position[2]
         )
     }
 }
-// 7e463bf4-a6ab-4648-a8a2-4b2023d1c588 ends here
+
+impl<S, C> std::convert::From<(S, C)> for Atom
+where
+    S: Into<String>,
+    C: Into<[f64; 3]>,
+{
+    fn from(p: (S, C)) -> Self {
+        let s = p.0.into();
+        let c = p.1.into();
+        Atom::new(s, c)
+    }
+}
+// convert:1 ends here
 
 // test
 
@@ -892,7 +910,7 @@ impl IntoBondIndex for BondIndex {
 // 定义分子体系的电荷, 自旋等参数. ase里每个原子都有一个magmon的参数.
 
 
-// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*charge,%20spin,%20magmon][charge, spin, magmon:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*charge, spin, magmon][charge, spin, magmon:1]]
 impl Molecule {
     // TODO
     /// Return molecule net charge

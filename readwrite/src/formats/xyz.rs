@@ -1,12 +1,12 @@
 // base
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*base][base:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*base][base:1]]
 use super::*;
 // base:1 ends here
 
 // atom/atoms
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*atom/atoms][atom/atoms:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*atom/atoms][atom/atoms:1]]
 /// Create Atom object from xyz line
 /// # Example
 /// C -11.4286  1.7645  0.0000
@@ -51,15 +51,31 @@ C -11.4286 -1.3155  0.0000
 
 // molecule
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
 /// Create a Molecule object from lines in plain xyz format (coordinates only)
 named!(read_molecule_pxyz<&str, Molecule>, do_parse!(
     atoms: read_atoms_xyz >>
     (
         {
             let mut mol = Molecule::new("plain xyz");
+            let mut lat_vectors = vec![];
             for a in atoms {
-                mol.add_atom(a);
+                match a.kind() {
+                    AtomKind::Dummy(x) => {
+                        if x == "TV" {
+                            info!("found TV dummy atom.");
+                            lat_vectors.push(a.position());
+                        }
+                    },
+                    AtomKind::Element(x) => {
+                        mol.add_atom(a);
+                    }
+                }
+            }
+            // construct lattice parsed from three "TV" dummy atoms.
+            if lat_vectors.len() == 3 {
+                let lat = Lattice::new([lat_vectors[0], lat_vectors[1], lat_vectors[2]]);
+                mol.set_lattice(lat);
             }
             mol
         }
@@ -120,7 +136,7 @@ H -13.7062  1.5395  0.0000\n";
 
 // XYZFile
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*XYZFile][XYZFile:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*XYZFile][XYZFile:1]]
 pub struct XYZFile();
 
 named!(parse_xyz<&str, Molecule>, do_parse!(
@@ -161,6 +177,14 @@ impl ChemFileLike for XYZFile {
             lines.push_str(&s);
         }
 
+        // write lattice transition vectors using TV symbol.
+        if let Some(lat) = &mol.lattice {
+            for v in lat.vectors().iter() {
+                let line = format!("TV {:-12.8} {:-12.8} {:-12.8}\n", v[0], v[1], v[2]);
+                lines.push_str(&line);
+            }
+        }
+
         Ok(lines)
     }
 }
@@ -181,12 +205,19 @@ fn test_formats_xyz() {
     let natoms_expected = vec![16, 10, 16, 16, 16, 13];
     let natoms: Vec<_> = mols.iter().map(|m| m.natoms()).collect();
     assert_eq!(natoms_expected, natoms);
+
+    // pbc
+    let path = Path::new("tests/files/xyz/pbc.xyz");
+    let mols = file.parse(path).expect("pbc xyz");
+    assert_eq!(1, mols.len());
+    assert_eq!(32, mols[0].natoms());
+    assert!(mols[0].lattice.is_some());
 }
 // XYZFile:1 ends here
 
 // PlainXYZFile
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*PlainXYZFile][PlainXYZFile:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*PlainXYZFile][PlainXYZFile:1]]
 /// plain xyz coordinates with atom symbols
 #[derive(Debug, Clone)]
 pub struct PlainXYZFile();
@@ -222,6 +253,14 @@ impl ChemFileLike for PlainXYZFile {
             lines.push_str(format!("{}\n", a.to_string()).as_ref());
         }
 
+        // write lattice transition vectors using TV symbol.
+        if let Some(lat) = &mol.lattice {
+            for v in lat.vectors().iter() {
+                let line = format!("TV {:-12.8} {:-12.8} {:-12.8}\n", v[0], v[1], v[2]);
+                lines.push_str(&line);
+            }
+        }
+
         // append a blank line as a separator between multiple molecules
         lines.push_str("\n");
 
@@ -255,5 +294,12 @@ fn test_formats_plain_xyz() {
     let natoms_expected = vec![16, 10, 16, 16, 16, 13];
     let natoms: Vec<_> = mols.iter().map(|m| m.natoms()).collect();
     assert_eq!(natoms_expected, natoms);
+
+    // pbc
+    let path = Path::new("tests/files/xyz/pbc.pxyz");
+    let mols = file.parse(path).expect("pbc xyz");
+    assert_eq!(1, mols.len());
+    assert_eq!(32, mols[0].natoms());
+    assert!(mols[0].lattice.is_some());
 }
 // PlainXYZFile:1 ends here
