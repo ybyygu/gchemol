@@ -12,12 +12,12 @@ use crate::lattice::Lattice;
 use crate::molecule::Molecule;
 
 use crate::core_utils::*;
-//use quicli::prelude::*;
 // imports:1 ends here
 
 // core
 
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/core/gchemol-core.note::*core][core:1]]
+/// Resprents the state of a molecule at a specfic frame in trajectory.
 pub struct Configuration {
     /// The molecule positions.
     positions: Vec<[f64; 3]>,
@@ -68,7 +68,7 @@ impl Trajectory {
 use std::convert::TryFrom;
 
 impl TryFrom<Vec<Molecule>> for Trajectory {
-    type Error = Error;
+    type Error = crate::core_utils::Error;
 
     fn try_from(mols: Vec<Molecule>) -> Result<Self> {
         for (i, pair) in mols.windows(2).enumerate() {

@@ -28,7 +28,8 @@ pub use crate::trajectory::Trajectory;
 pub use crate::lattice::{Lattice, Supercell};
 
 mod core_utils {
-    pub use quicli::prelude::*;
-    pub type Result<T> = ::std::result::Result<T, Error>;
+    // pub use quicli::prelude::*;
+    pub use guts::prelude::*;
+    pub use guts::failure::Error;
 }
 // lib.rs:1 ends here

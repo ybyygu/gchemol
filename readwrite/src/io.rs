@@ -16,7 +16,7 @@ use crate::core_utils::*;
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-11 Wed 15:42>
-//       UPDATED:  <2019-06-02 Sun 14:24>
+//       UPDATED:  <2020-01-11 Sat 20:08>
 //===============================================================================#
 // header:1 ends here
 
@@ -25,7 +25,6 @@ use crate::core_utils::*;
 // [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*trait][trait:1]]
 use std::path::Path;
 
-use quicli;
 use crate::core_utils::*;
 
 pub mod prelude {
@@ -59,17 +58,17 @@ pub mod prelude {
 
 // FIXME: to be removed.
 // reexport
-pub use quicli::fs::read_file;
+pub use guts::fs::read_file;
 
 impl FromFile for String {
     fn from_file<P: AsRef<Path>>(path: P) -> Result<Self> {
-        quicli::fs::read_file(path)
+        guts::fs::read_file(path)
     }
 }
 
 impl ToFile for str {
     fn to_file<P: AsRef<Path>>(&self, path: P) -> Result<()> {
-        quicli::fs::write_to_file(path, &self)
+        guts::fs::write_to_file(path, &self)
     }
 }
 // trait:1 ends here

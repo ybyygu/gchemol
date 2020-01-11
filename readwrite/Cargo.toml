@@ -10,11 +10,11 @@ authors = ["Wenping Guo <ybyygu@gmail.com>"]
 [dependencies]
 nom = "4"
 handlebars = "1.1"
-quicli = "0.4"
 indexmap = "1.0"
 itertools = "0.7"
 gchemol-core = {path = "../core"}
 text-parser = {git = "https://github.com/ybyygu/text-parser.git", tag="v0.0.3" }
+guts = { git = "https://github.com/ybyygu/guts.git" }
 failure = "0.1"
 serde = "1.0"
 serde_json = "1.0"

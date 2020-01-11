@@ -3,11 +3,9 @@
 // :header-args: :tangle src/lib.rs
 // :END:
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*lib.rs][lib.rs:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*lib.rs][lib.rs:1]]
 #[macro_use]
 extern crate nom;
-#[macro_use]
-extern crate quicli;
 #[macro_use]
 extern crate indexmap;
 #[macro_use]
@@ -31,8 +29,7 @@ pub mod io;
 pub mod template;
 
 mod core_utils {
-    pub use quicli::prelude::*;
-    pub type Result<T> = ::std::result::Result<T, Error>;
+    pub use guts::prelude::*;
 }
 
 // FIXME: why must be located in lib.rs?

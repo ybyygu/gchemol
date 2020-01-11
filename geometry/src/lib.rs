@@ -36,7 +36,6 @@ pub use self::random::*;
 
 // logging, error handling, ...
 mod core_utils {
-    pub use quicli::prelude::*;
-    pub type Result<T> = ::std::result::Result<T, Error>;
+    pub use guts::prelude::*;
 }
 // lib.rs:1 ends here

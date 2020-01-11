@@ -9,7 +9,7 @@ authors = ["Wenping Guo <ybyygu@gmail.com>"]
 
 [dependencies]
 vecfx = { git = "https://github.com/gchemol/vecfx.git", features = ["nalgebra"] }
-quicli = "0.4"
+guts = { git = "https://github.com/ybyygu/guts.git" }
 rand = "=0.5"
 
 [dev-dependencies]

@@ -10,7 +10,7 @@
 //        AUTHOR:  Wenping Guo <ybyygu@gmail.com>
 //       LICENCE:  GPL version 3
 //       CREATED:  <2018-04-12 Thu 15:48>
-//       UPDATED:  <2020-01-03 Fri 16:16>
+//       UPDATED:  <2020-01-11 Sat 20:02>
 //===============================================================================#
 // header:1 ends here
 
@@ -518,7 +518,7 @@ fn test_atom_builder() {
 use std::str::FromStr;
 
 impl FromStr for Atom {
-    type Err = Error;
+    type Err = crate::core_utils::Error;
 
     fn from_str(line: &str) -> Result<Self> {
         let parts: Vec<_> = line.split_whitespace().collect();
