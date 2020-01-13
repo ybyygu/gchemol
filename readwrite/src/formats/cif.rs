@@ -1,19 +1,19 @@
 // header
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*header][header:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*header][header:1]]
 // Data will be parsed:
 // Lattice, Atoms, Bonds
 // header:1 ends here
 
 // base
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*base][base:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*base][base:1]]
 use super::*;
 // base:1 ends here
 
 // cell loop
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*cell%20loop][cell loop:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*cell loop][cell loop:1]]
 use nom::recognize_float;
 
 /// Recognizes a float point number with uncertainty brackets
@@ -46,10 +46,7 @@ fn test_cif_float_number() {
 
 /// Recognizes a float value with a preceeding tag
 fn tagged_f64<'a>(input: &'a str, tag: &'a str) -> IResult<&'a str, f64> {
-    sp!(
-        input,
-        preceded!(tag!(tag), double_cif)
-    )
+    sp!(input, preceded!(tag!(tag), double_cif))
 }
 
 #[test]
@@ -66,7 +63,6 @@ named!(cell_params<&str, (f64, f64, f64, f64, f64, f64)>, ws!(permutation!(
     call!(tagged_f64, "_cell_angle_beta"),
     call!(tagged_f64, "_cell_angle_gamma")
 )));
-
 
 /// Read crystal cell
 named!(read_cell<&str, Lattice>, do_parse!(
@@ -116,7 +112,7 @@ loop_
 // N1 N 0.2759(3) 0.8588(2) 0.4883(3)
 // ...
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*atom%20sites%20loop][atom sites loop:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*atom sites loop][atom sites loop:1]]
 named!(atom_site_header<&str, &str>, preceded!(
     tag!("_atom_site_"),
     not_space
@@ -154,7 +150,8 @@ fn read_atoms<'a>(input: &'a str) -> IResult<&'a str, Vec<Atom>> {
     if headers.len() <= 4 {
         println!("{:?}", rest);
         eprintln!("cif formats: not enough columns in atom site loop");
-        return Err(nom_failure!(rest));
+        // return Err(nom_failure!(rest));
+        panic!("nom failure")
     }
 
     // column header loopup table
@@ -171,46 +168,30 @@ fn read_atoms<'a>(input: &'a str) -> IResult<&'a str, Vec<Atom>> {
     // TODO: column index to element symbol, which is optional
     let isym = *table.get(&"type_symbol").expect("atom symbol col");
 
-    do_parse!(rest,
-        rows: many1!(
-            terminated!(
-                count!(sp!(not_space), headers.len()),
-                sp!(line_ending)
-            )
-        ) >>
-        (
-            {
-                let mut atoms = vec![];
-                for row in rows {
-                    let line = format!("{} {} {}\n",
-                                       row[ifx],
-                                       row[ify],
-                                       row[ifz]);
-                    let (_, (fx, fy, fz)) = sp!(
-                        &line,
-                        tuple!(
-                            double_cif,
-                            double_cif,
-                            double_cif
-                        )
-                    ).map_err(|e| {
+    do_parse!(
+        rest,
+        rows: many1!(terminated!(
+            count!(sp!(not_space), headers.len()),
+            sp!(line_ending)
+        )) >> ({
+            let mut atoms = vec![];
+            for row in rows {
+                let line = format!("{} {} {}\n", row[ifx], row[ify], row[ifz]);
+                let (_, (fx, fy, fz)) = sp!(&line, tuple!(double_cif, double_cif, double_cif))
+                    .map_err(|e| {
                         eprintln!("failed to parse coordinates: {:?}", e);
-                        nom_failure!(rest)
+                        panic!("no failure");
                     })?;
 
-                    let lbl = row[ilbl];
-                    let sym = row[isym];
-                    // TODO: assign atom label
-                    let a = Atom::build()
-                        .symbol(sym)
-                        .position(fx, fy, fz)
-                        .finish();
-                    atoms.push(a);
-                }
-
-                atoms
+                let lbl = row[ilbl];
+                let sym = row[isym];
+                // TODO: assign atom label
+                let a = Atom::build().symbol(sym).position(fx, fy, fz).finish();
+                atoms.push(a);
             }
-        )
+
+            atoms
+        })
     )
 }
 
@@ -237,8 +218,7 @@ O10    O     0.73620   0.62240   0.98650   0.00000  Uiso   1.00
 Si11   Si    0.69930   0.92760   0.54120   0.00000  Uiso   1.00
 Si12   Si    0.69630   0.69120   0.54610   0.00000  Uiso   1.00
 \n";
-    let (r, v) = read_atoms(lines)
-        .expect("cif atom site loop");
+    let (r, v) = read_atoms(lines).expect("cif atom site loop");
     assert_eq!(12, v.len());
 }
 // atom sites loop:1 ends here
@@ -258,7 +238,7 @@ Si12   Si    0.69630   0.69120   0.54610   0.00000  Uiso   1.00
 // Si2    O86     1.587   .     S
 // ...
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*bond%20loop][bond loop:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*bond loop][bond loop:1]]
 named!(geom_bond_header<&str, &str>, preceded!(
     alt!(
         tag!("_geom_bond_") |
@@ -290,7 +270,7 @@ _ccdc_geom_bond_type
 
 // molecule
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*molecule][molecule:1]]
 // The first line
 named!(cif_title<&str, &str>, preceded!(
     tag!("data_"),
@@ -338,7 +318,7 @@ fn read_molecule(input: &str) -> IResult<&str, Molecule> {
 
 // chemfile
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*chemfile][chemfile:1]]
 pub struct CifFile();
 
 impl ChemFileLike for CifFile {
@@ -447,7 +427,7 @@ impl ChemFileLike for CifFile {
 
 // test
 
-// [[file:~/Workspace/Programming/gchemol/readwrite/readwrite.note::*test][test:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*test][test:1]]
 #[test]
 fn test_formats_cif() {
     let file = CifFile();

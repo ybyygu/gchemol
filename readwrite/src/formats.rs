@@ -75,9 +75,10 @@ pub trait ChemFileLike {
 
     /// print a brief description about a chemical file format
     fn describe(&self) {
-        println!("filetype: {:?}, possible extensions: {:?}",
-                 self.ftype(),
-                 self.extensions()
+        println!(
+            "filetype: {:?}, possible extensions: {:?}",
+            self.ftype(),
+            self.extensions()
         );
     }
 
@@ -96,17 +97,15 @@ pub trait ChemFileLike {
         let parser = TextParser::default();
 
         let mut mols = vec![];
-        parser.parse(fp,
-                     // parse a single part
-                     |input| {
-                         self.parse_molecule(input)
-                     },
-
-                     // collect all parts
-                     |m| {
-                         mols.push(m);
-                     }
-        )?;
+        parser.parse(
+            fp,
+            // parse a single part
+            |input| self.parse_molecule(input),
+            // collect all parts
+            |m| {
+                mols.push(m);
+            },
+        ).expect("parse failure");
 
         Ok(mols)
     }
@@ -118,17 +117,17 @@ pub trait ChemFileLike {
 
         let mut mol = Molecule::default();
         let parser = TextParser::default();
-        parser.parse(fp,
-                     // parse a single part
-                     |input| {
-                         self.parse_molecule(input)
-                     },
-
-                     // collect all parts
-                     |m| {
-                         mol = m;
-                     }
-        )?;
+        parser
+            .parse(
+                fp,
+                // parse a single part
+                |input| self.parse_molecule(input),
+                // collect all parts
+                |m| {
+                    mol = m;
+                },
+            )
+            .expect("parse failure");
 
         Ok(mol)
     }

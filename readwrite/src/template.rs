@@ -31,13 +31,13 @@ use gchemol_core::{Atom, Molecule};
 
 // format float number
 
-// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*format%20float%20number][format float number:1]]
+// [[file:~/Workspace/Programming/gchemol-rs/gchemol/readwrite/readwrite.note::*format float number][format float number:1]]
 // https://docs.rs/handlebars/1.0.0/handlebars/trait.HelperDef.html
 // define a helper for formatting string or number
 fn format(
     h: &Helper,
     _: &Handlebars,
-    _: &Context,
+    _: &handlebars::Context,
     rc: &mut RenderContext,
     out: &mut dyn Output,
 ) -> HelperResult {
@@ -295,7 +295,7 @@ pub fn render_molecule_with(mol: &Molecule, template: &str) -> Result<String> {
     h.register_helper("fgt", Box::new(crate::fgt));
 
     let data = molecule_to_template_data(mol);
-    h.render_template(template, &data).map_err(failure::err_msg)
+    h.render_template(template, &data).map_err(|e| format_err!("render failure"))
 }
 
 #[test]

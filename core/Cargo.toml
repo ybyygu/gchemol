@@ -15,7 +15,7 @@ serde = {version="1.0", features = ["derive"]}
 envy = "0.4"
 serde_json = "1.0"
 itertools = "0.8"
-guts = { git = "https://github.com/ybyygu/guts.git" }
+guts = { git = "https://github.com/ybyygu/guts.git", branch="dev" }
 gchemol-geometry = {path = "../geometry"}
 
 [dev-dependencies]
