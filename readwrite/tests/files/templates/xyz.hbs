@@ -3,3 +3,8 @@
 {{#each molecule.atoms as |a| ~}}
 {{format a.symbol width=3 align="center"}} {{format a.x width=6 prec=2}} {{format a.y}} {{format a.z}}
 {{/each~}}
+{{#if molecule.unit_cell~}}
+TV {{#each molecule.unit_cell.va as |v| ~}} {{format v}} {{/each}}
+TV {{#each molecule.unit_cell.vb as |v| ~}} {{format v}} {{/each}}
+TV {{#each molecule.unit_cell.vc as |v| ~}} {{format v}} {{/each}}
+{{/if}}
